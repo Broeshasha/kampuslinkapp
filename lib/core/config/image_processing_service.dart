@@ -3,26 +3,27 @@ import 'package:image/image.dart' as img;
 import 'package:blurhash_dart/blurhash_dart.dart';
 
 class ProcessedImage {
-  final Uint8List webpBytes;
+  final Uint8List imageBytes;
   final String blurhash;
-  const ProcessedImage(this.webpBytes, this.blurhash);
+  const ProcessedImage(this.imageBytes, this.blurhash);
 }
 
 /// One shared pipeline for every image in the app — avatars, marketplace
-/// listings, report screenshots. Resize -> WebP -> BlurHash, all on-device,
-/// so the Worker/R2 side never has to do (or pay for) image processing.
+/// listings, report screenshots. Resize -> JPEG -> BlurHash, all on-device.
+/// Note: pure-Dart WebP *encoding* isn't available cross-platform (the
+/// `image` package only decodes WebP, it can't write it) — JPEG at high
+/// quality gets nearly the same size reduction and works everywhere.
 class ImageProcessingService {
   static ProcessedImage process(
     Uint8List originalBytes, {
     int maxDimension = 720,
-    int quality = 82,
+    int quality = 85,
   }) {
     final decoded = img.decodeImage(originalBytes);
     if (decoded == null) {
       throw Exception('Could not decode image');
     }
 
-    // Resize only if larger than target — never upscale a small image.
     final resized = decoded.width > maxDimension || decoded.height > maxDimension
         ? img.copyResize(
             decoded,
@@ -31,13 +32,11 @@ class ImageProcessingService {
           )
         : decoded;
 
-    final webpBytes = Uint8List.fromList(img.encodeWebP(resized, quality: quality));
+    final jpegBytes = Uint8List.fromList(img.encodeJpg(resized, quality: quality));
 
-    // BlurHash generated from a tiny thumbnail — fast, and the hash only
-    // needs to capture rough shape/color, not detail.
     final thumbForHash = img.copyResize(resized, width: 32);
     final blurhash = BlurHash.encode(thumbForHash, numCompX: 4, numCompY: 3).hash;
 
-    return ProcessedImage(webpBytes, blurhash);
+    return ProcessedImage(jpegBytes, blurhash);
   }
 }

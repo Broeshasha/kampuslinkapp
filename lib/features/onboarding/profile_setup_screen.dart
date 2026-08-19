@@ -49,11 +49,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       final processed = ImageProcessingService.process(originalBytes, maxDimension: 512);
 
       setState(() {
-        _avatarBytes = processed.webpBytes;
+        _avatarBytes = processed.imageBytes;
         _avatarBlurhash = processed.blurhash;
       });
 
-      final url = await UploadService.upload(processed.webpBytes, 'avatars', 'avatar.webp');
+      final url = await UploadService.upload(processed.imageBytes, 'avatars', 'avatar.jpg');
       setState(() => _avatarUrl = url);
     } catch (_) {
       // Non-blocking — they can retry or continue without an avatar.
