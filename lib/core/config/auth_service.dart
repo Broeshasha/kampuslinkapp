@@ -1,24 +1,48 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   static final _supabase = Supabase.instance.client;
 
+  // Only used on native Android/iOS — the Web client ID is used here too,
+  // since Supabase verifies tokens against the Web client's credentials
+  // regardless of which platform initiated sign-in.
+  static final _googleSignIn = GoogleSignIn(
+    serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+  );
+
   static Future<void> signInWithGoogle() async {
     if (kIsWeb) {
       await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        // Auto-detects whatever origin is currently running —
-        // localhost:XXXX in dev, kampus-link.com in production.
-        // Never needs manual swapping again.
         redirectTo: Uri.base.origin,
       );
     } else {
-      throw UnimplementedError('Native Google Sign-In not yet configured');
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Sign-in cancelled');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception('No ID token received from Google');
+      }
+
+      await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
+      );
     }
   }
 
   static Future<void> signOut() async {
+    if (!kIsWeb) {
+      await _googleSignIn.signOut();
+    }
     await _supabase.auth.signOut();
   }
 
