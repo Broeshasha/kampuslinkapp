@@ -9,7 +9,7 @@ class AuthService {
   // since Supabase verifies tokens against the Web client's credentials
   // regardless of which platform initiated sign-in.
   static final _googleSignIn = GoogleSignIn(
-    serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+    serverClientId: '649045631810-bajsvemrs6bcec2f4jtu3gfc3bb68her.apps.googleusercontent.com',
   );
 
   static Future<void> signInWithGoogle() async {

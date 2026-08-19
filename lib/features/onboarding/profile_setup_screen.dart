@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_page.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/config/algeria_universities.dart';
 import '../../core/config/countries.dart';
+import '../../core/config/upload_service.dart';
+import '../../core/config/image_processing_service.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -27,6 +31,36 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   bool _checkingUsername = false;
   bool _submitting = false;
   String? _error;
+
+  Uint8List? _avatarBytes;
+  String? _avatarUrl;
+  String? _avatarBlurhash;
+  bool _uploadingAvatar = false;
+
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+    if (picked == null) return;
+
+    setState(() => _uploadingAvatar = true);
+
+    try {
+      final originalBytes = await picked.readAsBytes();
+      final processed = ImageProcessingService.process(originalBytes, maxDimension: 512);
+
+      setState(() {
+        _avatarBytes = processed.webpBytes;
+        _avatarBlurhash = processed.blurhash;
+      });
+
+      final url = await UploadService.upload(processed.webpBytes, 'avatars', 'avatar.webp');
+      setState(() => _avatarUrl = url);
+    } catch (_) {
+      // Non-blocking — they can retry or continue without an avatar.
+    } finally {
+      setState(() => _uploadingAvatar = false);
+    }
+  }
 
   void _onUsernameChanged(String value) {
     _debounce?.cancel();
@@ -56,8 +90,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text('Tell us your $type',
-            style: const TextStyle(color: Colors.white)),
+        title: Text('Tell us your $type', style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -119,6 +152,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'country_id': _selectedCountry!.id,
         'university_id': _selectedUniversity!.id,
         'speciality_id': _selectedSpeciality!.id,
+        'avatar_url': _avatarUrl,
+        'avatar_blurhash': _avatarBlurhash,
       });
       widget.onComplete();
     } catch (e) {
@@ -168,6 +203,45 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: GestureDetector(
+                onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 44,
+                      backgroundColor: AppColors.surface,
+                      backgroundImage:
+                          _avatarBytes != null ? MemoryImage(_avatarBytes!) : null,
+                      child: _avatarBytes == null
+                          ? const Icon(Icons.person, color: AppColors.textSecondary, size: 36)
+                          : null,
+                    ),
+                    if (_uploadingAvatar)
+                      const Positioned.fill(
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black45,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: AppColors.accent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             const Text('Set up your profile',
                 style: TextStyle(
                     color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
