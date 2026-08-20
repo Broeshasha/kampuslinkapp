@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_page.dart';
 import '../../core/widgets/searchable_picker.dart';
+import '../../core/widgets/primary_button.dart';
 import '../../core/config/algeria_universities.dart';
 import '../../core/config/countries.dart';
 import '../../core/config/upload_service.dart';
@@ -146,15 +147,17 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     try {
       final userId = _supabase.auth.currentUser!.id;
-      await _supabase.from('profiles').insert({
-        'id': userId,
+      // update, not insert — the profile row already exists, auto-created
+      // by a DB trigger the moment this account signed up.
+      await _supabase.from('profiles').update({
         'username': username,
         'country_id': _selectedCountry!.id,
         'university_id': _selectedUniversity!.id,
         'speciality_id': _selectedSpeciality!.id,
         'avatar_url': _avatarUrl,
         'avatar_blurhash': _avatarBlurhash,
-      });
+        'onboarding_complete': true,
+      }).eq('id', userId);
       widget.onComplete();
     } catch (e) {
       setState(() {
@@ -243,6 +246,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             const SizedBox(height: 24),
 
             const Text('Set up your profile',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                     color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
             const SizedBox(height: 24),
@@ -323,25 +327,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
             if (_error != null) ...[
               const SizedBox(height: 16),
-              Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+              Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 13)),
             ],
 
             const SizedBox(height: 32),
-            SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 20, height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Finish setup',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              ),
+            PrimaryButton(
+              label: 'Finish setup',
+              loading: _submitting,
+              onPressed: _submit,
             ),
           ],
         ),

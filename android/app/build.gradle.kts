@@ -5,9 +5,9 @@ plugins {
 }
 
 android {
-    ndkVersion = "27.1.12297006"
+    ndkVersion = "28.2.13676358"
     namespace = "com.kampuslink.kampuslink"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     
 
     compileOptions {

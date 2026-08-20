@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/responsive_shell.dart';
+import 'core/widgets/splash_screen.dart';
 import 'core/config/auth_service.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/google_signin_screen.dart';
-import 'core/widgets/splash_screen.dart';
+import 'features/onboarding/profile_setup_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,10 +37,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Routes based on a LOCALLY-STORED session read at startup (offline-safe,
-/// no network call) — not on the auth stream, which only reacts to
-/// FUTURE sign-in/sign-out events during this running session.
-/// Splash shows for a fixed duration regardless of how fast auth resolves.
+enum _RouteState { splash, needsAuth, needsProfile, ready }
+
+/// Routing decision, source of truth entirely server-side now:
+/// - No session -> onboarding.
+/// - Session exists -> read profiles.onboarding_complete (a real column,
+///   guaranteed to exist the instant auth succeeds via a DB trigger —
+///   no more guessing from row existence, no more per-account bleed).
+/// - Result cached locally, keyed per user ID, for instant offline routing
+///   on return visits.
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -47,28 +54,55 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  bool _splashVisible = true;
-  Session? _session;
+  _RouteState _state = _RouteState.splash;
   late final StreamSubscription<AuthState> _authSub;
 
   @override
   void initState() {
     super.initState();
 
-    // Synchronous, offline-safe: reads the session Supabase already
-    // restored from local secure storage during initialize().
-    _session = supabase.auth.currentSession;
+    Future.delayed(const Duration(milliseconds: 1800), _resolveRoute);
 
-    // Fixed splash duration, fully decoupled from any auth/network check.
-    Future.delayed(const Duration(milliseconds: 1800), () {
-      if (mounted) setState(() => _splashVisible = false);
-    });
+    _authSub = AuthService.authStateChanges.listen((_) => _resolveRoute());
+  }
 
-    // Reacts to auth changes that happen WHILE the app is open
-    // (e.g. sign-in completing). Never blocks the initial routing above.
-    _authSub = AuthService.authStateChanges.listen((state) {
-      if (mounted) setState(() => _session = state.session);
-    });
+  Future<void> _resolveRoute() async {
+    final session = supabase.auth.currentSession;
+
+    if (session == null) {
+      if (mounted) setState(() => _state = _RouteState.needsAuth);
+      return;
+    }
+
+    final userId = session.user.id;
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = 'onboarding_complete_$userId';
+
+    if (prefs.getBool(cacheKey) == true) {
+      if (mounted) setState(() => _state = _RouteState.ready);
+      return;
+    }
+
+    try {
+      final profile = await supabase
+          .from('profiles')
+          .select('onboarding_complete')
+          .eq('id', userId)
+          .single();
+
+      final complete = profile['onboarding_complete'] as bool;
+
+      if (complete) {
+        await prefs.setBool(cacheKey, true);
+        if (mounted) setState(() => _state = _RouteState.ready);
+      } else {
+        if (mounted) setState(() => _state = _RouteState.needsProfile);
+      }
+    } catch (_) {
+      // Offline and never cached before — safest fallback is profile
+      // setup, not silently stranding them on a blank screen.
+      if (mounted) setState(() => _state = _RouteState.needsProfile);
+    }
   }
 
   @override
@@ -79,28 +113,39 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    if (_splashVisible) {
-      return const SplashScreen();
-    }
+    switch (_state) {
+      case _RouteState.splash:
+        return const SplashScreen();
 
-    if (_session != null) {
-      return ResponsiveShell(
-        screens: [
-          _placeholder('Home'),
-          _placeholder('Community'),
-          _placeholder('Messages'),
-          _placeholder('Marketplace'),
-        ],
-      );
-    }
-
-    return LanguageScreen(
-      onContinue: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const GoogleSignInScreen()),
+      case _RouteState.needsAuth:
+        return LanguageScreen(
+          onContinue: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const GoogleSignInScreen()),
+            );
+          },
         );
-      },
-    );
+
+      case _RouteState.needsProfile:
+        return ProfileSetupScreen(
+          onComplete: () async {
+            final prefs = await SharedPreferences.getInstance();
+            final userId = supabase.auth.currentUser!.id;
+            await prefs.setBool('onboarding_complete_$userId', true);
+            setState(() => _state = _RouteState.ready);
+          },
+        );
+
+      case _RouteState.ready:
+        return ResponsiveShell(
+          screens: [
+            _placeholder('Home'),
+            _placeholder('Community'),
+            _placeholder('Messages'),
+            _placeholder('Marketplace'),
+          ],
+        );
+    }
   }
 }
 
