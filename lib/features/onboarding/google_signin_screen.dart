@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_page.dart';
+import '../../core/widgets/primary_button.dart';
 import '../../core/config/auth_service.dart';
 
 class GoogleSignInScreen extends StatefulWidget {
@@ -24,8 +26,9 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
     try {
       await AuthService.signInWithGoogle();
     } catch (e) {
+      debugPrint('Google sign-in error: $e');
       setState(() {
-        _error = 'Something went wrong. Try again.';
+        _error = 'Error: $e'; // showing the real error temporarily, for debugging
         _loading = false;
       });
     }
@@ -57,6 +60,7 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
             ),
             const SizedBox(height: 24),
             const Text('Welcome to KampusLink',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                     color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
@@ -66,27 +70,17 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _loading ? null : _handleSignIn,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black87,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                icon: _loading
-                    ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.g_mobiledata, size: 26),
-                label: Text(_loading ? 'Signing in...' : 'Continue with Google'),
-              ),
+            PrimaryButton(
+              label: _loading ? 'Signing in...' : 'Continue with Google',
+              loading: _loading,
+              onPressed: _handleSignIn,
+              icon: Icons.g_mobiledata,
             ),
             if (_error != null) ...[
               const SizedBox(height: 16),
-              Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+              Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 13)),
             ],
             const SizedBox(height: 24),
             RichText(
