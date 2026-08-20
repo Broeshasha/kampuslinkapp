@@ -3,7 +3,8 @@ import '../theme/app_theme.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final List<Widget> screens;
-  const ResponsiveShell({super.key, required this.screens});
+  final VoidCallback? onAvatarTap;
+  const ResponsiveShell({super.key, required this.screens, this.onAvatarTap});
 
   @override
   State<ResponsiveShell> createState() => _ResponsiveShellState();
@@ -36,10 +37,24 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     );
   }
 
-  // Mobile: bottom nav + floating center action button
+  Widget _avatarButton() {
+    return IconButton(
+      onPressed: widget.onAvatarTap,
+      icon: const CircleAvatar(
+        radius: 16,
+        backgroundColor: AppColors.surface,
+        child: Icon(Icons.person, size: 18, color: AppColors.textSecondary),
+      ),
+    );
+  }
+
   Widget _mobileLayout() {
     return Scaffold(
-      body: SafeArea(child: widget.screens[_selectedIndex]),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        actions: [_avatarButton(), const SizedBox(width: 8)],
+      ),
+      body: SafeArea(top: false, child: widget.screens[_selectedIndex]),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.accent,
         onPressed: () {},
@@ -70,10 +85,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     );
   }
 
-  // Tablet: same bottom nav for now, wider content area
   Widget _tabletLayout() => _mobileLayout();
 
-  // Desktop/Web: side NavigationRail instead of bottom nav
   Widget _desktopLayout() {
     return Scaffold(
       body: Row(
@@ -83,9 +96,15 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             selectedIndex: _selectedIndex,
             onDestinationSelected: (i) => setState(() => _selectedIndex = i),
             labelType: NavigationRailLabelType.all,
-            leading: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Icon(Icons.link_rounded, color: AppColors.accent, size: 28),
+            leading: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                children: [
+                  const Icon(Icons.link_rounded, color: AppColors.accent, size: 28),
+                  const SizedBox(height: 16),
+                  _avatarButton(),
+                ],
+              ),
             ),
             selectedIconTheme: const IconThemeData(color: AppColors.accent),
             unselectedIconTheme: const IconThemeData(color: AppColors.textSecondary),

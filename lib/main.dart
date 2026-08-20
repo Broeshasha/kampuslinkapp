@@ -10,6 +10,8 @@ import 'core/config/auth_service.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/google_signin_screen.dart';
 import 'features/onboarding/profile_setup_screen.dart';
+import 'features/home/home_screen.dart';
+import 'features/profile/profile_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,11 +41,10 @@ class MyApp extends StatelessWidget {
 
 enum _RouteState { splash, needsAuth, needsProfile, ready }
 
-/// Routing decision, source of truth entirely server-side now:
+/// Routing decision, source of truth entirely server-side:
 /// - No session -> onboarding.
 /// - Session exists -> read profiles.onboarding_complete (a real column,
-///   guaranteed to exist the instant auth succeeds via a DB trigger —
-///   no more guessing from row existence, no more per-account bleed).
+///   guaranteed to exist the instant auth succeeds via a DB trigger).
 /// - Result cached locally, keyed per user ID, for instant offline routing
 ///   on return visits.
 class AuthGate extends StatefulWidget {
@@ -99,8 +100,6 @@ class _AuthGateState extends State<AuthGate> {
         if (mounted) setState(() => _state = _RouteState.needsProfile);
       }
     } catch (_) {
-      // Offline and never cached before — safest fallback is profile
-      // setup, not silently stranding them on a blank screen.
       if (mounted) setState(() => _state = _RouteState.needsProfile);
     }
   }
@@ -139,11 +138,16 @@ class _AuthGateState extends State<AuthGate> {
       case _RouteState.ready:
         return ResponsiveShell(
           screens: [
-            _placeholder('Home'),
+            const HomeScreen(),
             _placeholder('Community'),
             _placeholder('Messages'),
             _placeholder('Marketplace'),
           ],
+          onAvatarTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
         );
     }
   }
