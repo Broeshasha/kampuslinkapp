@@ -12,6 +12,7 @@ import 'features/onboarding/google_signin_screen.dart';
 import 'features/onboarding/profile_setup_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/profile/profile_screen.dart';
+import 'features/community/community_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,7 +140,7 @@ class _AuthGateState extends State<AuthGate> {
         return ResponsiveShell(
           screens: [
             const HomeScreen(),
-            _placeholder('Community'),
+            const CommunityScreen(),
             _placeholder('Messages'),
             _placeholder('Marketplace'),
           ],
