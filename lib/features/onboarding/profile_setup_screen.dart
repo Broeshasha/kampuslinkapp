@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
@@ -55,9 +56,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       });
 
       final url = await UploadService.upload(processed.imageBytes, 'avatars', 'avatar.jpg');
+      if (url == null) {
+        setState(() => _error = 'Avatar upload failed — you can continue and add one later.');
+      }
       setState(() => _avatarUrl = url);
-    } catch (_) {
-      // Non-blocking — they can retry or continue without an avatar.
+    } catch (e) {
+      debugPrint('Avatar upload error: $e');
     } finally {
       setState(() => _uploadingAvatar = false);
     }
@@ -147,9 +151,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     try {
       final userId = _supabase.auth.currentUser!.id;
-      // update, not insert — the profile row already exists, auto-created
-      // by a DB trigger the moment this account signed up.
-      await _supabase.from('profiles').update({
+      // upsert, not update — the DB trigger usually creates the profile
+      // row instantly, but upsert guarantees this works even if that
+      // row isn't there yet for any reason. This is the actual fix for
+      // fields silently failing to save.
+      await _supabase.from('profiles').upsert({
+        'id': userId,
         'username': username,
         'country_id': _selectedCountry!.id,
         'university_id': _selectedUniversity!.id,
@@ -157,9 +164,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'avatar_url': _avatarUrl,
         'avatar_blurhash': _avatarBlurhash,
         'onboarding_complete': true,
-      }).eq('id', userId);
+      });
       widget.onComplete();
     } catch (e) {
+      debugPrint('Profile submit error: $e');
       setState(() {
         _error = 'Something went wrong. Try again.';
         _submitting = false;
