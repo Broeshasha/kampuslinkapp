@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_page.dart';
 import '../../core/widgets/avatar_picker.dart';
+import '../../core/widgets/searchable_picker.dart';
+import '../../core/config/algeria_universities.dart';
+import '../../core/config/countries.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase
           .from('profiles')
-          .select('username, avatar_url, avatar_blurhash, '
+          .select('username, avatar_url, avatar_blurhash, university_id, country_id, speciality_id, '
               'universities(name, city), specialities(name), countries(name)')
           .eq('id', userId)
           .single();
@@ -64,6 +68,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _profile!['avatar_url'] = url;
       _profile!['avatar_blurhash'] = blurhash;
     });
+  }
+
+  Future<void> _editCountry() async {
+    final result = await SearchablePicker.show<Country>(
+      context: context,
+      title: 'Select your country',
+      items: countries,
+      labelBuilder: (c) => c.name,
+    );
+    if (result == null) return;
+    final userId = _supabase.auth.currentUser!.id;
+    await _supabase.from('profiles').update({'country_id': result.id}).eq('id', userId);
+    _loadProfile();
+  }
+
+  Future<void> _editUniversity() async {
+    final result = await SearchablePicker.show<University>(
+      context: context,
+      title: 'Select your university',
+      items: algeriaUniversities,
+      labelBuilder: (u) => '${u.name} (${u.city})',
+    );
+    if (result == null) return;
+    final userId = _supabase.auth.currentUser!.id;
+    await _supabase.from('profiles').update({'university_id': result.id}).eq('id', userId);
+    _loadProfile();
+  }
+
+  Future<void> _editSpeciality() async {
+    final result = await SearchablePicker.show<Speciality>(
+      context: context,
+      title: 'Select your speciality',
+      items: algeriaSpecialities,
+      labelBuilder: (s) => s.name,
+    );
+    if (result == null) return;
+    final userId = _supabase.auth.currentUser!.id;
+    await _supabase.from('profiles').update({'speciality_id': result.id}).eq('id', userId);
+    _loadProfile();
+  }
+
+  Future<void> _showLanguagePicker() async {
+    // Content translation isn't built yet — this stores a preference
+    // for when it is, it's not cosmetic-only forever.
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('Language', style: TextStyle(color: Colors.white, fontSize: 16)),
+            ),
+            ListTile(
+              title: const Text('English', style: TextStyle(color: Colors.white)),
+              trailing: const Icon(Icons.check, color: AppColors.accent),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              title: const Text('Français', style: TextStyle(color: AppColors.textSecondary)),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              title: const Text('العربية', style: TextStyle(color: AppColors.textSecondary)),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -117,67 +200,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: const TextStyle(
                       color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
             ),
-            const SizedBox(height: 4),
-            Center(
-              child: Text(
-                '${university?['name'] ?? 'No university set'} · ${speciality?['name'] ?? '—'}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  _infoRow('Country', country?['name'] ?? '—'),
-                  const Divider(color: AppColors.border, height: 1),
-                  _infoRow('City', university?['city'] ?? '—'),
-                ],
-              ),
-            ),
             const SizedBox(height: 28),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  _settingsRow('Language', Icons.language),
-                  const Divider(color: AppColors.border, height: 1, indent: 48),
-                  _settingsRow('Notifications', Icons.notifications_none),
-                  const Divider(color: AppColors.border, height: 1, indent: 48),
-                  _settingsRow('Blocked users', Icons.block),
-                  const Divider(color: AppColors.border, height: 1, indent: 48),
-                  _settingsRow('Log out', Icons.logout, danger: true, onTap: () async {
-                    await _supabase.auth.signOut();
-                  }),
-                ],
-              ),
-            ),
+
+            _sectionCard([
+              _editableRow('Country', country?['name'] ?? 'Not set', _editCountry),
+              const Divider(color: AppColors.border, height: 1, indent: 16),
+              _editableRow('University', university?['name'] ?? 'Not set', _editUniversity),
+              const Divider(color: AppColors.border, height: 1, indent: 16),
+              _editableRow('Speciality', speciality?['name'] ?? 'Not set', _editSpeciality),
+            ]),
+
+            const SizedBox(height: 20),
+
+            _sectionCard([
+              _settingsRow('Language', Icons.language, onTap: _showLanguagePicker),
+              const Divider(color: AppColors.border, height: 1, indent: 48),
+              _settingsRow('Notifications', Icons.notifications_none),
+              const Divider(color: AppColors.border, height: 1, indent: 48),
+              _settingsRow('Blocked users', Icons.block),
+            ]),
+
+            const SizedBox(height: 20),
+
+            _sectionCard([
+              _settingsRow('Privacy Policy', Icons.shield_outlined,
+                  onTap: () => _openLink('https://site.kampus-link.com/privacy.html')),
+              const Divider(color: AppColors.border, height: 1, indent: 48),
+              _settingsRow('Terms of Service', Icons.description_outlined,
+                  onTap: () => _openLink('https://site.kampus-link.com/terms.html')),
+              const Divider(color: AppColors.border, height: 1, indent: 48),
+              _settingsRow('Community Guidelines', Icons.groups_outlined,
+                  onTap: () =>
+                      _openLink('https://site.kampus-link.com/community-guidelines.html')),
+            ]),
+
+            const SizedBox(height: 20),
+
+            _sectionCard([
+              _settingsRow('Log out', Icons.logout, danger: true, onTap: () async {
+                await _supabase.auth.signOut();
+                if (context.mounted) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
+              }),
+            ]),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+  Widget _sectionCard(List<Widget> children) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(children: children),
+      );
+
+  Widget _editableRow(String label, String value, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-            Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
+            Row(
+              children: [
+                Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+              ],
+            ),
           ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _settingsRow(String label, IconData icon, {bool danger = false, VoidCallback? onTap}) {
     return InkWell(
