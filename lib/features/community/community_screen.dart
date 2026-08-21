@@ -28,12 +28,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
     try {
       final userId = _supabase.auth.currentUser!.id;
 
-      final posts = await _supabase
-          .from('community_posts')
-          .select('id, content, created_at, user_id, '
-              'profiles(username, avatar_url, avatar_blurhash)')
-          .order('created_at', ascending: false)
-          .limit(30);
+      // Server-side ranked feed — posts from the same university/speciality/
+      // country float up, but nothing is filtered out, everyone stays visible.
+      final posts = await _supabase.rpc('get_community_feed', params: {'viewer_id': userId});
 
       final likes = await _supabase
           .from('community_likes')
@@ -77,7 +74,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
             .insert({'post_id': postId, 'user_id': userId});
       }
     } catch (_) {
-      // Revert on failure
       setState(() {
         if (alreadyLiked) {
           _likedPostIds.add(postId);
@@ -88,16 +84,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
-  Future<int> _commentCount(String postId) async {
-    final result = await _supabase
-        .from('community_comments')
-        .select('id')
-        .eq('post_id', postId);
-    return result.length;
-  }
-
   Future<void> _openComposer() async {
     _composerController.clear();
+    bool submitting = false;
+
     final posted = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -105,52 +95,61 @@ class _CommunityScreenState extends State<CommunityScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          left: 20, right: 20, top: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('New post', style: TextStyle(color: Colors.white, fontSize: 16)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _composerController,
-              autofocus: true,
-              maxLines: 4,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "What's on your mind?",
-                hintStyle: const TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: AppColors.background,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20, right: 20, top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('New post', style: TextStyle(color: Colors.white, fontSize: 16)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _composerController,
+                autofocus: true,
+                maxLines: 4,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "What's on your mind?",
+                  hintStyle: const TextStyle(color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                // Disabled the instant a submit starts — this is what
+                // actually stops the double/triple-post bug.
+                onPressed: submitting ? null : () async {
+                  final content = _composerController.text.trim();
+                  if (content.isEmpty) return;
+                  setModalState(() => submitting = true);
+                  final userId = _supabase.auth.currentUser!.id;
+                  await _supabase
+                      .from('community_posts')
+                      .insert({'user_id': userId, 'content': content});
+                  if (context.mounted) Navigator.pop(context, true);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: submitting
+                      ? const SizedBox(
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Post', style: TextStyle(color: Colors.white)),
+                ),
               ),
-              onPressed: () async {
-                final content = _composerController.text.trim();
-                if (content.isEmpty) return;
-                final userId = _supabase.auth.currentUser!.id;
-                await _supabase
-                    .from('community_posts')
-                    .insert({'user_id': userId, 'content': content});
-                if (context.mounted) Navigator.pop(context, true);
-              },
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Post', style: TextStyle(color: Colors.white)),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -237,7 +236,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Widget _postCard(Map<String, dynamic> post) {
-    final profile = post['profiles'];
     final liked = _likedPostIds.contains(post['id']);
 
     return Container(
@@ -254,10 +252,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ClipOval(
                 child: SizedBox(
                   width: 32, height: 32,
-                  child: profile?['avatar_url'] != null
+                  child: post['avatar_url'] != null
                       ? BlurHashImage(
-                          imageUrl: profile['avatar_url'],
-                          blurhash: profile['avatar_blurhash'])
+                          imageUrl: post['avatar_url'],
+                          blurhash: post['avatar_blurhash'])
                       : Container(
                           color: AppColors.background,
                           child: const Icon(Icons.person, size: 18, color: AppColors.textSecondary),
@@ -265,7 +263,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              Text('@${profile?['username'] ?? 'unknown'}',
+              Text('@${post['username'] ?? 'unknown'}',
                   style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
               const SizedBox(width: 8),
               Text(_timeAgo(post['created_at']),
@@ -320,6 +318,7 @@ class _CommentsSheet extends StatefulWidget {
 class _CommentsSheetState extends State<_CommentsSheet> {
   List<Map<String, dynamic>> _comments = [];
   bool _loading = true;
+  bool _sending = false;
   final _controller = TextEditingController();
 
   @override
@@ -342,7 +341,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
   Future<void> _send() async {
     final content = _controller.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty || _sending) return;
+    setState(() => _sending = true);
     final userId = widget.supabase.auth.currentUser!.id;
     _controller.clear();
     await widget.supabase.from('community_comments').insert({
@@ -350,6 +350,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       'user_id': userId,
       'content': content,
     });
+    setState(() => _sending = false);
     _load();
   }
 
@@ -371,27 +372,34 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-                  : ListView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _comments.length,
-                      itemBuilder: (context, i) {
-                        final c = _comments[i];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('@${c['profiles']?['username'] ?? 'unknown'}',
-                                  style: const TextStyle(
-                                      color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 2),
-                              Text(c['content'], style: const TextStyle(color: Colors.white, fontSize: 14)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                  : _comments.isEmpty
+                      ? const Center(
+                          child: Text('No comments yet.',
+                              style: TextStyle(color: AppColors.textSecondary)))
+                      : ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _comments.length,
+                          itemBuilder: (context, i) {
+                            final c = _comments[i];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('@${c['profiles']?['username'] ?? 'unknown'}',
+                                      style: const TextStyle(
+                                          color: AppColors.accent,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 2),
+                                  Text(c['content'],
+                                      style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -413,8 +421,12 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     ),
                   ),
                   IconButton(
-                    onPressed: _send,
-                    icon: const Icon(Icons.send, color: AppColors.accent),
+                    onPressed: _sending ? null : _send,
+                    icon: _sending
+                        ? const SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
+                        : const Icon(Icons.send, color: AppColors.accent),
                   ),
                 ],
               ),
