@@ -25,12 +25,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool _submitting = false;
   String? _error;
 
-  // 1 photo minimum, 3 maximum — as requested.
   static const _minPhotos = 1;
   static const _maxPhotos = 3;
 
   final List<_ListingPhoto> _photos = [];
-  bool _photoUploadInProgress = false;
 
   final _categories = const [
     ('electronics', 'Electronics'),
@@ -43,43 +41,73 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   ];
 
   Future<void> _addPhoto() async {
-    // Block adding another photo while one is already mid-upload —
-    // removes any race condition between concurrent uploads.
-    if (_photos.length >= _maxPhotos || _photoUploadInProgress) return;
+    if (_photos.length >= _maxPhotos) return;
 
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (picked == null) return;
 
-    final slot = _ListingPhoto();
+    final slot = _ListingPhoto()..originalPicked = picked;
+    setState(() => _photos.add(slot));
+    await _uploadPhoto(slot);
+  }
+
+  Future<void> _uploadPhoto(_ListingPhoto slot) async {
     setState(() {
-      _photos.add(slot);
-      _photoUploadInProgress = true;
+      slot.uploading = true;
+      slot.failed = false;
     });
 
     try {
-      final bytes = await picked.readAsBytes();
-      final processed = ImageProcessingService.process(bytes, maxDimension: 1080);
-      setState(() => slot.localBytes = processed.imageBytes);
+      final bytes = await slot.originalPicked!.readAsBytes();
 
-      final url = await UploadService.upload(processed.imageBytes, 'marketplace', 'item.jpg');
-      if (url == null) {
-        setState(() => _photos.remove(slot));
+      Uint8List processedBytes;
+      String blurhash;
+      try {
+        final processed = ImageProcessingService.process(bytes, maxDimension: 1080);
+        processedBytes = processed.imageBytes;
+        blurhash = processed.blurhash;
+      } catch (e) {
+        // Image decode/resize failed — e.g. an unsupported format like HEIC.
+        debugPrint('Image processing error: $e');
+        setState(() {
+          slot.failed = true;
+          slot.uploading = false;
+          slot.errorLabel = 'Unsupported image format';
+        });
         return;
       }
+
+      setState(() => slot.localBytes = processedBytes);
+
+      final url = await UploadService.upload(processedBytes, 'marketplace', 'item.jpg');
+
+      if (url == null) {
+        setState(() {
+          slot.failed = true;
+          slot.uploading = false;
+          slot.errorLabel = 'Upload failed';
+        });
+        return;
+      }
+
       setState(() {
         slot.url = url;
-        slot.blurhash = processed.blurhash;
+        slot.blurhash = blurhash;
         slot.uploading = false;
+        slot.failed = false;
       });
     } catch (e) {
       debugPrint('Listing photo upload error: $e');
-      setState(() => _photos.remove(slot));
-    } finally {
-      setState(() => _photoUploadInProgress = false);
+      setState(() {
+        slot.failed = true;
+        slot.uploading = false;
+        slot.errorLabel = 'Something went wrong';
+      });
     }
   }
 
+  void _retryPhoto(_ListingPhoto slot) => _uploadPhoto(slot);
   void _removePhoto(_ListingPhoto photo) => setState(() => _photos.remove(photo));
 
   Future<void> _submit() async {
@@ -95,7 +123,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       setState(() => _error = 'Enter a valid price in DA.');
       return;
     }
-    if (_photos.length < _minPhotos || _photos.any((p) => p.url == null)) {
+    final readyPhotos = _photos.where((p) => p.url != null).toList();
+    if (readyPhotos.length < _minPhotos) {
       setState(() => _error = 'Add at least $_minPhotos photo and wait for it to finish uploading.');
       return;
     }
@@ -119,8 +148,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         'description': _descController.text.trim(),
         'price_dzd': price,
         'category': _category,
-        'image_urls': _photos.map((p) => p.url).toList(),
-        'image_blurhashes': _photos.map((p) => p.blurhash).toList(),
+        'image_urls': readyPhotos.map((p) => p.url).toList(),
+        'image_blurhashes': readyPhotos.map((p) => p.blurhash).toList(),
         'university_id': profile['university_id'],
       });
 
@@ -150,7 +179,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               const SizedBox(height: 10),
               SizedBox(
-                height: 90,
+                height: 100,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
@@ -254,6 +283,29 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           const Positioned.fill(
             child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
           ),
+        if (photo.failed)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => _retryPhoto(photo),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.refresh, color: Colors.white, size: 18),
+                      Text(photo.errorLabel ?? 'Retry',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 9)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         Positioned(
           top: 4, right: 4,
           child: GestureDetector(
@@ -275,14 +327,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       child: Container(
         width: 90, height: 90,
         decoration: BoxDecoration(
-          border: Border.all(
-              color: _photoUploadInProgress ? AppColors.border.withValues(alpha: 0.4) : AppColors.border),
+          border: Border.all(color: AppColors.border),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(Icons.add,
-            color: _photoUploadInProgress
-                ? AppColors.textSecondary.withValues(alpha: 0.4)
-                : AppColors.textSecondary),
+        child: const Icon(Icons.add, color: AppColors.textSecondary),
       ),
     );
   }
@@ -293,4 +341,7 @@ class _ListingPhoto {
   String? url;
   String? blurhash;
   bool uploading = true;
+  bool failed = false;
+  String? errorLabel;
+  XFile? originalPicked;
 }
