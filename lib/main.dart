@@ -13,6 +13,7 @@ import 'features/onboarding/profile_setup_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/community/community_screen.dart';
+import 'features/marketplace/marketplace_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -142,7 +143,7 @@ class _AuthGateState extends State<AuthGate> {
             const HomeScreen(),
             const CommunityScreen(),
             _placeholder('Messages'),
-            _placeholder('Marketplace'),
+            const MarketplaceScreen(),
           ],
           onAvatarTap: () {
             Navigator.of(context).push(
