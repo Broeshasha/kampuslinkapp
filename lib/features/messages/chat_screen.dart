@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/report_dialog.dart';
+import '../../core/config/block_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String otherUserId;
@@ -84,28 +86,35 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showMenu() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.block, color: AppColors.danger),
-              title: const Text('Block user', style: TextStyle(color: AppColors.danger)),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.flag_outlined, color: AppColors.danger),
-              title: const Text('Report', style: TextStyle(color: AppColors.danger)),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppColors.surface,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.block, color: AppColors.danger),
+            title: const Text('Block user', style: TextStyle(color: AppColors.danger)),
+            onTap: () async {
+              Navigator.pop(context);
+              final blocked = await BlockService.blockUser(context, widget.otherUserId);
+              if (blocked && mounted) Navigator.of(context).pop();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.flag_outlined, color: AppColors.danger),
+            title: const Text('Report', style: TextStyle(color: AppColors.danger)),
+            onTap: () {
+              Navigator.pop(context);
+              ReportDialog.show(context: context, targetType: 'user', targetId: widget.otherUserId);
+            },
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

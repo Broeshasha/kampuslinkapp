@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import '../../core/config/upload_service.dart';
 import '../../core/config/image_processing_service.dart';
+import '../../core/widgets/report_dialog.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -450,6 +451,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 }
+
+const SizedBox(width: 20),
+InkWell(
+  onTap: () => ReportDialog.show(
+    context: context,
+    targetType: 'community_post',
+    targetId: post['id'],
+  ),
+  child: const Icon(Icons.flag_outlined, size: 16, color: AppColors.textSecondary),
+),
 
 class _CommentsSheet extends StatefulWidget {
   final String postId;
