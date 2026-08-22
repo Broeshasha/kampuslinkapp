@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -57,12 +58,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Future<void> _toggleLike(String postId) async {
     final userId = _supabase.auth.currentUser!.id;
     final alreadyLiked = _likedPostIds.contains(postId);
+    final postIndex = _posts.indexWhere((p) => p['id'] == postId);
 
     setState(() {
       if (alreadyLiked) {
         _likedPostIds.remove(postId);
+        if (postIndex != -1) _posts[postIndex]['like_count'] = (_posts[postIndex]['like_count'] ?? 1) - 1;
       } else {
         _likedPostIds.add(postId);
+        if (postIndex != -1) _posts[postIndex]['like_count'] = (_posts[postIndex]['like_count'] ?? 0) + 1;
       }
     });
 
@@ -83,16 +87,35 @@ class _CommunityScreenState extends State<CommunityScreen> {
       setState(() {
         if (alreadyLiked) {
           _likedPostIds.add(postId);
+          if (postIndex != -1) _posts[postIndex]['like_count'] = (_posts[postIndex]['like_count'] ?? 0) + 1;
         } else {
           _likedPostIds.remove(postId);
+          if (postIndex != -1) _posts[postIndex]['like_count'] = (_posts[postIndex]['like_count'] ?? 1) - 1;
         }
       });
     }
   }
 
-  void _sharePost(Map<String, dynamic> post) {
+  Future<void> _sharePost(BuildContext context, Map<String, dynamic> post) async {
     final text = '${post['content']}\n\n— @${post['username']} on KampusLink';
-    SharePlus.instance.share(ShareParams(text: text));
+    try {
+      final result = await SharePlus.instance.share(ShareParams(text: text));
+      if (result.status == ShareResultStatus.unavailable && context.mounted) {
+        await Clipboard.setData(ClipboardData(text: text));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sharing not available here — copied to clipboard instead.')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Share error: $e');
+      // Desktop browsers often lack the Web Share API — fall back to clipboard.
+      await Clipboard.setData(ClipboardData(text: text));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Copied to clipboard.')),
+        );
+      }
+    }
   }
 
   Future<void> _openComposer() async {
@@ -332,6 +355,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _postCard(Map<String, dynamic> post) {
     final liked = _likedPostIds.contains(post['id']);
+    final likeCount = post['like_count'] ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -391,8 +415,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     Icon(liked ? Icons.favorite : Icons.favorite_border,
                         size: 18, color: liked ? AppColors.danger : AppColors.textSecondary),
                     const SizedBox(width: 5),
-                    Text('Like', style: TextStyle(
-                        color: liked ? AppColors.danger : AppColors.textSecondary, fontSize: 12)),
+                    Text(likeCount > 0 ? '$likeCount' : 'Like',
+                        style: TextStyle(
+                            color: liked ? AppColors.danger : AppColors.textSecondary, fontSize: 12)),
                   ],
                 ),
               ),
@@ -409,7 +434,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ),
               const SizedBox(width: 20),
               InkWell(
-                onTap: () => _sharePost(post),
+                onTap: () => _sharePost(context, post),
                 child: const Row(
                   children: [
                     Icon(Icons.share_outlined, size: 16, color: AppColors.textSecondary),
@@ -439,6 +464,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   List<Map<String, dynamic>> _comments = [];
   bool _loading = true;
   bool _sending = false;
+  String? _error;
   final _controller = TextEditingController();
 
   @override
@@ -448,15 +474,23 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   }
 
   Future<void> _load() async {
-    final data = await widget.supabase
-        .from('community_comments')
-        .select('content, created_at, profiles(username)')
-        .eq('post_id', widget.postId)
-        .order('created_at');
-    setState(() {
-      _comments = List<Map<String, dynamic>>.from(data);
-      _loading = false;
-    });
+    try {
+      final data = await widget.supabase
+          .from('community_comments')
+          .select('content, created_at, profiles(username)')
+          .eq('post_id', widget.postId)
+          .order('created_at');
+      setState(() {
+        _comments = List<Map<String, dynamic>>.from(data);
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('Comments load error: $e');
+      setState(() {
+        _error = 'Could not load comments.';
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _send() async {
@@ -465,13 +499,17 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     setState(() => _sending = true);
     final userId = widget.supabase.auth.currentUser!.id;
     _controller.clear();
-    await widget.supabase.from('community_comments').insert({
-      'post_id': widget.postId,
-      'user_id': userId,
-      'content': content,
-    });
+    try {
+      await widget.supabase.from('community_comments').insert({
+        'post_id': widget.postId,
+        'user_id': userId,
+        'content': content,
+      });
+      await _load();
+    } catch (e) {
+      debugPrint('Comment send error: $e');
+    }
     setState(() => _sending = false);
-    _load();
   }
 
   @override
@@ -492,34 +530,37 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-                  : _comments.isEmpty
-                      ? const Center(
-                          child: Text('No comments yet.',
-                              style: TextStyle(color: AppColors.textSecondary)))
-                      : ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _comments.length,
-                          itemBuilder: (context, i) {
-                            final c = _comments[i];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('@${c['profiles']?['username'] ?? 'unknown'}',
-                                      style: const TextStyle(
-                                          color: AppColors.accent,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 2),
-                                  Text(c['content'],
-                                      style: const TextStyle(color: Colors.white, fontSize: 14)),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                  : _error != null
+                      ? Center(
+                          child: Text(_error!, style: const TextStyle(color: AppColors.danger)))
+                      : _comments.isEmpty
+                          ? const Center(
+                              child: Text('No comments yet.',
+                                  style: TextStyle(color: AppColors.textSecondary)))
+                          : ListView.builder(
+                              controller: scrollController,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: _comments.length,
+                              itemBuilder: (context, i) {
+                                final c = _comments[i];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('@${c['profiles']?['username'] ?? 'unknown'}',
+                                          style: const TextStyle(
+                                              color: AppColors.accent,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 2),
+                                      Text(c['content'],
+                                          style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
