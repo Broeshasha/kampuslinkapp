@@ -355,7 +355,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _postCard(Map<String, dynamic> post) {
     final liked = _likedPostIds.contains(post['id']);
-    final likeCount = post['like_count'] ?? 0;
+    final likeCount = int.tryParse(post['like_count']?.toString() ?? '0') ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(14),
