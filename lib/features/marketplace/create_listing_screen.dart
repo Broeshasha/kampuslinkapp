@@ -25,10 +25,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool _submitting = false;
   String? _error;
 
-  static const _minPhotos = 3;
-  static const _maxPhotos = 6;
+  // 1 photo minimum, 3 maximum — as requested.
+  static const _minPhotos = 1;
+  static const _maxPhotos = 3;
 
   final List<_ListingPhoto> _photos = [];
+  bool _photoUploadInProgress = false;
 
   final _categories = const [
     ('electronics', 'Electronics'),
@@ -41,13 +43,19 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   ];
 
   Future<void> _addPhoto() async {
-    if (_photos.length >= _maxPhotos) return;
+    // Block adding another photo while one is already mid-upload —
+    // removes any race condition between concurrent uploads.
+    if (_photos.length >= _maxPhotos || _photoUploadInProgress) return;
+
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (picked == null) return;
 
     final slot = _ListingPhoto();
-    setState(() => _photos.add(slot));
+    setState(() {
+      _photos.add(slot);
+      _photoUploadInProgress = true;
+    });
 
     try {
       final bytes = await picked.readAsBytes();
@@ -67,6 +75,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     } catch (e) {
       debugPrint('Listing photo upload error: $e');
       setState(() => _photos.remove(slot));
+    } finally {
+      setState(() => _photoUploadInProgress = false);
     }
   }
 
@@ -86,7 +96,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       return;
     }
     if (_photos.length < _minPhotos || _photos.any((p) => p.url == null)) {
-      setState(() => _error = 'Add at least $_minPhotos photos and wait for uploads to finish.');
+      setState(() => _error = 'Add at least $_minPhotos photo and wait for it to finish uploading.');
       return;
     }
 
@@ -265,10 +275,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       child: Container(
         width: 90, height: 90,
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+              color: _photoUploadInProgress ? AppColors.border.withValues(alpha: 0.4) : AppColors.border),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Icon(Icons.add, color: AppColors.textSecondary),
+        child: Icon(Icons.add,
+            color: _photoUploadInProgress
+                ? AppColors.textSecondary.withValues(alpha: 0.4)
+                : AppColors.textSecondary),
       ),
     );
   }
