@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_blurhash/flutter_blurhash.dart';
 
-/// Use this everywhere an uploaded image is displayed — profile avatars,
-/// marketplace listings, report photos. Shows the BlurHash instantly,
-/// crossfades to the real cached image once loaded.
 class BlurHashImage extends StatelessWidget {
   final String imageUrl;
   final String? blurhash;
@@ -33,8 +31,13 @@ class BlurHashImage extends StatelessWidget {
       placeholder: (context, url) => blurhash != null
           ? BlurHash(hash: blurhash!)
           : Container(color: Colors.grey.shade900),
-      errorWidget: (context, url, error) =>
-          Container(color: Colors.grey.shade900, child: const Icon(Icons.broken_image)),
+      errorWidget: (context, url, error) {
+        debugPrint('BlurHashImage failed to load: $url — $error');
+        return Container(
+          color: Colors.grey.shade900,
+          child: const Icon(Icons.person, color: Colors.white38),
+        );
+      },
       fadeInDuration: const Duration(milliseconds: 250),
     );
 
