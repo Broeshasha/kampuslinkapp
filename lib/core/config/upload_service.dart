@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UploadService {
-  static const _workerUrl = 'https://kampuslink-upload-worker.chidafarai06.workers.dev';
+  static const _workerUrl = 'https://upload.kampus-link.com';
 
   static Future<String?> upload(Uint8List bytes, String folder, String filename) async {
     final session = Supabase.instance.client.auth.currentSession;
