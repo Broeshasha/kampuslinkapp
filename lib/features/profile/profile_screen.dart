@@ -35,15 +35,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     try {
       final userId = _supabase.auth.currentUser!.id;
+      // RPC, not the PostgREST embedding shorthand — this is the same
+      // pattern proven working by direct SQL testing, guaranteed to
+      // return the real joined names instead of silently null.
       final data = await _supabase
-          .from('profiles')
-          .select('username, avatar_url, avatar_blurhash, university_id, country_id, speciality_id, '
-              'universities(name, city), specialities(name), countries(name)')
-          .eq('id', userId)
+          .rpc('get_my_profile', params: {'viewer_id': userId})
           .single();
+      debugPrint('ProfileScreen loaded: $data');
       if (mounted) {
         setState(() {
-          _profile = data;
+          _profile = data as Map<String, dynamic>;
           _loading = false;
         });
       }
@@ -110,8 +111,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showLanguagePicker() async {
-    // Content translation isn't built yet — this stores a preference
-    // for when it is, it's not cosmetic-only forever.
     await showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -175,10 +174,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    final university = _profile!['universities'];
-    final speciality = _profile!['specialities'];
-    final country = _profile!['countries'];
-
     return ResponsivePage(
       maxWidth: 480,
       child: RefreshIndicator(
@@ -203,11 +198,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 28),
 
             _sectionCard([
-              _editableRow('Country', country?['name'] ?? 'Not set', _editCountry),
+              _editableRow('Country', _profile!['country_name'] ?? 'Not set', _editCountry),
               const Divider(color: AppColors.border, height: 1, indent: 16),
-              _editableRow('University', university?['name'] ?? 'Not set', _editUniversity),
+              _editableRow('University', _profile!['university_name'] ?? 'Not set', _editUniversity),
               const Divider(color: AppColors.border, height: 1, indent: 16),
-              _editableRow('Speciality', speciality?['name'] ?? 'Not set', _editSpeciality),
+              _editableRow('City', _profile!['university_city'] ?? '—', null),
+              const Divider(color: AppColors.border, height: 1, indent: 16),
+              _editableRow('Speciality', _profile!['speciality_name'] ?? 'Not set', _editSpeciality),
             ]),
 
             const SizedBox(height: 20),
@@ -259,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(children: children),
       );
 
-  Widget _editableRow(String label, String value, VoidCallback onTap) {
+  Widget _editableRow(String label, String value, VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -272,8 +269,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               children: [
                 Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                const SizedBox(width: 6),
-                const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+                if (onTap != null) ...[
+                  const SizedBox(width: 6),
+                  const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+                ],
               ],
             ),
           ],

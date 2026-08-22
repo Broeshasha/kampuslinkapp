@@ -31,6 +31,7 @@ dependencies:
   image: ^4.9.2
   blurhash_dart: ^1.2.1
   flutter_blurhash: ^0.9.1
+  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:

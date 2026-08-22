@@ -1,7 +1,13 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
+import '../../core/config/upload_service.dart';
+import '../../core/config/image_processing_service.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -28,8 +34,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
     try {
       final userId = _supabase.auth.currentUser!.id;
 
-      // Server-side ranked feed — posts from the same university/speciality/
-      // country float up, but nothing is filtered out, everyone stays visible.
       final posts = await _supabase.rpc('get_community_feed', params: {'viewer_id': userId});
 
       final likes = await _supabase
@@ -44,7 +48,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Community load error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -73,7 +78,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
             .from('community_likes')
             .insert({'post_id': postId, 'user_id': userId});
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Like toggle error: $e');
       setState(() {
         if (alreadyLiked) {
           _likedPostIds.add(postId);
@@ -84,9 +90,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
+  void _sharePost(Map<String, dynamic> post) {
+    final text = '${post['content']}\n\n— @${post['username']} on KampusLink';
+    SharePlus.instance.share(ShareParams(text: text));
+  }
+
   Future<void> _openComposer() async {
     _composerController.clear();
+    Uint8List? imageBytes;
+    String? imageUrl;
+    String? imageBlurhash;
     bool submitting = false;
+    bool uploadingImage = false;
 
     final posted = await showModalBottomSheet<bool>(
       context: context,
@@ -121,23 +136,103 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
+              const SizedBox(height: 12),
+
+              if (imageBytes != null)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.memory(imageBytes!, height: 140, width: double.infinity, fit: BoxFit.cover),
+                    ),
+                    if (uploadingImage)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black45,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+                        ),
+                      ),
+                    Positioned(
+                      top: 6, right: 6,
+                      child: GestureDetector(
+                        onTap: () => setModalState(() {
+                          imageBytes = null;
+                          imageUrl = null;
+                          imageBlurhash = null;
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                          child: const Icon(Icons.close, size: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                InkWell(
+                  onTap: () async {
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+                    if (picked == null) return;
+
+                    setModalState(() => uploadingImage = true);
+                    final bytes = await picked.readAsBytes();
+                    final processed = ImageProcessingService.process(bytes, maxDimension: 1080);
+                    setModalState(() => imageBytes = processed.imageBytes);
+
+                    final url = await UploadService.upload(processed.imageBytes, 'community', 'post.jpg');
+                    setModalState(() {
+                      imageUrl = url;
+                      imageBlurhash = processed.blurhash;
+                      uploadingImage = false;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image_outlined, size: 18, color: AppColors.textSecondary),
+                        SizedBox(width: 8),
+                        Text('Add a photo', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                ),
+
               const SizedBox(height: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                // Disabled the instant a submit starts — this is what
-                // actually stops the double/triple-post bug.
-                onPressed: submitting ? null : () async {
+                onPressed: (submitting || uploadingImage) ? null : () async {
                   final content = _composerController.text.trim();
                   if (content.isEmpty) return;
                   setModalState(() => submitting = true);
                   final userId = _supabase.auth.currentUser!.id;
-                  await _supabase
-                      .from('community_posts')
-                      .insert({'user_id': userId, 'content': content});
-                  if (context.mounted) Navigator.pop(context, true);
+                  try {
+                    await _supabase.from('community_posts').insert({
+                      'user_id': userId,
+                      'content': content,
+                      'image_url': imageUrl,
+                      'image_blurhash': imageBlurhash,
+                    });
+                    if (context.mounted) Navigator.pop(context, true);
+                  } catch (e) {
+                    debugPrint('Post submit error: $e');
+                    setModalState(() => submitting = false);
+                  }
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -272,6 +367,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
           const SizedBox(height: 10),
           Text(post['content'], style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4)),
+
+          if (post['image_url'] != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: BlurHashImage(
+                imageUrl: post['image_url'],
+                blurhash: post['image_blurhash'],
+                height: 200,
+                width: double.infinity,
+              ),
+            ),
+          ],
+
           const SizedBox(height: 12),
           Row(
             children: [
@@ -295,6 +404,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     Icon(Icons.mode_comment_outlined, size: 17, color: AppColors.textSecondary),
                     SizedBox(width: 5),
                     Text('Comment', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              InkWell(
+                onTap: () => _sharePost(post),
+                child: const Row(
+                  children: [
+                    Icon(Icons.share_outlined, size: 16, color: AppColors.textSecondary),
+                    SizedBox(width: 5),
+                    Text('Share', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                   ],
                 ),
               ),
