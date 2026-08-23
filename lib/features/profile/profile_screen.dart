@@ -192,45 +192,53 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          Center(
-            child: AvatarPicker(
-              existingUrl: _profile!['avatar_url'],
-              existingBlurhash: _profile!['avatar_blurhash'],
-              onUploaded: _updateAvatar,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text('@${_profile!['username']}',
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
+      body: Center(
+        // The width cap that was missing — this is the whole fix.
+        // Everything below stays exactly as designed on mobile,
+        // and now sits in a sane centered column on wider screens.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: AvatarPicker(
+                  existingUrl: _profile!['avatar_url'],
+                  existingBlurhash: _profile!['avatar_blurhash'],
+                  onUploaded: _updateAvatar,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('@${_profile!['username']}',
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
 
-          TabBar(
-            controller: _tabController,
-            indicatorColor: AppColors.accent,
-            labelColor: AppColors.accent,
-            unselectedLabelColor: AppColors.textSecondary,
-            tabs: const [
-              Tab(text: 'Settings'),
-              Tab(text: 'My Posts'),
-              Tab(text: 'My Listings'),
+              TabBar(
+                controller: _tabController,
+                indicatorColor: AppColors.accent,
+                labelColor: AppColors.accent,
+                unselectedLabelColor: AppColors.textSecondary,
+                tabs: const [
+                  Tab(text: 'Settings'),
+                  Tab(text: 'My Posts'),
+                  Tab(text: 'My Listings'),
+                ],
+              ),
+
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _settingsTab(),
+                    const MyPostsTab(),
+                    const MyListingsTab(),
+                  ],
+                ),
+              ),
             ],
           ),
-
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _settingsTab(),
-                const MyPostsTab(),
-                const MyListingsTab(),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

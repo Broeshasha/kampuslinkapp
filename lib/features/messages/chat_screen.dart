@@ -12,7 +12,7 @@ class ChatScreen extends StatefulWidget {
   final String otherUsername;
   final String? otherAvatarUrl;
   final String? otherAvatarBlurhash;
-  final String? initialListingId; // set when opened via "Message seller"
+  final String? initialListingId;
 
   const ChatScreen({
     super.key,
@@ -35,10 +35,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _loading = true;
   bool _sending = false;
   bool _isFirstContact = true;
-
-  // The listing attached to the NEXT message about to be sent —
-  // shown as a WhatsApp-style reply preview above the composer,
-  // cleared after that one message is sent (or dismissed by the user).
   Map<String, dynamic>? _pendingListing;
 
   @override
@@ -55,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .select()
           .or('and(sender_id.eq.$userId,recipient_id.eq.${widget.otherUserId}),'
               'and(sender_id.eq.${widget.otherUserId},recipient_id.eq.$userId)')
-          .order('created_at', ascending: false); // newest first, for reverse:true
+          .order('created_at', ascending: false);
 
       final messages = List<Map<String, dynamic>>.from(data);
 
@@ -68,8 +64,6 @@ class _ChatScreenState extends State<ChatScreen> {
             .inFilter('id', unreadIds);
       }
 
-      // Fetch details for every distinct listing referenced anywhere
-      // in this thread, so each message can show its own attached card.
       final listingIds = messages
           .map((m) => m['listing_id'])
           .where((id) => id != null)
@@ -89,9 +83,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
       final isFirstContact = messages.isEmpty;
 
-      // On first contact via "Message seller": pre-fill the composer
-      // and show the listing as a pending attachment, exactly once.
-      if (isFirstContact && widget.initialListingId != null) {
+      // FIX: this used to only trigger on isFirstContact, which meant
+      // "Message seller" silently did nothing if you'd already messaged
+      // this person before (about anything). The prefill/attachment
+      // should show any time a listingId is passed in and hasn't
+      // already been referenced by an existing message in this thread.
+      final alreadyReferenced = widget.initialListingId != null &&
+          messages.any((m) => m['listing_id'] == widget.initialListingId);
+
+      if (widget.initialListingId != null && !alreadyReferenced) {
         Map<String, dynamic>? listing = _listingCache[widget.initialListingId];
         listing ??= await _supabase
             .from('marketplace_listings')
@@ -102,7 +102,9 @@ class _ChatScreenState extends State<ChatScreen> {
         if (listing != null) {
           _listingCache[listing['id']] = listing;
           _pendingListing = listing;
-          _controller.text = 'Is this still available?';
+          if (_controller.text.isEmpty) {
+            _controller.text = 'Is this still available?';
+          }
         }
       }
 
@@ -131,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'content': content,
         'listing_id': attachedListingId,
       });
-      setState(() => _pendingListing = null); // attach once, like WhatsApp's reply preview
+      setState(() => _pendingListing = null);
       await _load();
     } catch (e) {
       debugPrint('Send message error: $e');
@@ -176,6 +178,14 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  String _timeLabel(String isoDate) {
+    final date = DateTime.parse(isoDate).toLocal();
+    final hour = date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
   Widget _listingChip(Map<String, dynamic> listing, {VoidCallback? onDismiss}) {
     final images = List<String>.from(listing['image_urls'] ?? []);
     return Container(
@@ -183,7 +193,7 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
-        border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
+        border: const Border(left: BorderSide(color: AppColors.accent, width: 3)),
       ),
       child: Row(
         children: [
@@ -224,6 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final userId = _supabase.auth.currentUser!.id;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -249,112 +260,144 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(onPressed: _showMenu, icon: const Icon(Icons.more_vert)),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-          : Column(
-              children: [
-                if (_isFirstContact)
-                  Container(
-                    width: double.infinity,
-                    color: AppColors.surface,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: const Text(
-                      "You don't know this person yet — be cautious sharing personal details.",
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                    ),
-                  ),
-                Expanded(
-                  child: RefreshIndicator(
-                    color: AppColors.accent,
-                    onRefresh: _load,
-                    child: ListView.builder(
-                      reverse: true, // pins to newest message, no manual scroll code needed
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, i) {
-                        final m = _messages[i];
-                        final isMe = m['sender_id'] == userId;
-                        final listing = m['listing_id'] != null ? _listingCache[m['listing_id']] : null;
-
-                        return Align(
-                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(10),
-                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                            decoration: BoxDecoration(
-                              color: isMe ? AppColors.accent : AppColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Quoted listing attached to THIS specific
-                                // message — WhatsApp reply-style, not a
-                                // thread-wide banner.
-                                if (listing != null)
-                                  GestureDetector(
-                                    onTap: () => _openListing(listing),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
-                                      child: _listingChip(listing),
-                                    ),
-                                  ),
-                                Text(m['content'], style: const TextStyle(color: Colors.white)),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                // Pending listing preview — sits above the composer,
-                // dismissible, attaches to the next message only.
-                if (_pendingListing != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: _listingChip(
-                      _pendingListing!,
-                      onDismiss: () => setState(() => _pendingListing = null),
-                    ),
-                  ),
-
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: 'Message...',
-                            hintStyle: const TextStyle(color: AppColors.textSecondary),
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              : Column(
+                  children: [
+                    if (_isFirstContact)
+                      Container(
+                        width: double.infinity,
+                        color: AppColors.surface,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: const Text(
+                          "You don't know this person yet — be cautious sharing personal details.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: _sending ? null : _send,
-                        icon: _sending
-                            ? const SizedBox(
-                                width: 18, height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
-                            : const Icon(Icons.send, color: AppColors.accent),
+                    Expanded(
+                      child: RefreshIndicator(
+                        color: AppColors.accent,
+                        onRefresh: _load,
+                        child: _messages.isEmpty
+                            ? const Center(
+                                child: Text('Say hello 👋',
+                                    style: TextStyle(color: AppColors.textSecondary)))
+                            : ListView.builder(
+                                reverse: true,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                itemCount: _messages.length,
+                                itemBuilder: (context, i) {
+                                  final m = _messages[i];
+                                  final isMe = m['sender_id'] == userId;
+                                  final listing =
+                                      m['listing_id'] != null ? _listingCache[m['listing_id']] : null;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(11),
+                                          constraints: BoxConstraints(
+                                              maxWidth: MediaQuery.of(context).size.width * 0.7),
+                                          decoration: BoxDecoration(
+                                            color: isMe ? AppColors.accent : AppColors.surface,
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: const Radius.circular(16),
+                                              topRight: const Radius.circular(16),
+                                              bottomLeft: Radius.circular(isMe ? 16 : 4),
+                                              bottomRight: Radius.circular(isMe ? 4 : 16),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (listing != null)
+                                                GestureDetector(
+                                                  onTap: () => _openListing(listing),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(bottom: 8),
+                                                    child: _listingChip(listing),
+                                                  ),
+                                                ),
+                                              Text(m['content'],
+                                                  style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(_timeLabel(m['created_at']),
+                                            style: const TextStyle(
+                                                color: AppColors.textSecondary, fontSize: 10)),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    if (_pendingListing != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: _listingChip(
+                          _pendingListing!,
+                          onDismiss: () => setState(() => _pendingListing = null),
+                        ),
+                      ),
+
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        border: Border(top: BorderSide(color: AppColors.border)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                hintText: 'Message...',
+                                hintStyle: const TextStyle(color: AppColors.textSecondary),
+                                filled: true,
+                                fillColor: AppColors.surface,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide.none),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            decoration: const BoxDecoration(
+                                color: AppColors.accent, shape: BoxShape.circle),
+                            child: IconButton(
+                              onPressed: _sending ? null : _send,
+                              icon: _sending
+                                  ? const SizedBox(
+                                      width: 16, height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white))
+                                  : const Icon(Icons.arrow_upward, color: Colors.white, size: 18),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+        ),
+      ),
     );
   }
 }
