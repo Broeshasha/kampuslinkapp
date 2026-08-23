@@ -31,10 +31,15 @@ class _ChatScreenState extends State<ChatScreen> {
   final _supabase = Supabase.instance.client;
   final _controller = TextEditingController();
   List<Map<String, dynamic>> _messages = []; // newest first
-  Map<String, dynamic>? _referencedListing;
+  final Map<String, Map<String, dynamic>> _listingCache = {};
   bool _loading = true;
   bool _sending = false;
   bool _isFirstContact = true;
+
+  // The listing attached to the NEXT message about to be sent —
+  // shown as a WhatsApp-style reply preview above the composer,
+  // cleared after that one message is sent (or dismissed by the user).
+  Map<String, dynamic>? _pendingListing;
 
   @override
   void initState() {
@@ -63,27 +68,47 @@ class _ChatScreenState extends State<ChatScreen> {
             .inFilter('id', unreadIds);
       }
 
-      // Referenced listing = most recent listing_id in this thread,
-      // falling back to the one passed in when opened from a listing.
-      final listingId = messages.firstWhere(
-            (m) => m['listing_id'] != null,
-            orElse: () => {'listing_id': widget.initialListingId},
-          )['listing_id'] ??
-          widget.initialListingId;
+      // Fetch details for every distinct listing referenced anywhere
+      // in this thread, so each message can show its own attached card.
+      final listingIds = messages
+          .map((m) => m['listing_id'])
+          .where((id) => id != null)
+          .toSet()
+          .cast<String>()
+          .toList();
 
-      Map<String, dynamic>? listing;
-      if (listingId != null) {
-        listing = await _supabase
+      if (listingIds.isNotEmpty) {
+        final listings = await _supabase
             .from('marketplace_listings')
             .select('id, title, price_dzd, image_urls')
-            .eq('id', listingId)
+            .inFilter('id', listingIds);
+        for (final l in listings) {
+          _listingCache[l['id']] = l;
+        }
+      }
+
+      final isFirstContact = messages.isEmpty;
+
+      // On first contact via "Message seller": pre-fill the composer
+      // and show the listing as a pending attachment, exactly once.
+      if (isFirstContact && widget.initialListingId != null) {
+        Map<String, dynamic>? listing = _listingCache[widget.initialListingId];
+        listing ??= await _supabase
+            .from('marketplace_listings')
+            .select('id, title, price_dzd, image_urls')
+            .eq('id', widget.initialListingId!)
             .maybeSingle();
+
+        if (listing != null) {
+          _listingCache[listing['id']] = listing;
+          _pendingListing = listing;
+          _controller.text = 'Is this still available?';
+        }
       }
 
       setState(() {
         _messages = messages;
-        _isFirstContact = messages.isEmpty;
-        _referencedListing = listing;
+        _isFirstContact = isFirstContact;
         _loading = false;
       });
     } catch (e) {
@@ -97,14 +122,16 @@ class _ChatScreenState extends State<ChatScreen> {
     if (content.isEmpty || _sending) return;
     setState(() => _sending = true);
     final userId = _supabase.auth.currentUser!.id;
+    final attachedListingId = _pendingListing?['id'];
     _controller.clear();
     try {
       await _supabase.from('messages').insert({
         'sender_id': userId,
         'recipient_id': widget.otherUserId,
         'content': content,
-        'listing_id': widget.initialListingId ?? _referencedListing?['id'],
+        'listing_id': attachedListingId,
       });
+      setState(() => _pendingListing = null); // attach once, like WhatsApp's reply preview
       await _load();
     } catch (e) {
       debugPrint('Send message error: $e');
@@ -143,6 +170,55 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _openListing(Map<String, dynamic> listing) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ListingDetailScreen(listing: listing)),
+    );
+  }
+
+  Widget _listingChip(Map<String, dynamic> listing, {VoidCallback? onDismiss}) {
+    final images = List<String>.from(listing['image_urls'] ?? []);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
+      ),
+      child: Row(
+        children: [
+          if (images.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 32, height: 32,
+                child: BlurHashImage(imageUrl: images.first),
+              ),
+            ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(listing['title'],
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text('${listing['price_dzd']} DA',
+                    style: const TextStyle(color: AppColors.accent, fontSize: 11)),
+              ],
+            ),
+          ),
+          if (onDismiss != null)
+            GestureDetector(
+              onTap: onDismiss,
+              child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userId = _supabase.auth.currentUser!.id;
@@ -177,45 +253,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : Column(
               children: [
-                if (_referencedListing != null)
-                  InkWell(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => ListingDetailScreen(listing: _referencedListing!)),
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      color: AppColors.surface,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: SizedBox(
-                              width: 36, height: 36,
-                              child: BlurHashImage(
-                                imageUrl: List<String>.from(_referencedListing!['image_urls']).first,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(_referencedListing!['title'],
-                                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                Text('${_referencedListing!['price_dzd']} DA',
-                                    style: const TextStyle(color: AppColors.accent, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
                 if (_isFirstContact)
                   Container(
                     width: double.infinity,
@@ -237,23 +274,54 @@ class _ChatScreenState extends State<ChatScreen> {
                       itemBuilder: (context, i) {
                         final m = _messages[i];
                         final isMe = m['sender_id'] == userId;
+                        final listing = m['listing_id'] != null ? _listingCache[m['listing_id']] : null;
+
                         return Align(
                           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                            padding: const EdgeInsets.all(10),
+                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
                             decoration: BoxDecoration(
                               color: isMe ? AppColors.accent : AppColors.surface,
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Text(m['content'], style: const TextStyle(color: Colors.white)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Quoted listing attached to THIS specific
+                                // message — WhatsApp reply-style, not a
+                                // thread-wide banner.
+                                if (listing != null)
+                                  GestureDetector(
+                                    onTap: () => _openListing(listing),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: _listingChip(listing),
+                                    ),
+                                  ),
+                                Text(m['content'], style: const TextStyle(color: Colors.white)),
+                              ],
+                            ),
                           ),
                         );
                       },
                     ),
                   ),
                 ),
+
+                // Pending listing preview — sits above the composer,
+                // dismissible, attaches to the next message only.
+                if (_pendingListing != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: _listingChip(
+                      _pendingListing!,
+                      onDismiss: () => setState(() => _pendingListing = null),
+                    ),
+                  ),
+
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
