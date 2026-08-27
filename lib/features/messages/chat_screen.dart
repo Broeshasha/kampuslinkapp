@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import '../../core/widgets/report_dialog.dart';
 import '../../core/config/block_service.dart';
+import '../../core/config/cached_fetch.dart';
 import '../marketplace/listing_detail_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -43,8 +44,20 @@ class _ChatScreenState extends State<ChatScreen> {
     _load();
   }
 
+  String get _cacheKey => 'chat_${widget.otherUserId}';
+
   Future<void> _load() async {
     final userId = _supabase.auth.currentUser!.id;
+
+    final cached = await CachedFetch.readCache(_cacheKey);
+    if (cached.isNotEmpty) {
+      setState(() {
+        _messages = cached;
+        _isFirstContact = cached.isEmpty;
+        _loading = false;
+      });
+    }
+
     try {
       final data = await _supabase
           .from('messages')
@@ -54,6 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .order('created_at', ascending: false);
 
       final messages = List<Map<String, dynamic>>.from(data);
+      await CachedFetch.writeCache(_cacheKey, messages);
 
       final unreadIds = messages
           .where((m) => m['recipient_id'] == userId && m['read_at'] == null)
@@ -273,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         color: AppColors.surface,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         child: const Text(
-                          "You don't know this person yet — be cautious sharing personal details.",
+                          "You don't know this person yet -- be cautious sharing personal details.",
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
@@ -284,7 +298,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         onRefresh: _load,
                         child: _messages.isEmpty
                             ? const Center(
-                                child: Text('Say hello 👋',
+                                child: Text('Say hello',
                                     style: TextStyle(color: AppColors.textSecondary)))
                             : ListView.builder(
                                 reverse: true,

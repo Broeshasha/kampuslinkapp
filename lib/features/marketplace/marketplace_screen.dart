@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/cached_fetch.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import 'create_listing_screen.dart';
@@ -24,7 +25,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    final cached = await CachedFetch.readCache('marketplace_listings');
+    if (cached.isNotEmpty) {
+      setState(() {
+        _listings = cached;
+        _loading = false;
+      });
+    } else {
+      setState(() => _loading = true);
+    }
+
     try {
       final data = await _supabase
           .from('marketplace_listings')
@@ -32,8 +42,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           .eq('status', 'active')
           .order('created_at', ascending: false)
           .limit(40);
+      final listings = List<Map<String, dynamic>>.from(data);
+      await CachedFetch.writeCache('marketplace_listings', listings);
       setState(() {
-        _listings = List<Map<String, dynamic>>.from(data);
+        _listings = listings;
         _loading = false;
       });
     } catch (_) {
@@ -78,7 +90,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           if (_listings.isEmpty)
             const SliverFillRemaining(
               child: Center(
-                child: Text('No listings yet — be the first to sell something.',
+                child: Text('No listings yet -- be the first to sell something.',
                     style: TextStyle(color: AppColors.textSecondary)),
               ),
             )

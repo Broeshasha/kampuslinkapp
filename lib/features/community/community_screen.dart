@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/cached_fetch.dart';
 import '../../core/config/image_processing_service.dart';
 import '../../core/config/upload_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -34,7 +35,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    final cached = await CachedFetch.readCache('community_posts');
+    if (cached.isNotEmpty && mounted) {
+      setState(() {
+        _posts = cached;
+        _loading = false;
+      });
+    } else {
+      setState(() => _loading = true);
+    }
 
     try {
       final userId = _supabase.auth.currentUser!.id;
@@ -49,9 +58,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
           .select('post_id')
           .eq('user_id', userId);
 
+      final postsList = List<Map<String, dynamic>>.from(posts);
+      await CachedFetch.writeCache('community_posts', postsList);
+
       if (mounted) {
         setState(() {
-          _posts = List<Map<String, dynamic>>.from(posts);
+          _posts = postsList;
           _likedPostIds = Set<String>.from(
             likes.map((l) => l['post_id'] as String),
           );
@@ -131,7 +143,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     Map<String, dynamic> post,
   ) async {
     final text =
-        '${post['content']}\n\n— @${post['username']} on KampusLink';
+        '${post['content']}\n\nâ€” @${post['username']} on KampusLink';
 
     try {
       final result = await SharePlus.instance.share(
@@ -147,7 +159,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Sharing not available here — copied to clipboard instead.',
+              'Sharing not available here â€” copied to clipboard instead.',
             ),
           ),
         );
@@ -155,7 +167,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     } catch (e) {
       debugPrint('Share error: $e');
 
-      // Desktop browsers often lack the Web Share API — fall back to clipboard.
+      // Desktop browsers often lack the Web Share API â€” fall back to clipboard.
       await Clipboard.setData(
         ClipboardData(text: text),
       );
@@ -535,7 +547,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               padding: EdgeInsets.only(top: 60),
               child: Center(
                 child: Text(
-                  'No posts yet — be the first to share something.',
+                  'No posts yet â€” be the first to share something.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                   ),

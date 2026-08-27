@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/feed_cache_service.dart';
+import '../../core/widgets/offline_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -113,88 +114,95 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Center(child: CircularProgressIndicator(color: AppColors.accent));
     }
 
-    return RefreshIndicator(
-      color: AppColors.accent,
-      onRefresh: _load,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
-            child: Text('Home',
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: Text("Here's what's relevant to you today",
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          ),
-
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, i) {
-                final cat = _categories[i];
-                final selected = _filter == cat;
-                return GestureDetector(
-                  onTap: () => setState(() => _filter = cat),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: selected ? AppColors.accent : AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: selected ? AppColors.accent : AppColors.border),
-                    ),
-                    child: Text(cat,
-                        style: TextStyle(
-                            color: selected ? Colors.white : AppColors.textSecondary,
-                            fontSize: 13,
-                            fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
+    return Column(
+      children: [
+        const OfflineBanner(),
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: _load,
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                if (_dining != null) ...[
-                  _diningCard(_dining!),
-                  const SizedBox(height: 12),
-                ],
-                ..._filteredPosts.map((p) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _postCard(p),
-                    )),
-                if (_filteredPosts.isEmpty && _dining == null)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 60),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.inbox_outlined, color: AppColors.textSecondary, size: 32),
-                          SizedBox(height: 12),
-                          Text('Nothing here yet — check back soon.',
-                              style: TextStyle(color: AppColors.textSecondary)),
-                        ],
-                      ),
-                    ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
+                  child: Text('Home',
+                      style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: Text("Here's what's relevant to you today",
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                ),
+
+                SizedBox(
+                  height: 36,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, i) {
+                      final cat = _categories[i];
+                      final selected = _filter == cat;
+                      return GestureDetector(
+                        onTap: () => setState(() => _filter = cat),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: selected ? AppColors.accent : AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: selected ? AppColors.accent : AppColors.border),
+                          ),
+                          child: Text(cat,
+                              style: TextStyle(
+                                  color: selected ? Colors.white : AppColors.textSecondary,
+                                  fontSize: 13,
+                                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+                        ),
+                      );
+                    },
                   ),
+                ),
                 const SizedBox(height: 20),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      if (_dining != null) ...[
+                        _diningCard(_dining!),
+                        const SizedBox(height: 12),
+                      ],
+                      ..._filteredPosts.map((p) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _postCard(p),
+                          )),
+                      if (_filteredPosts.isEmpty && _dining == null)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 60),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(Icons.inbox_outlined, color: AppColors.textSecondary, size: 32),
+                                SizedBox(height: 12),
+                                Text('Nothing here yet -- check back soon.',
+                                    style: TextStyle(color: AppColors.textSecondary)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

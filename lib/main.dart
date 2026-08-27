@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/widgets/responsive_shell.dart';
 import 'core/widgets/splash_screen.dart';
 import 'core/config/auth_service.dart';
+import 'core/config/connectivity_service.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/google_signin_screen.dart';
 import 'features/onboarding/profile_setup_screen.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+  await ConnectivityService.init();
   runApp(const MyApp());
 }
 

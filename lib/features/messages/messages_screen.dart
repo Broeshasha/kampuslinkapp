@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/cached_fetch.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import 'chat_screen.dart';
@@ -23,12 +24,23 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    final cached = await CachedFetch.readCache('message_threads');
+    if (cached.isNotEmpty) {
+      setState(() {
+        _threads = cached;
+        _loading = false;
+      });
+    } else {
+      setState(() => _loading = true);
+    }
+
     try {
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase.rpc('get_message_threads', params: {'viewer_id': userId});
+      final threads = List<Map<String, dynamic>>.from(data);
+      await CachedFetch.writeCache('message_threads', threads);
       setState(() {
-        _threads = List<Map<String, dynamic>>.from(data);
+        _threads = threads;
         _loading = false;
       });
     } catch (_) {
