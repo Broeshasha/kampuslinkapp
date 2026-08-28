@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+﻿import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,7 +11,7 @@ class AuthService {
   static Future<void> _ensureGoogleInitialized() async {
     if (_googleInitialized) return;
     await GoogleSignIn.instance.initialize(
-      serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+      serverClientId: '649045631810-bajsvemrs6bcec2f4jtu3gfc3bb68her.apps.googleusercontent.com',
     );
     _googleInitialized = true;
   }
