@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'kampus_mark.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final List<Widget> screens;
@@ -52,6 +53,16 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        titleSpacing: 20,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const KampusMark(size: 22, color: AppColors.accent),
+            const SizedBox(width: 8),
+            const Text('KampusLink',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+          ],
+        ),
         actions: [_avatarButton(), const SizedBox(width: 8)],
       ),
       body: SafeArea(top: false, child: widget.screens[_selectedIndex]),
@@ -100,7 +111,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
                 children: [
-                  const Icon(Icons.link_rounded, color: AppColors.accent, size: 28),
+                  const KampusMark(size: 28, color: AppColors.accent),
                   const SizedBox(height: 16),
                   _avatarButton(),
                 ],

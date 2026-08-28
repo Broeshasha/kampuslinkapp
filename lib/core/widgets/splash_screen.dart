@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'kampus_mark.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -24,8 +25,8 @@ class SplashScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              child: const Center(
-                child: Icon(Icons.link_rounded, color: AppColors.accent, size: 34),
+              child: Center(
+                child: KampusMark(size: 40, color: AppColors.accent),
               ),
             ),
             const SizedBox(height: 16),
@@ -52,3 +53,4 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
+

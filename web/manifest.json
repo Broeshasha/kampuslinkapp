@@ -1,11 +1,11 @@
-{
-    "name": "kampuslink",
-    "short_name": "kampuslink",
+﻿{
+    "name": "KampusLink",
+    "short_name": "KampusLink",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#3E7BFA",
+    "theme_color": "#3E7BFA",
+    "description": "KampusLink connects international and African students in Algeria with translated university news, a student community, and a marketplace.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
