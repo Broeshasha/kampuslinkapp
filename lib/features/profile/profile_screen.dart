@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               onTap: () => Navigator.pop(context, 'en'),
             ),
             ListTile(
-              title: const Text('Français', style: TextStyle(color: Colors.white)),
+              title: const Text('FranÃ§ais', style: TextStyle(color: Colors.white)),
               trailing: current == 'fr' ? const Icon(Icons.check, color: AppColors.accent) : null,
               onTap: () => Navigator.pop(context, 'fr'),
             ),
@@ -151,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       _loadProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved — full translation is coming soon.')),
+          const SnackBar(content: Text('Saved â€” full translation is coming soon.')),
         );
       }
     }
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
-        // The width cap that was missing — this is the whole fix.
+        // The width cap that was missing â€” this is the whole fix.
         // Everything below stays exactly as designed on mobile,
         // and now sits in a sane centered column on wider screens.
         child: ConstrainedBox(
@@ -255,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('University', _profile!['university_name'] ?? 'Not set', _editUniversity),
             const Divider(color: AppColors.border, height: 1, indent: 16),
-            _editableRow('City', _profile!['university_city'] ?? '—', null),
+            _editableRow('City', _profile!['university_city'] ?? 'â€”', null),
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('Speciality', _profile!['speciality_name'] ?? 'Not set', _editSpeciality),
           ]),
@@ -265,7 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           _sectionCard([
             _editableRow(
               'Language',
-              (_profile!['preferred_language'] ?? 'en') == 'fr' ? 'Français' : 'English',
+              (_profile!['preferred_language'] ?? 'en') == 'fr' ? 'FranÃ§ais' : 'English',
               _showLanguagePicker,
             ),
             const Divider(color: AppColors.border, height: 1, indent: 16),
@@ -298,9 +298,59 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               }
             }),
           ]),
+
+          const SizedBox(height: 20),
+
+          _sectionCard([
+            _settingsRow('Delete account', Icons.delete_forever_outlined, danger: true,
+                onTap: () => _confirmDeleteAccount(context)),
+          ]),
         ],
       ),
     );
+  }
+
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Delete account?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'This permanently deletes your profile, posts, listings, messages, and likes. '
+          'This cannot be undone.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Delete permanently', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _supabase.rpc('delete_my_account');
+      await _supabase.auth.signOut();
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      debugPrint('Delete account error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Something went wrong. Please try again.')),
+        );
+      }
+    }
   }
 
   Widget _sectionCard(List<Widget> children) => Container(
