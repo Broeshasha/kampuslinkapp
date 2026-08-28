@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/config/upload_service.dart';
 import '../../core/widgets/avatar_picker.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/config/algeria_universities.dart';
@@ -338,6 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (confirmed != true) return;
 
     try {
+      await UploadService.deleteAllFiles();
       await _supabase.rpc('delete_my_account');
       await _supabase.auth.signOut();
       if (context.mounted) {
@@ -409,3 +411,4 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 }
+
