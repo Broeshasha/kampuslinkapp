@@ -33,14 +33,13 @@ class AuthService {
         throw Exception('No ID token received from Google');
       }
 
-      // Access token comes from a separate authorization call in v7+
-      final authorization =
-          await googleUser.authorizationClient.authorizationForScopes([]);
-
+      // No extra Google API scopes needed for KampusLink -- the ID token
+      // alone is enough to authenticate with Supabase. Skipping the
+      // authorizationClient call entirely avoids passing an empty scope
+      // list, which the Android SDK rejects.
       await _supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
-        accessToken: authorization?.accessToken,
       );
     }
   }
@@ -57,3 +56,4 @@ class AuthService {
   static Stream<AuthState> get authStateChanges =>
       _supabase.auth.onAuthStateChange;
 }
+

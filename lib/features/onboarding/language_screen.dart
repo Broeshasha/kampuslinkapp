@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/kampus_mark.dart';
 
 class LanguageScreen extends StatefulWidget {
   final VoidCallback onContinue;
@@ -12,9 +13,8 @@ class LanguageScreen extends StatefulWidget {
 class _LanguageScreenState extends State<LanguageScreen> {
   int _selected = 0;
   final _languages = const [
-    ('🇬🇧', 'English'),
-    ('🇫🇷', 'Français'),
-    ('🇩🇿', 'العربية'),
+    ('EN', 'English'),
+    ('FR', 'Français'),
   ];
 
   @override
@@ -27,7 +27,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              const Icon(Icons.link_rounded, color: AppColors.accent, size: 28),
+              const KampusMark(size: 28, color: AppColors.accent),
               const SizedBox(height: 12),
               const Text('KampusLink',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
@@ -54,7 +54,23 @@ class _LanguageScreenState extends State<LanguageScreen> {
                       ),
                       child: Row(
                         children: [
-                          Text(_languages[i].$1, style: const TextStyle(fontSize: 22)),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: selected ? AppColors.accent : AppColors.background,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              _languages[i].$1,
+                              style: TextStyle(
+                                color: selected ? Colors.white : AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                           const SizedBox(width: 14),
                           Text(_languages[i].$2,
                               style: const TextStyle(color: Colors.white, fontSize: 16)),

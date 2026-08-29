@@ -8,6 +8,7 @@ import 'core/widgets/responsive_shell.dart';
 import 'core/widgets/splash_screen.dart';
 import 'core/config/auth_service.dart';
 import 'core/config/connectivity_service.dart';
+import 'core/config/notification_service.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/google_signin_screen.dart';
 import 'features/onboarding/profile_setup_screen.dart';
@@ -61,13 +62,15 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   _RouteState _state = _RouteState.splash;
+  final _communityKey = GlobalKey<CommunityScreenState>();
+  final _marketplaceKey = GlobalKey<MarketplaceScreenState>();
   late final StreamSubscription<AuthState> _authSub;
 
   @override
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(milliseconds: 1800), _resolveRoute);
+    Future.delayed(const Duration(milliseconds: 600), _resolveRoute);
 
     _authSub = AuthService.authStateChanges.listen((_) => _resolveRoute());
   }
@@ -85,7 +88,10 @@ class _AuthGateState extends State<AuthGate> {
     final cacheKey = 'onboarding_complete_$userId';
 
     if (prefs.getBool(cacheKey) == true) {
-      if (mounted) setState(() => _state = _RouteState.ready);
+      if (mounted) {
+        setState(() => _state = _RouteState.ready);
+        NotificationService.requestPermissionAndGetToken();
+      }
       return;
     }
 
@@ -100,7 +106,10 @@ class _AuthGateState extends State<AuthGate> {
 
       if (complete) {
         await prefs.setBool(cacheKey, true);
-        if (mounted) setState(() => _state = _RouteState.ready);
+        if (mounted) {
+        setState(() => _state = _RouteState.ready);
+        NotificationService.requestPermissionAndGetToken();
+      }
       } else {
         if (mounted) setState(() => _state = _RouteState.needsProfile);
       }
@@ -137,6 +146,7 @@ class _AuthGateState extends State<AuthGate> {
             final userId = supabase.auth.currentUser!.id;
             await prefs.setBool('onboarding_complete_$userId', true);
             setState(() => _state = _RouteState.ready);
+            NotificationService.requestPermissionAndGetToken();
           },
         );
 
@@ -144,10 +154,12 @@ class _AuthGateState extends State<AuthGate> {
         return ResponsiveShell(
           screens: [
             const HomeScreen(),
-            const CommunityScreen(),
+            CommunityScreen(key: _communityKey),
             const MessagesScreen(),
-            const MarketplaceScreen(),
+            MarketplaceScreen(key: _marketplaceKey),
           ],
+          communityKey: _communityKey,
+          marketplaceKey: _marketplaceKey,
           onAvatarTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -161,3 +173,7 @@ class _AuthGateState extends State<AuthGate> {
 Widget _placeholder(String label) => Center(
       child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 20)),
     );
+
+
+
+

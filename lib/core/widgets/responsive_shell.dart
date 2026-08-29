@@ -1,11 +1,21 @@
 ﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'kampus_mark.dart';
+import '../../features/community/community_screen.dart';
+import '../../features/marketplace/marketplace_screen.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final List<Widget> screens;
   final VoidCallback? onAvatarTap;
-  const ResponsiveShell({super.key, required this.screens, this.onAvatarTap});
+  final GlobalKey<CommunityScreenState> communityKey;
+  final GlobalKey<MarketplaceScreenState> marketplaceKey;
+  const ResponsiveShell({
+    super.key,
+    required this.screens,
+    required this.communityKey,
+    required this.marketplaceKey,
+    this.onAvatarTap,
+  });
 
   @override
   State<ResponsiveShell> createState() => _ResponsiveShellState();
@@ -13,6 +23,51 @@ class ResponsiveShell extends StatefulWidget {
 
 class _ResponsiveShellState extends State<ResponsiveShell> {
   int _selectedIndex = 0;
+
+  void _openCreateSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: Text('Share something',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.groups_rounded, color: AppColors.accent),
+              title: const Text('Community post', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                setState(() => _selectedIndex = 1);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.communityKey.currentState?.openComposer();
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.storefront_rounded, color: AppColors.accent),
+              title: const Text('Marketplace listing', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                setState(() => _selectedIndex = 3);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.marketplaceKey.currentState?.openCreate();
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
   static const _destinations = [
     _NavItem(icon: Icons.home_rounded, label: 'Home'),
@@ -68,7 +123,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       body: SafeArea(top: false, child: widget.screens[_selectedIndex]),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.accent,
-        onPressed: () {},
+        onPressed: _openCreateSheet,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -141,7 +196,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.accent,
-        onPressed: () {},
+        onPressed: _openCreateSheet,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -154,3 +209,4 @@ class _NavItem {
   final String label;
   const _NavItem({required this.icon, required this.label});
 }
+

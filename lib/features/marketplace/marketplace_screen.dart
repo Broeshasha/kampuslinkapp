@@ -10,10 +10,10 @@ class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
 
   @override
-  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
+  State<MarketplaceScreen> createState() => MarketplaceScreenState();
 }
 
-class _MarketplaceScreenState extends State<MarketplaceScreen> {
+class MarketplaceScreenState extends State<MarketplaceScreen> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _listings = [];
   bool _loading = true;
@@ -53,7 +53,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     }
   }
 
-  Future<void> _openCreate() async {
+  Future<void> openCreate() async {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const CreateListingScreen()),
     );
@@ -80,7 +80,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   const Text('Marketplace',
                       style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
                   IconButton(
-                    onPressed: _openCreate,
+                    onPressed: openCreate,
                     icon: const Icon(Icons.add_circle, color: AppColors.accent, size: 28),
                   ),
                 ],
@@ -133,8 +133,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 1,
+            Expanded(
               child: BlurHashImage(
                 imageUrl: images.first,
                 blurhash: blurhashes.isNotEmpty ? blurhashes.first : null,
@@ -162,3 +161,5 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 }
+
+

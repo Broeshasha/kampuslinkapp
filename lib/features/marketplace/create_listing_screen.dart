@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -41,15 +41,22 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   ];
 
   Future<void> _addPhoto() async {
-    if (_photos.length >= _maxPhotos) return;
+    final remaining = _maxPhotos - _photos.length;
+    if (remaining <= 0) return;
 
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
-    if (picked == null) return;
+    final picked = await picker.pickMultiImage(imageQuality: 90, limit: remaining);
+    if (picked.isEmpty) return;
 
-    final slot = _ListingPhoto()..originalPicked = picked;
-    setState(() => _photos.add(slot));
-    await _uploadPhoto(slot);
+    // limit isn't guaranteed to be enforced by every platform picker, so
+    // still cap defensively at however many slots are actually free.
+    final newSlots = picked.take(remaining).map((file) => _ListingPhoto()..originalPicked = file).toList();
+
+    setState(() => _photos.addAll(newSlots));
+
+    for (final slot in newSlots) {
+      await _uploadPhoto(slot);
+    }
   }
 
   Future<void> _uploadPhoto(_ListingPhoto slot) async {
@@ -68,7 +75,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         processedBytes = processed.imageBytes;
         blurhash = processed.blurhash;
       } catch (e) {
-        // Image decode/resize failed — e.g. an unsupported format like HEIC.
+        // Image decode/resize failed â€” e.g. an unsupported format like HEIC.
         debugPrint('Image processing error: $e');
         setState(() {
           slot.failed = true;

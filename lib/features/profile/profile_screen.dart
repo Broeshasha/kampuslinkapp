@@ -4,12 +4,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/upload_service.dart';
+import '../../core/config/notification_service.dart';
 import '../../core/widgets/avatar_picker.dart';
+import '../../core/widgets/fullscreen_image_viewer.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/config/algeria_universities.dart';
 import '../../core/config/countries.dart';
 import 'my_posts_tab.dart';
 import 'my_listings_tab.dart';
+import 'blocked_users_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -193,6 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
       body: Center(
         // The width cap that was missing â€” this is the whole fix.
         // Everything below stays exactly as designed on mobile,
@@ -203,10 +207,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             children: [
               const SizedBox(height: 20),
               Center(
-                child: AvatarPicker(
-                  existingUrl: _profile!['avatar_url'],
-                  existingBlurhash: _profile!['avatar_blurhash'],
-                  onUploaded: _updateAvatar,
+                child: GestureDetector(
+                  onLongPress: _profile!['avatar_url'] != null
+                      ? () => showFullscreenImage(context, _profile!['avatar_url'])
+                      : null,
+                  child: AvatarPicker(
+                    existingUrl: _profile!['avatar_url'],
+                    existingBlurhash: _profile!['avatar_blurhash'],
+                    onUploaded: _updateAvatar,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -270,9 +279,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               _showLanguagePicker,
             ),
             const Divider(color: AppColors.border, height: 1, indent: 16),
-            _settingsRow('Notifications', Icons.notifications_none),
+            _settingsRow('Notifications', Icons.notifications_none, onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notification settings are coming soon.')),
+              );
+            }),
             const Divider(color: AppColors.border, height: 1, indent: 48),
-            _settingsRow('Blocked users', Icons.block),
+            _settingsRow('Blocked users', Icons.block, onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BlockedUsersScreen()),
+              );
+            }),
           ]),
 
           const SizedBox(height: 20),
@@ -293,6 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
           _sectionCard([
             _settingsRow('Log out', Icons.logout, danger: true, onTap: () async {
+              await NotificationService.clearToken();
               await _supabase.auth.signOut();
               if (context.mounted) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
@@ -374,14 +392,24 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-            Row(
-              children: [
-                Text(value, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                if (onTap != null) ...[
-                  const SizedBox(width: 6),
-                  const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(value,
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  ),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 6),
+                    const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),
@@ -411,4 +439,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 }
+
+
+
+
+
 
