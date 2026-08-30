@@ -46,7 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
           .from('posts')
           .select()
           .order('created_at', ascending: false)
-          .limit(20);
+          .limit(20)
+          .timeout(const Duration(seconds: 8));
 
       final dining = universityId == null
           ? null
@@ -303,3 +304,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

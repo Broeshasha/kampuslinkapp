@@ -64,7 +64,8 @@ class _ChatScreenState extends State<ChatScreen> {
           .select()
           .or('and(sender_id.eq.$userId,recipient_id.eq.${widget.otherUserId}),'
               'and(sender_id.eq.${widget.otherUserId},recipient_id.eq.$userId)')
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .timeout(const Duration(seconds: 8));
 
       final messages = List<Map<String, dynamic>>.from(data);
       await CachedFetch.writeCache(_cacheKey, messages);
@@ -415,3 +416,4 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+

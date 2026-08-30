@@ -36,7 +36,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
     try {
       final userId = _supabase.auth.currentUser!.id;
-      final data = await _supabase.rpc('get_message_threads', params: {'viewer_id': userId});
+      final data = await _supabase.rpc('get_message_threads', params: {'viewer_id': userId}).timeout(const Duration(seconds: 8));
       final threads = List<Map<String, dynamic>>.from(data);
       await CachedFetch.writeCache('message_threads', threads);
       setState(() {
@@ -174,3 +174,4 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 }
+

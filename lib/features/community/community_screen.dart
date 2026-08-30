@@ -53,12 +53,13 @@ class CommunityScreenState extends State<CommunityScreen> {
       final posts = await _supabase.rpc(
         'get_community_feed',
         params: {'viewer_id': userId},
-      );
+      ).timeout(const Duration(seconds: 8));
 
       final likes = await _supabase
           .from('community_likes')
           .select('post_id')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 8));
 
       final postsList = List<Map<String, dynamic>>.from(posts);
       await CachedFetch.writeCache('community_posts', postsList);
@@ -744,6 +745,7 @@ class CommunityScreenState extends State<CommunityScreen> {
     );
   }
 }
+
 
 
 

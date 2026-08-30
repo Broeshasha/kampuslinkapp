@@ -41,7 +41,8 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
           .select()
           .eq('status', 'active')
           .order('created_at', ascending: false)
-          .limit(40);
+          .limit(40)
+          .timeout(const Duration(seconds: 8));
       final listings = List<Map<String, dynamic>>.from(data);
       await CachedFetch.writeCache('marketplace_listings', listings);
       setState(() {
@@ -161,5 +162,6 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 }
+
 
 
