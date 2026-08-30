@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
+import '../../core/widgets/skeleton_loader.dart';
 
 class MyListingsTab extends StatefulWidget {
   const MyListingsTab({super.key});
@@ -15,6 +16,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _listings = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -23,21 +25,28 @@ class _MyListingsTabState extends State<MyListingsTab> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase
           .from('marketplace_listings')
           .select()
           .eq('seller_id', userId)
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .timeout(const Duration(seconds: 8));
       setState(() {
         _listings = List<Map<String, dynamic>>.from(data);
         _loading = false;
       });
     } catch (e) {
       debugPrint('MyListingsTab load error: $e');
-      setState(() => _loading = false);
+      setState(() {
+        _error = 'Could not load your listings. Pull down to retry.';
+        _loading = false;
+      });
     }
   }
 
@@ -92,7 +101,46 @@ class _MyListingsTabState extends State<MyListingsTab> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+      return ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: 4,
+        itemBuilder: (context, i) => const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              SkeletonBox(width: 64, height: 64, borderRadius: BorderRadius.all(Radius.circular(10))),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(height: 14, borderRadius: BorderRadius.all(Radius.circular(4))),
+                    SizedBox(height: 8),
+                    SkeletonBox(width: 80, height: 12, borderRadius: BorderRadius.all(Radius.circular(4))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return RefreshIndicator(
+        color: AppColors.accent,
+        onRefresh: _load,
+        child: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 120),
+              child: Center(
+                child: Text(_error!, style: const TextStyle(color: AppColors.danger)),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_listings.isEmpty) {
@@ -183,3 +231,4 @@ class _MyListingsTabState extends State<MyListingsTab> {
     );
   }
 }
+

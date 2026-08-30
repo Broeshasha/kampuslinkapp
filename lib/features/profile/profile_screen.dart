@@ -7,6 +7,7 @@ import '../../core/config/upload_service.dart';
 import '../../core/config/notification_service.dart';
 import '../../core/widgets/avatar_picker.dart';
 import '../../core/widgets/fullscreen_image_viewer.dart';
+import '../../core/widgets/skeleton_loader.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/config/algeria_universities.dart';
 import '../../core/config/countries.dart';
@@ -50,7 +51,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase
           .rpc('get_my_profile', params: {'viewer_id': userId})
-          .single();
+          .single()
+          .timeout(const Duration(seconds: 8));
       debugPrint('ProfileScreen loaded: $data');
       if (mounted) {
         setState(() {
@@ -171,7 +173,21 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            SizedBox(height: 20),
+            SkeletonBox(width: 88, height: 88, borderRadius: BorderRadius.all(Radius.circular(44))),
+            SizedBox(height: 16),
+            SkeletonBox(width: 140, height: 16),
+            SizedBox(height: 32),
+            SkeletonBox(height: 60, borderRadius: BorderRadius.all(Radius.circular(16))),
+            SizedBox(height: 12),
+            SkeletonBox(height: 60, borderRadius: BorderRadius.all(Radius.circular(16))),
+          ],
+        ),
+      );
     }
 
     if (_error != null) {
@@ -439,6 +455,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 }
+
+
 
 
 

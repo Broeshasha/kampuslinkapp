@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_page.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../core/config/auth_service.dart';
+import '../../core/widgets/kampus_mark.dart';
 
 class GoogleSignInScreen extends StatefulWidget {
   const GoogleSignInScreen({super.key});
@@ -25,6 +26,11 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
     });
     try {
       await AuthService.signInWithGoogle();
+      // AuthGate's auth-state listener has already routed to the right
+      // screen underneath by this point -- pop this one to reveal it.
+      // Without this, the app just sits here "Signing in..." forever
+      // even though sign-in actually succeeded.
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
       debugPrint('Google sign-in error: $e');
       setState(() {
@@ -56,7 +62,7 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
                 color: AppColors.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.link_rounded, color: AppColors.accent, size: 32),
+              child: const KampusMark(size: 32, color: AppColors.accent),
             ),
             const SizedBox(height: 24),
             const Text('Welcome to KampusLink',
@@ -120,3 +126,4 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
     );
   }
 }
+

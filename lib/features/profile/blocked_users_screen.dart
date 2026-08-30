@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
+import '../../core/widgets/skeleton_loader.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
   const BlockedUsersScreen({super.key});
@@ -15,6 +16,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _blocked = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -23,13 +25,17 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final myId = _supabase.auth.currentUser!.id;
       final data = await _supabase
           .from('blocked_users')
           .select('blocked_id, profiles!blocked_users_blocked_id_fkey(username, avatar_url, avatar_blurhash)')
-          .eq('blocker_id', myId);
+          .eq('blocker_id', myId)
+          .timeout(const Duration(seconds: 8));
 
       setState(() {
         _blocked = List<Map<String, dynamic>>.from(data);
@@ -37,7 +43,10 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       });
     } catch (e) {
       debugPrint('BlockedUsersScreen load error: $e');
-      setState(() => _loading = false);
+      setState(() {
+        _error = 'Could not load blocked users. Pull down to retry.';
+        _loading = false;
+      });
     }
   }
 
@@ -57,7 +66,29 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Blocked Users')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+          ? ListView(
+              padding: const EdgeInsets.all(20),
+              children: const [
+                SkeletonPostCard(),
+                SkeletonPostCard(),
+                SkeletonPostCard(),
+              ],
+            )
+          : _error != null
+              ? RefreshIndicator(
+                  color: AppColors.accent,
+                  onRefresh: _load,
+                  child: ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 120),
+                        child: Center(
+                          child: Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
           : _blocked.isEmpty
               ? const Center(
                   child: Text("You haven't blocked anyone.",
@@ -98,3 +129,5 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     );
   }
 }
+
+

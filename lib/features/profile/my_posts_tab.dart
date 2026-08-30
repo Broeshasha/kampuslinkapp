@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import '../../core/widgets/comments_sheet.dart';
+import '../../core/widgets/skeleton_loader.dart';
 
 class MyPostsTab extends StatefulWidget {
   const MyPostsTab({super.key});
@@ -18,6 +19,7 @@ class _MyPostsTabState extends State<MyPostsTab> {
   List<Map<String, dynamic>> _posts = [];
   Set<String> _likedPostIds = {};
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -26,19 +28,24 @@ class _MyPostsTabState extends State<MyPostsTab> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase
           .from('community_posts')
           .select('*, community_likes(count)')
           .eq('user_id', userId)
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .timeout(const Duration(seconds: 8));
 
       final likes = await _supabase
           .from('community_likes')
           .select('post_id')
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 8));
 
       setState(() {
         _posts = List<Map<String, dynamic>>.from(data).map((p) {
@@ -51,7 +58,10 @@ class _MyPostsTabState extends State<MyPostsTab> {
       });
     } catch (e) {
       debugPrint('MyPostsTab load error: $e');
-      setState(() => _loading = false);
+      setState(() {
+        _error = 'Could not load your posts. Pull down to retry.';
+        _loading = false;
+      });
     }
   }
 
@@ -161,7 +171,31 @@ class _MyPostsTabState extends State<MyPostsTab> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: const [
+          SkeletonPostCard(),
+          SkeletonPostCard(),
+          SkeletonPostCard(),
+        ],
+      );
+    }
+
+    if (_error != null) {
+      return RefreshIndicator(
+        color: AppColors.accent,
+        onRefresh: _load,
+        child: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 120),
+              child: Center(
+                child: Text(_error!, style: const TextStyle(color: AppColors.danger)),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_posts.isEmpty) {
@@ -273,3 +307,5 @@ class _MyPostsTabState extends State<MyPostsTab> {
     );
   }
 }
+
+

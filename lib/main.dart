@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/responsive_shell.dart';
 import 'core/widgets/splash_screen.dart';
@@ -21,6 +22,7 @@ import 'features/messages/messages_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  await Firebase.initializeApp();
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
@@ -100,7 +102,8 @@ class _AuthGateState extends State<AuthGate> {
           .from('profiles')
           .select('onboarding_complete')
           .eq('id', userId)
-          .single();
+          .single()
+          .timeout(const Duration(seconds: 6));
 
       final complete = profile['onboarding_complete'] as bool;
 
@@ -173,6 +176,8 @@ class _AuthGateState extends State<AuthGate> {
 Widget _placeholder(String label) => Center(
       child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 20)),
     );
+
+
 
 
 

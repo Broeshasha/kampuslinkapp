@@ -37,7 +37,8 @@ class CommentsSheetState extends State<CommentsSheet> {
             'content, created_at, profiles(username)',
           )
           .eq('post_id', widget.postId)
-          .order('created_at');
+          .order('created_at')
+          .timeout(const Duration(seconds: 8));
 
       setState(() {
         _comments = List<Map<String, dynamic>>.from(data);
@@ -220,3 +221,4 @@ class CommentsSheetState extends State<CommentsSheet> {
     );
   }
 }
+
