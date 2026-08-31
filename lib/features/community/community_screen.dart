@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/cached_fetch.dart';
+import '../../core/config/outbox_service.dart';
 import '../../core/widgets/comments_sheet.dart';
 import '../../core/widgets/fullscreen_image_viewer.dart';
 import '../../core/config/image_processing_service.dart';
@@ -64,12 +65,20 @@ class CommunityScreenState extends State<CommunityScreen> {
       final postsList = List<Map<String, dynamic>>.from(posts);
       await CachedFetch.writeCache('community_posts', postsList);
 
+      final serverLiked = Set<String>.from(likes.map((l) => l['post_id'] as String));
+      final pending = await OutboxService.getAllPending();
+      pending.forEach((postId, liked) {
+        if (liked) {
+          serverLiked.add(postId);
+        } else {
+          serverLiked.remove(postId);
+        }
+      });
+
       if (mounted) {
         setState(() {
           _posts = postsList;
-          _likedPostIds = Set<String>.from(
-            likes.map((l) => l['post_id'] as String),
-          );
+          _likedPostIds = serverLiked;
           _loading = false;
         });
       }
@@ -120,24 +129,11 @@ class CommunityScreenState extends State<CommunityScreen> {
       }
     } catch (e) {
       debugPrint('Like toggle error: $e');
-
-      setState(() {
-        if (alreadyLiked) {
-          _likedPostIds.add(postId);
-
-          if (postIndex != -1) {
-            _posts[postIndex]['like_count'] =
-                (_posts[postIndex]['like_count'] ?? 0) + 1;
-          }
-        } else {
-          _likedPostIds.remove(postId);
-
-          if (postIndex != -1) {
-            _posts[postIndex]['like_count'] =
-                (_posts[postIndex]['like_count'] ?? 1) - 1;
-          }
-        }
-      });
+      // Don't revert the tap -- queue it instead. The user's like/unlike
+      // stays exactly as they left it and syncs automatically the
+      // moment connectivity returns, instead of snapping back and
+      // making it look like their tap didn't register.
+      await OutboxService.queueLike(postId, !alreadyLiked);
     }
   }
 
@@ -745,6 +741,8 @@ class CommunityScreenState extends State<CommunityScreen> {
     );
   }
 }
+
+
 
 
 

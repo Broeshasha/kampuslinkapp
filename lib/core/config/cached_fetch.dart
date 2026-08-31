@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Generic cache-first fetch: returns cached data instantly (if any),
@@ -13,6 +13,19 @@ class CachedFetch {
   }
 
   static Future<void> writeCache(String key, List<Map<String, dynamic>> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cache_$key', jsonEncode(data));
+  }
+
+  /// Same idea, for a single object (a profile) instead of a list.
+  static Future<Map<String, dynamic>?> readCacheMap(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('cache_$key');
+    if (raw == null) return null;
+    return Map<String, dynamic>.from(jsonDecode(raw));
+  }
+
+  static Future<void> writeCacheMap(String key, Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('cache_$key', jsonEncode(data));
   }

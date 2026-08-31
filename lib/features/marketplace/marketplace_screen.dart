@@ -50,7 +50,7 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
         _loading = false;
       });
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -162,6 +162,7 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 }
+
 
 
 

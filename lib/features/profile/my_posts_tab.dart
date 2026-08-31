@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import '../../core/widgets/comments_sheet.dart';
+import '../../core/config/outbox_service.dart';
 import '../../core/widgets/skeleton_loader.dart';
 
 class MyPostsTab extends StatefulWidget {
@@ -47,13 +48,23 @@ class _MyPostsTabState extends State<MyPostsTab> {
           .eq('user_id', userId)
           .timeout(const Duration(seconds: 8));
 
+      final serverLiked = Set<String>.from(likes.map((l) => l['post_id'] as String));
+      final pending = await OutboxService.getAllPending();
+      pending.forEach((postId, liked) {
+        if (liked) {
+          serverLiked.add(postId);
+        } else {
+          serverLiked.remove(postId);
+        }
+      });
+
       setState(() {
         _posts = List<Map<String, dynamic>>.from(data).map((p) {
           final likeRows = p['community_likes'] as List?;
           p['like_count'] = likeRows != null && likeRows.isNotEmpty ? likeRows.first['count'] : 0;
           return p;
         }).toList();
-        _likedPostIds = Set<String>.from(likes.map((l) => l['post_id'] as String));
+        _likedPostIds = serverLiked;
         _loading = false;
       });
     } catch (e) {
@@ -92,7 +103,9 @@ class _MyPostsTabState extends State<MyPostsTab> {
       }
     } catch (e) {
       debugPrint('Like toggle error: $e');
-      _load();
+      // Don't refetch/revert -- queue it instead, same as the community
+      // feed. The tap stays applied and syncs once connectivity returns.
+      await OutboxService.queueLike(postId, !alreadyLiked);
     }
   }
 
@@ -307,5 +320,7 @@ class _MyPostsTabState extends State<MyPostsTab> {
     );
   }
 }
+
+
 
 

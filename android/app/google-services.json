@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "353026057708",
+    "project_id": "kmapuslink",
+    "storage_bucket": "kmapuslink.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353026057708:android:98cc8744b166f90d7e4cc9",
+        "android_client_info": {
+          "package_name": "com.kampuslink.kampuslink"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIkTJMmNAmUlQ0u4iGQ219vKqyDXML9BI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -130,7 +130,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       debugPrint('Chat load error: $e');
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -416,4 +416,5 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
 

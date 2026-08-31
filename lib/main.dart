@@ -9,6 +9,7 @@ import 'core/widgets/responsive_shell.dart';
 import 'core/widgets/splash_screen.dart';
 import 'core/config/auth_service.dart';
 import 'core/config/connectivity_service.dart';
+import 'core/config/outbox_service.dart';
 import 'core/config/notification_service.dart';
 import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/google_signin_screen.dart';
@@ -22,12 +23,20 @@ import 'features/messages/messages_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    // Firebase misconfiguration must NEVER block app startup -- Analytics
+    // and push notifications simply won't work until it's fixed, but the
+    // app itself has to keep running regardless.
+    debugPrint('Firebase init failed, app continuing without it: $e');
+  }
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   await ConnectivityService.init();
+  OutboxService.startAutoSync();
   runApp(const MyApp());
 }
 
@@ -176,6 +185,8 @@ class _AuthGateState extends State<AuthGate> {
 Widget _placeholder(String label) => Center(
       child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 20)),
     );
+
+
 
 
 

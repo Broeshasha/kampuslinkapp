@@ -44,7 +44,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         _loading = false;
       });
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -174,4 +174,5 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 }
+
 

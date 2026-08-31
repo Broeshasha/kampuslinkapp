@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/upload_service.dart';
+import '../../core/config/cached_fetch.dart';
 import '../../core/config/notification_service.dart';
 import '../../core/widgets/avatar_picker.dart';
 import '../../core/widgets/fullscreen_image_viewer.dart';
@@ -43,10 +44,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _loadProfile() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final cached = await CachedFetch.readCacheMap('my_profile');
+    if (cached != null) {
+      setState(() {
+        _profile = cached;
+        _loading = false;
+      });
+    } else {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase
@@ -54,19 +63,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           .single()
           .timeout(const Duration(seconds: 8));
       debugPrint('ProfileScreen loaded: $data');
+      final profileMap = data as Map<String, dynamic>;
+      await CachedFetch.writeCacheMap('my_profile', profileMap);
       if (mounted) {
         setState(() {
-          _profile = data as Map<String, dynamic>;
+          _profile = profileMap;
           _loading = false;
         });
       }
     } catch (e) {
       debugPrint('ProfileScreen load error: $e');
-      if (mounted) {
+      if (mounted && _profile == null) {
         setState(() {
           _error = 'Could not load your profile. Pull down to retry.';
           _loading = false;
         });
+      } else if (mounted) {
+        setState(() => _loading = false);
       }
     }
   }
@@ -455,6 +468,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 }
+
 
 
 
