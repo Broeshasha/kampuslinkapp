@@ -75,9 +75,21 @@ class CommunityScreenState extends State<CommunityScreen> {
         }
       });
 
+      final pendingPosts = await OutboxService.getPendingPosts();
+      final pendingPostWidgets = pendingPosts.map((p) => {
+            'id': p['tempId'],
+            'content': p['content'],
+            'created_at': p['createdAt'],
+            'username': 'You',
+            'avatar_url': null,
+            'avatar_blurhash': null,
+            'like_count': 0,
+            'pending': true,
+          });
+
       if (mounted) {
         setState(() {
-          _posts = postsList;
+          _posts = [...pendingPostWidgets, ...postsList];
           _likedPostIds = serverLiked;
           _loading = false;
         });
@@ -317,17 +329,34 @@ class CommunityScreenState extends State<CommunityScreen> {
                       () => imageBytes = processed.imageBytes,
                     );
 
-                    final url = await UploadService.upload(
-                      processed.imageBytes,
-                      'community',
-                      'post.jpg',
-                    );
+                    try {
+                      final url = await UploadService.upload(
+                        processed.imageBytes,
+                        'community',
+                        'post.jpg',
+                      ).timeout(const Duration(seconds: 15));
 
-                    setModalState(() {
-                      imageUrl = url;
-                      imageBlurhash = processed.blurhash;
-                      uploadingImage = false;
-                    });
+                      setModalState(() {
+                        imageUrl = url;
+                        imageBlurhash = processed.blurhash;
+                        uploadingImage = false;
+                      });
+                    } catch (e) {
+                      debugPrint('Composer image upload error: $e');
+                      setModalState(() {
+                        imageBytes = null;
+                        uploadingImage = false;
+                      });
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Couldn't upload photo -- check your connection. You can still post text.",
+                            ),
+                          ),
+                        );
+                      }
+                    }
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
@@ -392,7 +421,7 @@ class CommunityScreenState extends State<CommunityScreen> {
                                 'content': content,
                                 'image_url': imageUrl,
                                 'image_blurhash': imageBlurhash,
-                              });
+                              }).timeout(const Duration(seconds: 8));
 
                               if (context.mounted) {
                                 Navigator.pop(context, true);
@@ -402,9 +431,31 @@ class CommunityScreenState extends State<CommunityScreen> {
                                 'Post submit error: $e',
                               );
 
-                              setModalState(
-                                () => submitting = false,
-                              );
+                              if (imageUrl == null) {
+                                // Text-only post -- safe to queue and
+                                // let it sync automatically later.
+                                await OutboxService.queuePost(content);
+                                if (context.mounted) {
+                                  Navigator.pop(context, true);
+                                }
+                              } else {
+                                // Has an image already uploaded but the
+                                // final post failed -- don't silently
+                                // lose it, but don't pretend it queued
+                                // either since that's not built yet.
+                                setModalState(
+                                  () => submitting = false,
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Couldn't post -- check your connection and try again.",
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
                             }
                           },
                 child: Padding(
@@ -618,6 +669,16 @@ class CommunityScreenState extends State<CommunityScreen> {
                 ),
               ),
               const SizedBox(width: 8),
+              if (post['pending'] == true) ...[
+                const Text(
+                  'Posting...',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ] else
               Text(
                 _timeAgo(post['created_at']),
                 style: const TextStyle(
@@ -741,6 +802,10 @@ class CommunityScreenState extends State<CommunityScreen> {
     );
   }
 }
+
+
+
+
 
 
 

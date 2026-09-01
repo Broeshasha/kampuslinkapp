@@ -2,6 +2,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../theme/app_theme.dart';
+import '../config/outbox_service.dart';
 
 class CommentsSheet extends StatefulWidget {
   final String postId;
@@ -40,15 +41,42 @@ class CommentsSheetState extends State<CommentsSheet> {
           .order('created_at')
           .timeout(const Duration(seconds: 8));
 
+      final serverComments = List<Map<String, dynamic>>.from(data);
+      final pending = await OutboxService.getPendingComments(widget.postId);
+
       setState(() {
-        _comments = List<Map<String, dynamic>>.from(data);
+        _comments = [
+          ...serverComments,
+          ...pending.map((p) => {
+                'content': p['content'],
+                'created_at': p['createdAt'],
+                'profiles': {'username': 'You'},
+                'pending': true,
+              }),
+        ];
         _loading = false;
       });
     } catch (e) {
       debugPrint('Comments load error: $e');
 
+      // Even offline, still show whatever's queued for this post -- an
+      // empty error screen when the user has pending comments waiting
+      // would make it look like they vanished.
+      final pending = await OutboxService.getPendingComments(widget.postId);
+
       setState(() {
-        _error = 'Could not load comments.';
+        if (pending.isNotEmpty) {
+          _comments = pending
+              .map((p) => {
+                    'content': p['content'],
+                    'created_at': p['createdAt'],
+                    'profiles': {'username': 'You'},
+                    'pending': true,
+                  })
+              .toList();
+        } else {
+          _error = 'Could not load comments.';
+        }
         _loading = false;
       });
     }
@@ -66,15 +94,30 @@ class CommentsSheetState extends State<CommentsSheet> {
     _controller.clear();
 
     try {
-      await widget.supabase.from('community_comments').insert({
-        'post_id': widget.postId,
-        'user_id': userId,
-        'content': content,
-      });
+      await widget.supabase
+          .from('community_comments')
+          .insert({
+            'post_id': widget.postId,
+            'user_id': userId,
+            'content': content,
+          })
+          .timeout(const Duration(seconds: 8));
 
       await _load();
     } catch (e) {
       debugPrint('Comment send error: $e');
+      // Don't lose it -- queue it and show it right away, marked pending,
+      // instead of the comment silently disappearing.
+      await OutboxService.queueComment(widget.postId, content);
+      setState(() {
+        _comments.add({
+          'content': content,
+          'created_at': DateTime.now().toIso8601String(),
+          'profiles': {'username': 'You'},
+          'pending': true,
+        });
+        _error = null;
+      });
     }
 
     setState(() => _sending = false);
@@ -137,6 +180,8 @@ class CommentsSheetState extends State<CommentsSheet> {
                               itemBuilder: (context, i) {
                                 final c = _comments[i];
 
+                                final isPending = c['pending'] == true;
+
                                 return Padding(
                                   padding: const EdgeInsets.only(
                                     bottom: 12,
@@ -145,19 +190,34 @@ class CommentsSheetState extends State<CommentsSheet> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        '@${c['profiles']?['username'] ?? 'unknown'}',
-                                        style: const TextStyle(
-                                          color: AppColors.accent,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '@${c['profiles']?['username'] ?? 'unknown'}',
+                                            style: const TextStyle(
+                                              color: AppColors.accent,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (isPending) ...[
+                                            const SizedBox(width: 6),
+                                            const Text(
+                                              'Sending...',
+                                              style: TextStyle(
+                                                color: AppColors.textSecondary,
+                                                fontSize: 11,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         c['content'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                          color: isPending ? AppColors.textSecondary : Colors.white,
                                           fontSize: 14,
                                         ),
                                       ),
@@ -221,4 +281,6 @@ class CommentsSheetState extends State<CommentsSheet> {
     );
   }
 }
+
+
 

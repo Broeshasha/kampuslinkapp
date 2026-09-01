@@ -87,7 +87,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
       setState(() => slot.localBytes = processedBytes);
 
-      final url = await UploadService.upload(processedBytes, 'marketplace', 'item.jpg');
+      final url = await UploadService.upload(processedBytes, 'marketplace', 'item.jpg')
+          .timeout(const Duration(seconds: 15));
 
       if (url == null) {
         setState(() {
@@ -147,7 +148,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           .from('profiles')
           .select('university_id')
           .eq('id', userId)
-          .single();
+          .single()
+          .timeout(const Duration(seconds: 8));
 
       await _supabase.from('marketplace_listings').insert({
         'seller_id': userId,
@@ -158,15 +160,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         'image_urls': readyPhotos.map((p) => p.url).toList(),
         'image_blurhashes': readyPhotos.map((p) => p.blurhash).toList(),
         'university_id': profile['university_id'],
-      });
+      }).timeout(const Duration(seconds: 8));
 
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       debugPrint('Listing submit error: $e');
-      setState(() {
-        _error = 'Something went wrong. Try again.';
-        _submitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Something went wrong. Try again.';
+          _submitting = false;
+        });
+      }
     }
   }
 
@@ -352,3 +356,5 @@ class _ListingPhoto {
   String? errorLabel;
   XFile? originalPicked;
 }
+
+
