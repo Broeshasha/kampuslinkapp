@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +12,7 @@ import '../../core/config/algeria_universities.dart';
 import '../../core/config/countries.dart';
 import '../../core/config/upload_service.dart';
 import '../../core/config/image_processing_service.dart';
+import '../../core/config/residence_service.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -29,6 +30,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Country? _selectedCountry;
   University? _selectedUniversity;
   Speciality? _selectedSpeciality;
+  Residence? _selectedResidence;
+  bool _noResidence = false;
+  List<Residence> _residenceOptions = [];
+  bool _loadingResidences = false;
   bool? _usernameAvailable;
   bool _checkingUsername = false;
   bool _submitting = false;
@@ -87,6 +92,26 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         if (mounted) setState(() => _checkingUsername = false);
       }
     });
+  }
+
+  Future<void> _onUniversitySelected(University university) async {
+    setState(() {
+      _selectedUniversity = university;
+      // Changing university invalidates any previously picked residence —
+      // it belongs to the old wilaya.
+      _selectedResidence = null;
+      _noResidence = false;
+      _residenceOptions = [];
+      _loadingResidences = true;
+    });
+
+    final residences = await ResidenceService.forWilaya(university.wilayaId);
+    if (mounted && _selectedUniversity?.id == university.id) {
+      setState(() {
+        _residenceOptions = residences;
+        _loadingResidences = false;
+      });
+    }
   }
 
   Future<void> _submitMissingEntry(String type) async {
@@ -161,6 +186,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'country_id': _selectedCountry!.id,
         'university_id': _selectedUniversity!.id,
         'speciality_id': _selectedSpeciality!.id,
+        // Residence is optional — most students don't live in a state
+        // residence, and "no residence" is a valid, first-class answer.
+        'residence_id': _noResidence ? null : _selectedResidence?.id,
         'avatar_url': _avatarUrl,
         'avatar_blurhash': _avatarBlurhash,
         'onboarding_complete': true,
@@ -313,10 +341,55 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   labelBuilder: (u) => '${u.name} (${u.city})',
                   onNotListed: () => _submitMissingEntry('university'),
                 );
-                if (result != null) setState(() => _selectedUniversity = result);
+                if (result != null) await _onUniversitySelected(result);
               },
             ),
             const SizedBox(height: 16),
+
+            if (_selectedUniversity != null) ...[
+              Opacity(
+                opacity: _noResidence ? 0.5 : 1,
+                child: IgnorePointer(
+                  ignoring: _noResidence,
+                  child: _pickerField(
+                    label: _loadingResidences ? 'Loading residences…' : 'Residence (optional)',
+                    value: _selectedResidence != null
+                        ? '${_selectedResidence!.name} (${_selectedResidence!.douName})'
+                        : null,
+                    onTap: _loadingResidences
+                        ? () {}
+                        : () async {
+                            final result = await SearchablePicker.show<Residence>(
+                              context: context,
+                              title: 'Select your residence',
+                              items: _residenceOptions,
+                              labelBuilder: (r) => '${r.name} (${r.douName})',
+                              onNotListed: () => _submitMissingEntry('residence'),
+                            );
+                            if (result != null) setState(() => _selectedResidence = result);
+                          },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Checkbox(
+                    value: _noResidence,
+                    activeColor: AppColors.accent,
+                    onChanged: (v) => setState(() {
+                      _noResidence = v ?? false;
+                      if (_noResidence) _selectedResidence = null;
+                    }),
+                  ),
+                  const Expanded(
+                    child: Text("I don't live in a university residence",
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
 
             _pickerField(
               label: 'Speciality',

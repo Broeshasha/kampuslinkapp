@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/feed_cache_service.dart';
 import '../../core/widgets/offline_banner.dart';
+import '../../core/widgets/blurhash_image.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -262,9 +263,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _postCard(Map<String, dynamic> post) {
     final trust = _trustMeta(post['trust_label']);
+    final imageUrl = post['image_url'] as String?;
+    final content = post['content'] as String?;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -273,32 +276,60 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(_categoryIcon(post['category']), size: 15, color: AppColors.textSecondary),
-              const SizedBox(width: 6),
-              Text((post['category'] as String).toUpperCase(),
-                  style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.4)),
-              const Spacer(),
-              Icon(trust.icon, size: 13, color: trust.color),
-              const SizedBox(width: 4),
-              Text(trust.label,
-                  style: TextStyle(
-                      color: trust.color, fontSize: 11, fontWeight: FontWeight.w600)),
-            ],
+          if (imageUrl != null && imageUrl.isNotEmpty)
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: BlurHashImage(
+                imageUrl: imageUrl,
+                blurhash: post['image_blurhash'] as String?,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(_categoryIcon(post['category']), size: 15, color: AppColors.textSecondary),
+                    const SizedBox(width: 6),
+                    Text((post['category'] as String).toUpperCase(),
+                        style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.4)),
+                    const Spacer(),
+                    Icon(trust.icon, size: 13, color: trust.color),
+                    const SizedBox(width: 4),
+                    Text(trust.label,
+                        style: TextStyle(
+                            color: trust.color, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(post['title'],
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3)),
+                if (content != null && content.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(content,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13.5, height: 1.45)),
+                ],
+                if (post['source_name'] != null) ...[
+                  const SizedBox(height: 10),
+                  Text(post['source_name'],
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(post['title'],
-              style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.35)),
-          if (post['source_name'] != null) ...[
-            const SizedBox(height: 8),
-            Text(post['source_name'],
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-          ],
         ],
       ),
     );
