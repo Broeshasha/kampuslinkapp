@@ -261,10 +261,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String? _faviconUrl(String? sourceUrl) {
+    if (sourceUrl == null || sourceUrl.isEmpty) return null;
+    final uri = Uri.tryParse(sourceUrl);
+    if (uri == null || uri.host.isEmpty) return null;
+    // Google's public favicon service - free, no key, and works for any
+    // domain automatically. Scales to every new source (each of the 46
+    // university sites, APS, etc.) with zero manual logo work per source.
+    return 'https://www.google.com/s2/favicons?domain=${uri.host}&sz=64';
+  }
+
   Widget _postCard(Map<String, dynamic> post) {
     final trust = _trustMeta(post['trust_label']);
     final imageUrl = post['image_url'] as String?;
     final content = post['content'] as String?;
+    final favicon = _faviconUrl(post['source_url'] as String?);
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
@@ -277,14 +288,39 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (imageUrl != null && imageUrl.isNotEmpty)
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: BlurHashImage(
-                imageUrl: imageUrl,
-                blurhash: post['image_blurhash'] as String?,
-                width: double.infinity,
-                height: double.infinity,
-              ),
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: BlurHashImage(
+                    imageUrl: imageUrl,
+                    blurhash: post['image_blurhash'] as String?,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
+                if (favicon != null)
+                  Positioned(
+                    left: 10,
+                    bottom: 10,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: Image.network(
+                          favicon,
+                          errorBuilder: (_, __, ___) => const Icon(
+                              Icons.public, size: 14, color: Colors.white70),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           Padding(
             padding: const EdgeInsets.all(16),
