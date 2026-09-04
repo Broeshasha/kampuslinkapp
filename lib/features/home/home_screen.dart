@@ -266,10 +266,47 @@ class _HomeScreenState extends State<HomeScreen> {
     if (sourceUrl == null || sourceUrl.isEmpty) return null;
     final uri = Uri.tryParse(sourceUrl);
     if (uri == null || uri.host.isEmpty) return null;
-    // Google's public favicon service - free, no key, and works for any
-    // domain automatically. Scales to every new source (each of the 46
-    // university sites, APS, etc.) with zero manual logo work per source.
-    return 'https://www.google.com/s2/favicons?domain=${uri.host}&sz=64';
+    // Clearbit's Logo API - given a domain, returns an actual clean brand
+    // logo (same service behind a lot of "company logo" lookups), not a
+    // tiny pixelated favicon. Works for any domain automatically, so it
+    // scales to every new source with zero manual logo work per source.
+    return 'https://logo.clearbit.com/${uri.host}';
+  }
+
+  // Deterministic color per source, so the same source always gets the
+  // same badge color across the app instead of a random one each build.
+  Color _sourceColor(String name) {
+    const palette = [
+      Color(0xFF3E7BFA), Color(0xFFE0654E), Color(0xFF2FAE6B),
+      Color(0xFFB851D6), Color(0xFFE0A62F), Color(0xFF29AAB0),
+    ];
+    return palette[name.codeUnits.fold(0, (a, b) => a + b) % palette.length];
+  }
+
+  Widget _sourceBadge(String? favicon, String sourceName) {
+    // If the logo genuinely fails to load, fall back to a colored circle
+    // with the source's first letter - a proper polished avatar pattern
+    // (same idea as Gmail/Slack contact badges), not a broken-looking
+    // generic globe icon.
+    final initial = sourceName.isNotEmpty ? sourceName[0].toUpperCase() : '?';
+    final fallback = Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: _sourceColor(sourceName)),
+      child: Text(initial,
+          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+    );
+    if (favicon == null) return fallback;
+    return ClipOval(
+      child: Image.network(
+        favicon,
+        width: 22,
+        height: 22,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
+      ),
+    );
   }
 
   Future<void> _openSource(String url) async {
@@ -284,6 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final imageUrl = post['image_url'] as String?;
     final content = post['content'] as String?;
     final sourceUrl = post['source_url'] as String?;
+    final sourceName = post['source_name'] as String? ?? 'Source';
     final favicon = _faviconUrl(sourceUrl);
     return Container(
       width: double.infinity,
@@ -358,24 +396,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    if (favicon != null)
-                      ClipOval(
-                        child: Image.network(
-                          favicon,
-                          width: 18,
-                          height: 18,
-                          errorBuilder: (_, __, ___) => const Icon(
-                              Icons.public, size: 16, color: AppColors.textSecondary),
-                        ),
-                      )
-                    else
-                      const Icon(Icons.public, size: 16, color: AppColors.textSecondary),
-                    const SizedBox(width: 8),
+                    _sourceBadge(favicon, sourceName),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        post['source_name'] != null
-                            ? 'Read full story on ${post['source_name']}'
-                            : 'Read full story',
+                        'Read full story on $sourceName',
                         style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12.5,
