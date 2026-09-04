@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/feed_cache_service.dart';
 import '../../core/widgets/offline_banner.dart';
@@ -271,11 +272,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'https://www.google.com/s2/favicons?domain=${uri.host}&sz=64';
   }
 
+  Future<void> _openSource(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Widget _postCard(Map<String, dynamic> post) {
     final trust = _trustMeta(post['trust_label']);
     final imageUrl = post['image_url'] as String?;
     final content = post['content'] as String?;
-    final favicon = _faviconUrl(post['source_url'] as String?);
+    final sourceUrl = post['source_url'] as String?;
+    final favicon = _faviconUrl(sourceUrl);
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
@@ -288,39 +297,14 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (imageUrl != null && imageUrl.isNotEmpty)
-            Stack(
-              children: [
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: BlurHashImage(
-                    imageUrl: imageUrl,
-                    blurhash: post['image_blurhash'] as String?,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-                if (favicon != null)
-                  Positioned(
-                    left: 10,
-                    bottom: 10,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        shape: BoxShape.circle,
-                      ),
-                      child: ClipOval(
-                        child: Image.network(
-                          favicon,
-                          errorBuilder: (_, __, ___) => const Icon(
-                              Icons.public, size: 14, color: Colors.white70),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: BlurHashImage(
+                imageUrl: imageUrl,
+                blurhash: post['image_blurhash'] as String?,
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -358,17 +342,54 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 13.5, height: 1.45)),
                 ],
-                if (post['source_name'] != null) ...[
-                  const SizedBox(height: 10),
-                  Text(post['source_name'],
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                ],
               ],
             ),
           ),
+          // Tappable footer: opens the real source article/page. This is
+          // the actual "go to the source" affordance, not decoration.
+          if (sourceUrl != null && sourceUrl.isNotEmpty)
+            InkWell(
+              onTap: () => _openSource(sourceUrl),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+                ),
+                child: Row(
+                  children: [
+                    if (favicon != null)
+                      ClipOval(
+                        child: Image.network(
+                          favicon,
+                          width: 18,
+                          height: 18,
+                          errorBuilder: (_, __, ___) => const Icon(
+                              Icons.public, size: 16, color: AppColors.textSecondary),
+                        ),
+                      )
+                    else
+                      const Icon(Icons.public, size: 16, color: AppColors.textSecondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        post['source_name'] != null
+                            ? 'Read full story on ${post['source_name']}'
+                            : 'Read full story',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(Icons.arrow_outward, size: 15, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 }
-
