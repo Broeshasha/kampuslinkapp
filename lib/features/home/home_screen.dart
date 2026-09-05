@@ -266,15 +266,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (sourceUrl == null || sourceUrl.isEmpty) return null;
     final uri = Uri.tryParse(sourceUrl);
     if (uri == null || uri.host.isEmpty) return null;
-    // Clearbit's Logo API - given a domain, returns an actual clean brand
-    // logo (same service behind a lot of "company logo" lookups), not a
-    // tiny pixelated favicon. Works for any domain automatically, so it
-    // scales to every new source with zero manual logo work per source.
     return 'https://logo.clearbit.com/${uri.host}';
   }
 
-  // Deterministic color per source, so the same source always gets the
-  // same badge color across the app instead of a random one each build.
   Color _sourceColor(String name) {
     const palette = [
       Color(0xFF3E7BFA), Color(0xFFE0654E), Color(0xFF2FAE6B),
@@ -284,10 +278,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _sourceBadge(String? favicon, String sourceName) {
-    // If the logo genuinely fails to load, fall back to a colored circle
-    // with the source's first letter - a proper polished avatar pattern
-    // (same idea as Gmail/Slack contact badges), not a broken-looking
-    // generic globe icon.
     final initial = sourceName.isNotEmpty ? sourceName[0].toUpperCase() : '?';
     final fallback = Container(
       width: 22,
@@ -379,12 +369,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(content,
                       style: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 13.5, height: 1.45)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.auto_awesome, size: 12, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text('Summarized by AI',
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 10.5,
+                              fontStyle: FontStyle.italic)),
+                    ],
+                  ),
                 ],
               ],
             ),
           ),
-          // Tappable footer: opens the real source article/page. This is
-          // the actual "go to the source" affordance, not decoration.
           if (sourceUrl != null && sourceUrl.isNotEmpty)
             InkWell(
               onTap: () => _openSource(sourceUrl),
