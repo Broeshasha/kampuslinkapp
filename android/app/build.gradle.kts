@@ -10,7 +10,6 @@ if (keystorePropertiesFile.exists()) {
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
@@ -19,7 +18,6 @@ android {
     ndkVersion = "28.2.13676358"
     namespace = "com.kampuslink.kampuslink"
     compileSdk = 37
-    
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -36,16 +34,15 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String?
+            keyAlias = System.getenv("KS_ALIAS") ?: (keystoreProperties["keyAlias"] as String?)
+            keyPassword = System.getenv("KS_KEY_PW") ?: (keystoreProperties["keyPassword"] as String?)
+            storeFile = (System.getenv("KS_FILE") ?: (keystoreProperties["storeFile"] as String?))?.let { file(it) }
+            storePassword = System.getenv("KS_STORE_PW") ?: (keystoreProperties["storePassword"] as String?)
         }
     }
 
     buildTypes {
         release {
-            // Now actually signed with the real release key, not debug.
             signingConfig = signingConfigs.getByName("release")
         }
     }

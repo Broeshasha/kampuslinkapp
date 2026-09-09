@@ -1,8 +1,6 @@
 ﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
     <application
         android:label="KampusLink"
@@ -31,6 +29,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Workaround for google_sign_in v7 Credential Manager "[16] Account reauth failed" -->
+        <meta-data
+            android:name="com.google.android.gms.credentials.API_ENABLED"
+            android:value="false" />
+        <meta-data
+            android:name="androidx.credentials.CREDENTIAL_SERVICE_ENABLED"
+            android:value="false" />
     </application>
 
     <queries>
@@ -40,5 +46,3 @@
         </intent>
     </queries>
 </manifest>
-
-
