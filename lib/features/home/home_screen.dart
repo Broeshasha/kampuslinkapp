@@ -75,36 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  ({Color color, String label, IconData icon}) _trustMeta(String trust) {
-    switch (trust) {
-      case 'official':
-        return (color: AppColors.official, label: 'Official', icon: Icons.verified);
-      case 'verified':
-        return (color: AppColors.verified, label: 'Verified', icon: Icons.check_circle);
-      default:
-        return (color: AppColors.community, label: 'Community', icon: Icons.groups);
-    }
-  }
-
-  IconData _categoryIcon(String category) {
-    switch (category) {
-      case 'university':
-        return Icons.school_outlined;
-      case 'residence':
-        return Icons.home_outlined;
-      case 'transport':
-        return Icons.directions_bus_outlined;
-      case 'opportunity':
-        return Icons.workspace_premium_outlined;
-      case 'event':
-        return Icons.event_outlined;
-      case 'telegram':
-        return Icons.send_outlined;
-      default:
-        return Icons.newspaper_outlined;
-    }
-  }
-
   List<Map<String, dynamic>> get _filteredPosts {
     if (_filter == 'All') return _posts;
     final key = _filter.toLowerCase();
@@ -181,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                       ..._filteredPosts.map((p) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: _postCard(p),
+                            child: _PostCard(post: p),
                           )),
                       if (_filteredPosts.isEmpty && _dining == null)
                         const Padding(
@@ -262,14 +232,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String? _faviconUrl(String? sourceUrl) {
+}
+
+class _PostCard extends StatefulWidget {
+  final Map<String, dynamic> post;
+  const _PostCard({required this.post});
+
+  @override
+  State<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<_PostCard> {
+  bool _expanded = false;
+
+  static ({Color color, String label, IconData icon}) _trustMeta(String trust) {
+    switch (trust) {
+      case 'official':
+        return (color: AppColors.official, label: 'Official', icon: Icons.verified);
+      case 'verified':
+        return (color: AppColors.verified, label: 'Verified', icon: Icons.check_circle);
+      default:
+        return (color: AppColors.community, label: 'Community', icon: Icons.groups);
+    }
+  }
+
+  static IconData _categoryIcon(String category) {
+    switch (category) {
+      case 'university':
+        return Icons.school_outlined;
+      case 'residence':
+        return Icons.home_outlined;
+      case 'transport':
+        return Icons.directions_bus_outlined;
+      case 'opportunity':
+        return Icons.workspace_premium_outlined;
+      case 'event':
+        return Icons.event_outlined;
+      case 'telegram':
+        return Icons.send_outlined;
+      default:
+        return Icons.newspaper_outlined;
+    }
+  }
+
+  static String? _faviconUrl(String? sourceUrl) {
     if (sourceUrl == null || sourceUrl.isEmpty) return null;
     final uri = Uri.tryParse(sourceUrl);
     if (uri == null || uri.host.isEmpty) return null;
     return 'https://logo.clearbit.com/${uri.host}';
   }
 
-  Color _sourceColor(String name) {
+  static Color _sourceColor(String name) {
     const palette = [
       Color(0xFF3E7BFA), Color(0xFFE0654E), Color(0xFF2FAE6B),
       Color(0xFFB851D6), Color(0xFFE0A62F), Color(0xFF29AAB0),
@@ -306,13 +319,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _postCard(Map<String, dynamic> post) {
+  /// True if [text] would need more than 2 lines at [maxWidth] with [style].
+  bool _isOverflowing(String text, TextStyle style, double maxWidth) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      maxLines: 2,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: maxWidth);
+    return painter.didExceedMaxLines;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
     final trust = _trustMeta(post['trust_label']);
     final imageUrl = post['image_url'] as String?;
     final content = post['content'] as String?;
     final sourceUrl = post['source_url'] as String?;
     final sourceName = post['source_name'] as String? ?? 'Source';
     final favicon = _faviconUrl(sourceUrl);
+    const descStyle =
+        TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.45);
+
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
@@ -366,20 +394,48 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 1.3)),
                 if (content != null && content.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(content,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13.5, height: 1.45)),
-                  const SizedBox(height: 8),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final overflowing = _isOverflowing(content, descStyle, constraints.maxWidth);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            content,
+                            style: descStyle,
+                            maxLines: _expanded ? null : 2,
+                            overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                          ),
+                          if (overflowing) ...[
+                            const SizedBox(height: 4),
+                            GestureDetector(
+                              onTap: () => setState(() => _expanded = !_expanded),
+                              child: Text(
+                                _expanded ? 'Show less' : 'Read more',
+                                style: const TextStyle(
+                                    color: AppColors.accent,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome, size: 12, color: AppColors.textSecondary),
+                      const Icon(Icons.auto_awesome, size: 11, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
-                      Text('Summarized by AI',
-                          style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 10.5,
-                              fontStyle: FontStyle.italic)),
+                      Text(
+                        _expanded ? 'Summarized by AI' : 'AI',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic),
+                      ),
                     ],
                   ),
                 ],

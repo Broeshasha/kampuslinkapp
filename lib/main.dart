@@ -172,8 +172,8 @@ class _AuthGateState extends State<AuthGate> {
           ],
           communityKey: _communityKey,
           marketplaceKey: _marketplaceKey,
-          onAvatarTap: () {
-            Navigator.of(context).push(
+          onAvatarTap: () async {
+            await Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
             );
           },

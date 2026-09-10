@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -154,7 +154,7 @@ class CommunityScreenState extends State<CommunityScreen> {
     Map<String, dynamic> post,
   ) async {
     final text =
-        '${post['content']}\n\nâ€” @${post['username']} on KampusLink';
+        '${post['content']}\n\n— @${post['username']} on KampusLink';
 
     try {
       final result = await SharePlus.instance.share(
@@ -170,7 +170,7 @@ class CommunityScreenState extends State<CommunityScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Sharing not available here â€” copied to clipboard instead.',
+              'Sharing not available here — copied to clipboard instead.',
             ),
           ),
         );
@@ -178,7 +178,7 @@ class CommunityScreenState extends State<CommunityScreen> {
     } catch (e) {
       debugPrint('Share error: $e');
 
-      // Desktop browsers often lack the Web Share API â€” fall back to clipboard.
+      // Desktop browsers often lack the Web Share API — fall back to clipboard.
       await Clipboard.setData(
         ClipboardData(text: text),
       );
@@ -597,7 +597,7 @@ class CommunityScreenState extends State<CommunityScreen> {
               padding: EdgeInsets.only(top: 60),
               child: Center(
                 child: Text(
-                  'No posts yet â€” be the first to share something.',
+                  'No posts yet — be the first to share something.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                   ),
@@ -699,13 +699,16 @@ class CommunityScreenState extends State<CommunityScreen> {
           ),
           if (post['image_url'] != null) ...[
             const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: BlurHashImage(
-                imageUrl: post['image_url'],
-                blurhash: post['image_blurhash'],
-                height: 200,
-                width: double.infinity,
+            GestureDetector(
+              onTap: () => showFullscreenImage(context, post['image_url']),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BlurHashImage(
+                  imageUrl: post['image_url'],
+                  blurhash: post['image_blurhash'],
+                  height: 200,
+                  width: double.infinity,
+                ),
               ),
             ),
           ],
@@ -743,17 +746,19 @@ class CommunityScreenState extends State<CommunityScreen> {
               const SizedBox(width: 20),
               InkWell(
                 onTap: () => _openComments(post['id']),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.mode_comment_outlined,
                       size: 17,
                       color: AppColors.textSecondary,
                     ),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Text(
-                      'Comment',
-                      style: TextStyle(
+                      (post['comment_count'] ?? 0) > 0
+                          ? ''
+                          : 'Comment',
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),

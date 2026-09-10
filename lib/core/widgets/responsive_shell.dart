@@ -1,12 +1,15 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_theme.dart';
+import '../config/cached_fetch.dart';
 import 'kampus_mark.dart';
+import 'blurhash_image.dart';
 import '../../features/community/community_screen.dart';
 import '../../features/marketplace/marketplace_screen.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final List<Widget> screens;
-  final VoidCallback? onAvatarTap;
+  final Future<void> Function()? onAvatarTap;
   final GlobalKey<CommunityScreenState> communityKey;
   final GlobalKey<MarketplaceScreenState> marketplaceKey;
   const ResponsiveShell({
@@ -23,6 +26,41 @@ class ResponsiveShell extends StatefulWidget {
 
 class _ResponsiveShellState extends State<ResponsiveShell> {
   int _selectedIndex = 0;
+  String? _avatarUrl;
+  String? _avatarBlurhash;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvatar();
+  }
+
+  Future<void> _loadAvatar() async {
+    final cached = await CachedFetch.readCacheMap('my_profile');
+    if (cached != null && mounted) {
+      setState(() {
+        _avatarUrl = cached['avatar_url'] as String?;
+        _avatarBlurhash = cached['avatar_blurhash'] as String?;
+      });
+    }
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select('avatar_url, avatar_blurhash')
+          .eq('id', userId)
+          .single()
+          .timeout(const Duration(seconds: 6));
+      if (!mounted) return;
+      setState(() {
+        _avatarUrl = data['avatar_url'] as String?;
+        _avatarBlurhash = data['avatar_blurhash'] as String?;
+      });
+    } catch (_) {
+      // Keep whatever the cache gave us -- not worth surfacing an error for a nav icon.
+    }
+  }
 
   void _openCreateSheet() {
     showModalBottomSheet(
@@ -95,11 +133,23 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   Widget _avatarButton() {
     return IconButton(
-      onPressed: widget.onAvatarTap,
-      icon: const CircleAvatar(
+      onPressed: () async {
+        await widget.onAvatarTap?.call();
+        _loadAvatar();
+      },
+      icon: CircleAvatar(
         radius: 16,
         backgroundColor: AppColors.surface,
-        child: Icon(Icons.person, size: 18, color: AppColors.textSecondary),
+        child: _avatarUrl != null
+            ? ClipOval(
+                child: BlurHashImage(
+                  imageUrl: _avatarUrl!,
+                  blurhash: _avatarBlurhash,
+                  width: 32,
+                  height: 32,
+                ),
+              )
+            : const Icon(Icons.person, size: 18, color: AppColors.textSecondary),
       ),
     );
   }
