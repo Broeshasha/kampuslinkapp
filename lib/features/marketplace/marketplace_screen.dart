@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/cached_fetch.dart';
 import '../../core/theme/app_theme.dart';
@@ -138,6 +138,8 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
               child: BlurHashImage(
                 imageUrl: images.first,
                 blurhash: blurhashes.isNotEmpty ? blurhashes.first : null,
+                width: double.infinity,
+                height: double.infinity,
               ),
             ),
             Padding(
