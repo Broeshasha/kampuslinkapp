@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +15,7 @@ import '../../core/config/countries.dart';
 import 'my_posts_tab.dart';
 import 'my_listings_tab.dart';
 import 'blocked_users_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -156,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               onTap: () => Navigator.pop(context, 'en'),
             ),
             ListTile(
-              title: const Text('FranÃ§ais', style: TextStyle(color: Colors.white)),
+              title: const Text('Français', style: TextStyle(color: Colors.white)),
               trailing: current == 'fr' ? const Icon(Icons.check, color: AppColors.accent) : null,
               onTap: () => Navigator.pop(context, 'fr'),
             ),
@@ -170,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       _loadProfile();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved â€” full translation is coming soon.')),
+          const SnackBar(content: Text('Saved — full translation is coming soon.')),
         );
       }
     }
@@ -227,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       backgroundColor: AppColors.background,
       appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
       body: Center(
-        // The width cap that was missing â€” this is the whole fix.
+        // The width cap that was missing — this is the whole fix.
         // Everything below stays exactly as designed on mobile,
         // and now sits in a sane centered column on wider screens.
         child: ConstrainedBox(
@@ -294,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('University', _profile!['university_name'] ?? 'Not set', _editUniversity),
             const Divider(color: AppColors.border, height: 1, indent: 16),
-            _editableRow('City', _profile!['university_city'] ?? 'â€”', null),
+            _editableRow('City', _profile!['university_city'] ?? '—', null),
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('Speciality', _profile!['speciality_name'] ?? 'Not set', _editSpeciality),
           ]),
@@ -304,13 +305,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           _sectionCard([
             _editableRow(
               'Language',
-              (_profile!['preferred_language'] ?? 'en') == 'fr' ? 'FranÃ§ais' : 'English',
+              (_profile!['preferred_language'] ?? 'en') == 'fr' ? 'Français' : 'English',
               _showLanguagePicker,
             ),
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _settingsRow('Notifications', Icons.notifications_none, onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notification settings are coming soon.')),
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
               );
             }),
             const Divider(color: AppColors.border, height: 1, indent: 48),

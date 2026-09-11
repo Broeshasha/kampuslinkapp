@@ -1,4 +1,4 @@
-﻿import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -25,7 +25,10 @@ class NotificationService {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       debugPrint('FCM token: $token');
-      if (token != null) await _saveToken(token);
+      if (token != null) {
+        await _saveToken(token);
+        await _subscribeToUniversityTopic();
+      }
 
       // FCM tokens rotate over time (reinstall, cleared app data, token
       // expiry). Without this listener, a rotated token never gets saved
@@ -68,6 +71,30 @@ class NotificationService {
           .eq('id', userId);
     } catch (e) {
       debugPrint('FCM token clear error: $e');
+    }
+  }
+
+  /// Subscribes this device to its university's broadcast topic so it
+  /// gets pushed every new home-feed post for that campus. Safe to call
+  /// repeatedly -- Firebase just re-confirms an existing subscription.
+  static Future<void> _subscribeToUniversityTopic() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final profile = await Supabase.instance.client
+          .from('profiles')
+          .select('university_id')
+          .eq('id', userId)
+          .maybeSingle();
+
+      final universityId = profile?['university_id'];
+      if (universityId == null) return;
+
+      await FirebaseMessaging.instance.subscribeToTopic('uni_$universityId');
+      debugPrint('Subscribed to uni_$universityId');
+    } catch (e) {
+      debugPrint('Topic subscribe error: $e');
     }
   }
 }

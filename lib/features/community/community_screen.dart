@@ -404,7 +404,7 @@ class CommunityScreenState extends State<CommunityScreen> {
                             final content =
                                 _composerController.text.trim();
 
-                            if (content.isEmpty) return;
+                            if (content.isEmpty && imageUrl == null) return;
 
                             setModalState(
                               () => submitting = true,
@@ -688,15 +688,17 @@ class CommunityScreenState extends State<CommunityScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            post['content'],
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              height: 1.4,
+          if ((post['content'] as String?)?.isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            Text(
+              post['content'],
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
-          ),
+          ],
           if (post['image_url'] != null) ...[
             const SizedBox(height: 10),
             GestureDetector(

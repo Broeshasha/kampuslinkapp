@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_theme.dart';
 import '../config/cached_fetch.dart';
@@ -6,6 +6,7 @@ import 'kampus_mark.dart';
 import 'blurhash_image.dart';
 import '../../features/community/community_screen.dart';
 import '../../features/marketplace/marketplace_screen.dart';
+import '../../features/notifications/notifications_screen.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final List<Widget> screens;
@@ -154,6 +155,17 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     );
   }
 
+  Widget _notificationsButton() {
+    return IconButton(
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
+      },
+      icon: const Icon(Icons.notifications_none, color: AppColors.textSecondary),
+    );
+  }
+
   Widget _mobileLayout() {
     return Scaffold(
       appBar: AppBar(
@@ -168,7 +180,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
           ],
         ),
-        actions: [_avatarButton(), const SizedBox(width: 8)],
+        actions: [_notificationsButton(), _avatarButton(), const SizedBox(width: 8)],
       ),
       body: SafeArea(top: false, child: widget.screens[_selectedIndex]),
       floatingActionButton: FloatingActionButton(
@@ -218,6 +230,8 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                 children: [
                   const KampusMark(size: 28, color: AppColors.accent),
                   const SizedBox(height: 16),
+                  _notificationsButton(),
+                  const SizedBox(height: 8),
                   _avatarButton(),
                 ],
               ),

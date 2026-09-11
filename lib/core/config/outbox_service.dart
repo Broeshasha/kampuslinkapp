@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +17,7 @@ import 'connectivity_service.dart';
 class OutboxService {
   OutboxService._();
   static const _likesKey = 'outbox_likes';
+  static const _commentLikesKey = 'outbox_comment_likes';
   static const _commentsKey = 'outbox_comments';
   static bool _listening = false;
 
@@ -67,6 +68,73 @@ class OutboxService {
   /// onto its just-loaded liked-post set without one lookup per post.
   static Future<Map<String, bool>> getAllPending() => _readLikeQueue();
 
+  // ---------------- Comment likes (separate queue, same idempotent-toggle pattern) ----------------
+
+  static Future<Map<String, bool>> _readCommentLikeQueue() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_commentLikesKey);
+    if (raw == null) return {};
+    return Map<String, bool>.from(jsonDecode(raw));
+  }
+
+  static Future<void> _writeCommentLikeQueue(Map<String, bool> queue) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_commentLikesKey, jsonEncode(queue));
+  }
+
+  static Future<void> queueCommentLike(String commentId, bool liked) async {
+    final queue = await _readCommentLikeQueue();
+    queue[commentId] = liked;
+    await _writeCommentLikeQueue(queue);
+  }
+
+  static Future<bool?> getPendingCommentLike(String commentId) async {
+    final queue = await _readCommentLikeQueue();
+    return queue[commentId];
+  }
+
+  static Future<Map<String, bool>> getAllPendingCommentLikes() =>
+      _readCommentLikeQueue();
+
+  static Future<void> _drainCommentLikes() async {
+    final queue = await _readCommentLikeQueue();
+    if (queue.isEmpty) return;
+
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final remaining = Map<String, bool>.from(queue);
+
+    for (final entry in queue.entries) {
+      try {
+        if (entry.value) {
+          await supabase.from('comment_likes').insert({
+            'comment_id': entry.key,
+            'user_id': userId,
+          });
+        } else {
+          await supabase
+              .from('comment_likes')
+              .delete()
+              .eq('comment_id', entry.key)
+              .eq('user_id', userId);
+        }
+        remaining.remove(entry.key);
+      } on PostgrestException catch (e) {
+        if (e.code == '23505') {
+          remaining.remove(entry.key);
+        } else {
+          debugPrint('Outbox: failed to sync comment like for ${entry.key}: $e');
+        }
+      } catch (e) {
+        debugPrint('Outbox: failed to sync comment like for ${entry.key}: $e');
+      }
+    }
+
+    await _writeCommentLikeQueue(remaining);
+  }
+
   // ---------------- Comments ----------------
 
   static Future<List<Map<String, dynamic>>> _readCommentQueue() async {
@@ -83,13 +151,18 @@ class OutboxService {
 
   /// Queue a comment for later sync. Returns the temp ID so the caller
   /// can show it in the UI immediately, marked pending.
-  static Future<String> queueComment(String postId, String content) async {
+  static Future<String> queueComment(
+    String postId,
+    String content, {
+    String? parentCommentId,
+  }) async {
     final tempId = 'pending_${DateTime.now().microsecondsSinceEpoch}';
     final queue = await _readCommentQueue();
     queue.add({
       'tempId': tempId,
       'postId': postId,
       'content': content,
+      'parentCommentId': parentCommentId,
       'createdAt': DateTime.now().toIso8601String(),
     });
     await _writeCommentQueue(queue);
@@ -145,6 +218,7 @@ class OutboxService {
 
   static Future<void> drainQueue() async {
     await _drainLikes();
+    await _drainCommentLikes();
     await _drainComments();
     await _drainPosts();
   }
@@ -229,6 +303,7 @@ class OutboxService {
           'post_id': entry['postId'],
           'user_id': userId,
           'content': entry['content'],
+          'parent_comment_id': entry['parentCommentId'],
         });
       } catch (e) {
         debugPrint('Outbox: failed to sync comment ${entry['tempId']}: $e');
