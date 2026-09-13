@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/feed_cache_service.dart';
 import '../../core/widgets/offline_banner.dart';
@@ -107,6 +108,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text("Here's what's relevant to you today",
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                 ),
+
+                const _RateStrip(),
 
                 SizedBox(
                   height: 36,
@@ -470,6 +473,103 @@ class _PostCardState extends State<_PostCard> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small, self-contained "$1 ~ X DA" strip shown near the top of Home.
+/// Hides itself entirely if there's no rate yet (cache or network) -- never
+/// shows a broken/placeholder state.
+class _RateStrip extends StatefulWidget {
+  const _RateStrip();
+
+  @override
+  State<_RateStrip> createState() => _RateStripState();
+}
+
+class _RateStripState extends State<_RateStrip> {
+  static const _cacheKey = 'usd_street_rate';
+  double? _buyRate;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRate();
+  }
+
+  Future<void> _loadRate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getDouble(_cacheKey);
+    if (cached != null && mounted) {
+      setState(() => _buyRate = cached);
+    }
+    try {
+      final data = await Supabase.instance.client
+          .from('exchange_rates')
+          .select('buy_rate')
+          .eq('currency', 'USD')
+          .maybeSingle()
+          .timeout(const Duration(seconds: 6));
+      if (data == null) return;
+      final rate = (data['buy_rate'] as num).toDouble();
+      if (!mounted) return;
+      setState(() => _buyRate = rate);
+      await prefs.setDouble(_cacheKey, rate);
+    } catch (_) {
+      // Keep whatever the cache gave us -- not critical enough to surface an error.
+    }
+  }
+
+  void _showInfo() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('About this rate',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 10),
+            const Text(
+              'This is the informal (street) market rate observed at Square '
+              'Port-Said in Algiers -- not the official Bank of Algeria rate. '
+              'Rates can vary slightly in other cities and change daily.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_buyRate == null) return const SizedBox.shrink();
+    final rounded = _buyRate!.round();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Row(
+        children: [
+          Text('\$1 ~ $rounded DA',
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 6),
+          const Expanded(
+            child: Text('- Street rate, Algiers',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                overflow: TextOverflow.ellipsis),
+          ),
+          GestureDetector(
+            onTap: _showInfo,
+            child: const Icon(Icons.info_outline, size: 15, color: AppColors.textSecondary),
+          ),
         ],
       ),
     );

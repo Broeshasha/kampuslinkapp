@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/cached_fetch.dart';
 import '../../core/config/outbox_service.dart';
 import '../../core/widgets/comments_sheet.dart';
+import '../profile/user_profile_screen.dart';
 import '../../core/widgets/fullscreen_image_viewer.dart';
 import '../../core/config/image_processing_service.dart';
 import '../../core/config/upload_service.dart';
@@ -636,10 +637,22 @@ class CommunityScreenState extends State<CommunityScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: post['avatar_url'] != null
+                onTap: post['user_id'] == null
+                    ? null
+                    : () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => UserProfileScreen(
+                              userId: post['user_id'],
+                            ),
+                          ),
+                        ),
+                onLongPress: post['avatar_url'] != null
                     ? () => showFullscreenImage(context, post['avatar_url'])
                     : null,
-                child: ClipOval(
+                child: Row(
+                  children: [
+                    ClipOval(
                 child: SizedBox(
                   width: 32,
                   height: 32,
@@ -658,7 +671,6 @@ class CommunityScreenState extends State<CommunityScreen> {
                         ),
                 ),
               ),
-              ),
               const SizedBox(width: 10),
               Text(
                 '@${post['username'] ?? 'unknown'}',
@@ -666,6 +678,9 @@ class CommunityScreenState extends State<CommunityScreen> {
                   color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
