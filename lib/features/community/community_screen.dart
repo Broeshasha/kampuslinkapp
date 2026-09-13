@@ -202,6 +202,7 @@ class CommunityScreenState extends State<CommunityScreen> {
     String? imageBlurhash;
     bool submitting = false;
     bool uploadingImage = false;
+    bool isCampusNow = false;
 
     final posted = await showModalBottomSheet<bool>(
       context: context,
@@ -390,7 +391,26 @@ class CommunityScreenState extends State<CommunityScreen> {
                     ),
                   ),
                 ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Switch(
+                    value: isCampusNow,
+                    activeColor: AppColors.accent,
+                    onChanged: (v) => setModalState(() => isCampusNow = v),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Show in Campus Now (expires in 24h)',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
@@ -422,6 +442,11 @@ class CommunityScreenState extends State<CommunityScreen> {
                                 'content': content,
                                 'image_url': imageUrl,
                                 'image_blurhash': imageBlurhash,
+                                'is_campus_now': isCampusNow,
+                                if (isCampusNow)
+                                  'expires_at': DateTime.now()
+                                      .add(const Duration(hours: 24))
+                                      .toIso8601String(),
                               }).timeout(const Duration(seconds: 8));
 
                               if (context.mounted) {
