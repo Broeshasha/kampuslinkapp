@@ -1,6 +1,15 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../features/notifications/notifications_screen.dart';
+import '../../features/messages/chat_screen.dart';
+
+/// Global so a notification tap can navigate even when it happens outside
+/// any widget's BuildContext -- e.g. a cold-start tap fires before any
+/// screen has built yet.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Requests notification permission (required explicitly on Android 13+,
 /// otherwise push notifications are silently never shown), fetches the
@@ -34,6 +43,8 @@ class NotificationService {
       // expiry). Without this listener, a rotated token never gets saved
       // and push notifications quietly stop working for that user.
       FirebaseMessaging.instance.onTokenRefresh.listen(_saveToken);
+
+      _setupTapHandling();
 
       return token;
     } catch (e) {
@@ -96,5 +107,45 @@ class NotificationService {
     } catch (e) {
       debugPrint('Topic subscribe error: $e');
     }
+  }
+
+  /// Wires up both tap paths: a tap while the app is backgrounded (fires
+  /// immediately) and a tap that cold-started the app (must be checked
+  /// once, since there is no live stream event for it).
+  static Future<void> _setupTapHandling() async {
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      _routeFromMessage(initialMessage);
+    }
+
+    FirebaseMessaging.onMessageOpenedApp.listen(_routeFromMessage);
+  }
+
+  static void _routeFromMessage(RemoteMessage message) {
+    final navigator = rootNavigatorKey.currentState;
+    if (navigator == null) return;
+
+    final data = message.data;
+    final type = data['type'];
+
+    if (type == 'message') {
+      final actorId = data['actor_id'];
+      final actorUsername = data['actor_username'];
+      if (actorId == null || actorId.isEmpty) return;
+
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            otherUserId: actorId,
+            otherUsername: actorUsername ?? 'User',
+          ),
+        ),
+      );
+      return;
+    }
+
+    navigator.push(
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+    );
   }
 }

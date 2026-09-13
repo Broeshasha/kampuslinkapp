@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,6 +50,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'KampusLink',
       debugShowCheckedModeBanner: false,
+      navigatorKey: rootNavigatorKey,
       theme: AppTheme.dark,
       home: const AuthGate(),
     );
