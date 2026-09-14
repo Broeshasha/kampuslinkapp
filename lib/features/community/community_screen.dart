@@ -798,7 +798,7 @@ class CommunityScreenState extends State<CommunityScreen> {
                     const SizedBox(width: 5),
                     Text(
                       (post['comment_count'] ?? 0) > 0
-                          ? ''
+                          ? '${post['comment_count']}'
                           : 'Comment',
                       style: const TextStyle(
                         color: AppColors.textSecondary,

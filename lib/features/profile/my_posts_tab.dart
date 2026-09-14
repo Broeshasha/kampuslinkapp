@@ -1,4 +1,4 @@
-ï»¿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,6 +7,7 @@ import '../../core/widgets/blurhash_image.dart';
 import '../../core/widgets/comments_sheet.dart';
 import '../../core/config/outbox_service.dart';
 import '../../core/widgets/skeleton_loader.dart';
+import '../../core/widgets/fullscreen_image_viewer.dart';
 
 class MyPostsTab extends StatefulWidget {
   const MyPostsTab({super.key});
@@ -37,7 +38,7 @@ class _MyPostsTabState extends State<MyPostsTab> {
       final userId = _supabase.auth.currentUser!.id;
       final data = await _supabase
           .from('community_posts')
-          .select('*, community_likes(count)')
+          .select('*, community_likes(count), community_comments(count)')
           .eq('user_id', userId)
           .order('created_at', ascending: false)
           .timeout(const Duration(seconds: 8));
@@ -62,6 +63,8 @@ class _MyPostsTabState extends State<MyPostsTab> {
         _posts = List<Map<String, dynamic>>.from(data).map((p) {
           final likeRows = p['community_likes'] as List?;
           p['like_count'] = likeRows != null && likeRows.isNotEmpty ? likeRows.first['count'] : 0;
+          final commentRows = p['community_comments'] as List?;
+          p['comment_count'] = commentRows != null && commentRows.isNotEmpty ? commentRows.first['count'] : 0;
           return p;
         }).toList();
         _likedPostIds = serverLiked;
@@ -123,14 +126,14 @@ class _MyPostsTabState extends State<MyPostsTab> {
 
   Future<void> _sharePost(Map<String, dynamic> post) async {
     final username = _supabase.auth.currentUser?.userMetadata?['username'] ?? 'me';
-    final text = '${post['content']}\n\nâ€” @$username on KampusLink';
+    final text = '${post['content']}\n\n— @$username on KampusLink';
 
     try {
       final result = await SharePlus.instance.share(ShareParams(text: text));
       if (result.status == ShareResultStatus.unavailable && mounted) {
         await Clipboard.setData(ClipboardData(text: text));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sharing not available here â€” copied to clipboard instead.')),
+          const SnackBar(content: Text('Sharing not available here — copied to clipboard instead.')),
         );
       }
     } catch (e) {
@@ -255,13 +258,16 @@ class _MyPostsTabState extends State<MyPostsTab> {
                 Text(post['content'], style: const TextStyle(color: Colors.white, fontSize: 14)),
                 if (post['image_url'] != null) ...[
                   const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: BlurHashImage(
-                      imageUrl: post['image_url'],
-                      blurhash: post['image_blurhash'],
-                      height: 160,
-                      width: double.infinity,
+                  GestureDetector(
+                    onTap: () => showFullscreenImage(context, post['image_url']),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: BlurHashImage(
+                        imageUrl: post['image_url'],
+                        blurhash: post['image_blurhash'],
+                        height: 160,
+                        width: double.infinity,
+                      ),
                     ),
                   ),
                 ],
@@ -291,11 +297,14 @@ class _MyPostsTabState extends State<MyPostsTab> {
                     const SizedBox(width: 20),
                     InkWell(
                       onTap: () => _openComments(post['id']),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.mode_comment_outlined, size: 17, color: AppColors.textSecondary),
-                          SizedBox(width: 5),
-                          Text('Comment', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          const Icon(Icons.mode_comment_outlined, size: 17, color: AppColors.textSecondary),
+                          const SizedBox(width: 5),
+                          Text(
+                            (post['comment_count'] ?? 0) > 0 ? '${post['comment_count']}' : 'Comment',
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          ),
                         ],
                       ),
                     ),

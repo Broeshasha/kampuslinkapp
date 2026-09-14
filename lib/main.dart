@@ -19,6 +19,8 @@ import 'features/profile/profile_screen.dart';
 import 'features/community/community_screen.dart';
 import 'features/marketplace/marketplace_screen.dart';
 import 'features/messages/messages_screen.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'features/community/share_chooser_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +40,31 @@ Future<void> main() async {
   await ConnectivityService.init();
   OutboxService.startAutoSync();
   runApp(const MyApp());
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _setupShareListener();
+  });
+}
+
+void _routeSharedImage(List<SharedMediaFile> files) {
+  final image = files.where((f) => f.type == SharedMediaType.image).firstOrNull;
+  if (image == null) return;
+
+  rootNavigatorKey.currentState?.push(
+    MaterialPageRoute(
+      builder: (_) => ShareChooserScreen(imagePath: image.path),
+    ),
+  );
+
+  ReceiveSharingIntent.instance.reset();
+}
+
+void _setupShareListener() {
+  // Cold start: app was launched fresh via a share action.
+  ReceiveSharingIntent.instance.getInitialMedia().then(_routeSharedImage);
+
+  // Warm start: app was already open/backgrounded when the share happened.
+  ReceiveSharingIntent.instance.getMediaStream().listen(_routeSharedImage);
 }
 
 final supabase = Supabase.instance.client;

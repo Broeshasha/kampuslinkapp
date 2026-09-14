@@ -378,11 +378,24 @@ class CommentsSheetState extends State<CommentsSheet> {
                     )
                   : _error != null
                       ? Center(
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(
-                              color: AppColors.danger,
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _error!,
+                                style: const TextStyle(
+                                  color: AppColors.danger,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextButton(
+                                onPressed: _load,
+                                child: const Text(
+                                  'Retry',
+                                  style: TextStyle(color: AppColors.accent),
+                                ),
+                              ),
+                            ],
                           ),
                         )
                       : topLevel.isEmpty

@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,7 +10,9 @@ import '../../core/config/upload_service.dart';
 import '../../core/config/image_processing_service.dart';
 
 class CreateListingScreen extends StatefulWidget {
-  const CreateListingScreen({super.key});
+  final String? initialImagePath;
+
+  const CreateListingScreen({super.key, this.initialImagePath});
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -29,6 +31,16 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   static const _maxPhotos = 3;
 
   final List<_ListingPhoto> _photos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialImagePath != null) {
+      final slot = _ListingPhoto()..originalPicked = XFile(widget.initialImagePath!);
+      _photos.add(slot);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _uploadPhoto(slot));
+    }
+  }
 
   final _categories = const [
     ('electronics', 'Electronics'),
@@ -75,7 +87,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         processedBytes = processed.imageBytes;
         blurhash = processed.blurhash;
       } catch (e) {
-        // Image decode/resize failed â€” e.g. an unsupported format like HEIC.
+        // Image decode/resize failed — e.g. an unsupported format like HEIC.
         debugPrint('Image processing error: $e');
         setState(() {
           slot.failed = true;
