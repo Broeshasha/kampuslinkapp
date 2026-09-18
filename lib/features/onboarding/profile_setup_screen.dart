@@ -1,4 +1,4 @@
-ï»¿import 'dart:async';
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -30,6 +30,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Country? _selectedCountry;
   University? _selectedUniversity;
   Speciality? _selectedSpeciality;
+  String? _selectedYear;
   Residence? _selectedResidence;
   bool _noResidence = false;
   List<Residence> _residenceOptions = [];
@@ -62,7 +63,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
       final url = await UploadService.upload(processed.imageBytes, 'avatars', 'avatar.jpg');
       if (url == null) {
-        setState(() => _error = 'Avatar upload failed â€” you can continue and add one later.');
+        setState(() => _error = 'Avatar upload failed — you can continue and add one later.');
       }
       setState(() => _avatarUrl = url);
     } catch (e) {
@@ -97,7 +98,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Future<void> _onUniversitySelected(University university) async {
     setState(() {
       _selectedUniversity = university;
-      // Changing university invalidates any previously picked residence â€”
+      // Changing university invalidates any previously picked residence —
       // it belongs to the old wilaya.
       _selectedResidence = null;
       _noResidence = false;
@@ -149,11 +150,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Thanks â€” we'll add it soon.")),
+            const SnackBar(content: Text("Thanks — we'll add it soon.")),
           );
         }
       } catch (_) {
-        // Non-critical if this fails silently â€” don't block onboarding over it.
+        // Non-critical if this fails silently — don't block onboarding over it.
       }
     }
   }
@@ -176,7 +177,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     try {
       final userId = _supabase.auth.currentUser!.id;
-      // upsert, not update â€” the DB trigger usually creates the profile
+      // upsert, not update — the DB trigger usually creates the profile
       // row instantly, but upsert guarantees this works even if that
       // row isn't there yet for any reason. This is the actual fix for
       // fields silently failing to save.
@@ -186,7 +187,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'country_id': _selectedCountry!.id,
         'university_id': _selectedUniversity!.id,
         'speciality_id': _selectedSpeciality!.id,
-        // Residence is optional â€” most students don't live in a state
+        // Residence is optional — most students don't live in a state
         // residence, and "no residence" is a valid, first-class answer.
         'residence_id': _noResidence ? null : _selectedResidence?.id,
         'avatar_url': _avatarUrl,
@@ -201,6 +202,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         _submitting = false;
       });
     }
+  }
+
+  List<String> _yearOptionsFor(Speciality s) {
+    if (s.yearSystem == 'unified') {
+      return List.generate(s.maxYear, (i) => 'Year ${i + 1}');
+    }
+    final years = <String>[];
+    for (var i = 1; i <= s.maxYear && i <= 3; i++) {
+      years.add('L$i');
+    }
+    for (var i = 1; i <= (s.maxYear - 3); i++) {
+      years.add('M$i');
+    }
+    return years;
   }
 
   Widget _pickerField({
@@ -352,7 +367,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 child: IgnorePointer(
                   ignoring: _noResidence,
                   child: _pickerField(
-                    label: _loadingResidences ? 'Loading residencesâ€¦' : 'Residence (optional)',
+                    label: _loadingResidences ? 'Loading residences…' : 'Residence (optional)',
                     value: _selectedResidence != null
                         ? '${_selectedResidence!.name} (${_selectedResidence!.douName})'
                         : null,

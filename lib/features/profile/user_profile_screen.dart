@@ -183,7 +183,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               [
                 profile['university_name'],
                 profile['speciality_name'],
-                profile['country_name'],
               ].where((v) => v != null).join(' • '),
               textAlign: TextAlign.center,
               style: const TextStyle(

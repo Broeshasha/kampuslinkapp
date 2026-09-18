@@ -126,7 +126,7 @@ class _MyPostsTabState extends State<MyPostsTab> {
 
   Future<void> _sharePost(Map<String, dynamic> post) async {
     final username = _supabase.auth.currentUser?.userMetadata?['username'] ?? 'me';
-    final text = '${post['content']}\n\n— @$username on KampusLink';
+    final text = '${post['content']}\n\n -  @$username on KampusLink';
 
     try {
       final result = await SharePlus.instance.share(ShareParams(text: text));

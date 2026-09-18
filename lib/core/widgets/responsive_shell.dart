@@ -157,12 +157,36 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   Widget _notificationsButton() {
     return IconButton(
-      onPressed: () {
-        Navigator.of(context).push(
+      onPressed: () async {
+        await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const NotificationsScreen()),
         );
+        _loadUnreadCount();
       },
-      icon: const Icon(Icons.notifications_none, color: AppColors.textSecondary),
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.notifications_none, color: AppColors.textSecondary),
+          if (_unreadCount > 0)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.danger,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  _unreadCount > 9 ? '9+' : '$_unreadCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
