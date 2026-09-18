@@ -133,7 +133,7 @@ class _MyPostsTabState extends State<MyPostsTab> {
       if (result.status == ShareResultStatus.unavailable && mounted) {
         await Clipboard.setData(ClipboardData(text: text));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sharing not available here — copied to clipboard instead.')),
+          const SnackBar(content: Text('Sharing not available here - copied to clipboard instead.')),
         );
       }
     } catch (e) {
