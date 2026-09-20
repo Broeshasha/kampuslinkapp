@@ -11,7 +11,6 @@ import '../../core/widgets/fullscreen_image_viewer.dart';
 import '../../core/widgets/skeleton_loader.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/config/algeria_universities.dart';
-import '../../core/config/countries.dart';
 import 'my_posts_tab.dart';
 import 'my_listings_tab.dart';
 import 'blocked_users_screen.dart';
@@ -97,19 +96,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     });
   }
 
-  Future<void> _editCountry() async {
-    final result = await SearchablePicker.show<Country>(
-      context: context,
-      title: 'Select your country',
-      items: countries,
-      labelBuilder: (c) => c.name,
-    );
-    if (result == null) return;
-    final userId = _supabase.auth.currentUser!.id;
-    await _supabase.from('profiles').update({'country_id': result.id}).eq('id', userId);
-    _loadProfile();
-  }
-
   Future<void> _editUniversity() async {
     final result = await SearchablePicker.show<University>(
       context: context,
@@ -120,6 +106,36 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     if (result == null) return;
     final userId = _supabase.auth.currentUser!.id;
     await _supabase.from('profiles').update({'university_id': result.id}).eq('id', userId);
+    _loadProfile();
+  }
+
+  List<String> _yearOptionsFor(Speciality s) {
+    if (s.yearSystem == 'unified') {
+      return List.generate(s.maxYear, (i) => 'Year ${i + 1}');
+    }
+    final years = <String>[];
+    for (var i = 1; i <= s.maxYear && i <= 3; i++) {
+      years.add('L$i');
+    }
+    for (var i = 1; i <= (s.maxYear - 3); i++) {
+      years.add('M$i');
+    }
+    return years;
+  }
+
+  Future<void> _editYear() async {
+    final specialityId = _profile!['speciality_id'] as int?;
+    if (specialityId == null) return;
+    final speciality = algeriaSpecialities.firstWhere((s) => s.id == specialityId);
+    final result = await SearchablePicker.show<String>(
+      context: context,
+      title: 'Select your year',
+      items: _yearOptionsFor(speciality),
+      labelBuilder: (y) => y,
+    );
+    if (result == null) return;
+    final userId = _supabase.auth.currentUser!.id;
+    await _supabase.from('profiles').update({'academic_year': result}).eq('id', userId);
     _loadProfile();
   }
 
@@ -291,13 +307,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         padding: const EdgeInsets.all(20),
         children: [
           _sectionCard([
-            _editableRow('Country', _profile!['country_name'] ?? 'Not set', _editCountry),
-            const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('University', _profile!['university_name'] ?? 'Not set', _editUniversity),
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('City', _profile!['university_city'] ?? '—', null),
             const Divider(color: AppColors.border, height: 1, indent: 16),
             _editableRow('Speciality', _profile!['speciality_name'] ?? 'Not set', _editSpeciality),
+            const Divider(color: AppColors.border, height: 1, indent: 16),
+            _editableRow('Year', _profile!['academic_year'] ?? 'Not set', _editYear),
           ]),
 
           const SizedBox(height: 20),

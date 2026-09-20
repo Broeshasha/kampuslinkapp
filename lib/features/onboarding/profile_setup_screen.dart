@@ -9,7 +9,6 @@ import '../../core/widgets/responsive_page.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../core/config/algeria_universities.dart';
-import '../../core/config/countries.dart';
 import '../../core/config/upload_service.dart';
 import '../../core/config/image_processing_service.dart';
 import '../../core/config/residence_service.dart';
@@ -27,7 +26,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _usernameController = TextEditingController();
   Timer? _debounce;
 
-  Country? _selectedCountry;
   University? _selectedUniversity;
   Speciality? _selectedSpeciality;
   String? _selectedYear;
@@ -163,9 +161,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final username = _usernameController.text.trim();
     if (username.length < 3 ||
         _usernameAvailable != true ||
-        _selectedCountry == null ||
         _selectedUniversity == null ||
-        _selectedSpeciality == null) {
+        _selectedSpeciality == null ||
+        _selectedYear == null) {
       setState(() => _error = 'Fill in every field with a valid username.');
       return;
     }
@@ -184,9 +182,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       await _supabase.from('profiles').upsert({
         'id': userId,
         'username': username,
-        'country_id': _selectedCountry!.id,
         'university_id': _selectedUniversity!.id,
         'speciality_id': _selectedSpeciality!.id,
+        'academic_year': _selectedYear,
         // Residence is optional - most students don't live in a state
         // residence, and "no residence" is a valid, first-class answer.
         'residence_id': _noResidence ? null : _selectedResidence?.id,
@@ -328,22 +326,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             const SizedBox(height: 16),
 
             _pickerField(
-              label: 'Country',
-              value: _selectedCountry?.name,
-              onTap: () async {
-                final result = await SearchablePicker.show<Country>(
-                  context: context,
-                  title: 'Select your country',
-                  items: countries,
-                  labelBuilder: (c) => c.name,
-                  onNotListed: () => _submitMissingEntry('country'),
-                );
-                if (result != null) setState(() => _selectedCountry = result);
-              },
-            ),
-            const SizedBox(height: 16),
-
-            _pickerField(
               label: 'University',
               value: _selectedUniversity != null
                   ? '${_selectedUniversity!.name} (${_selectedUniversity!.city})'
@@ -417,9 +399,32 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   labelBuilder: (s) => s.name,
                   onNotListed: () => _submitMissingEntry('speciality'),
                 );
-                if (result != null) setState(() => _selectedSpeciality = result);
+                if (result != null) {
+                  setState(() {
+                    _selectedSpeciality = result;
+                    _selectedYear = null;
+                  });
+                }
               },
             ),
+
+            if (_selectedSpeciality != null) ...[
+              const SizedBox(height: 16),
+              _pickerField(
+                label: 'Year',
+                value: _selectedYear,
+                onTap: () async {
+                  final options = _yearOptionsFor(_selectedSpeciality!);
+                  final result = await SearchablePicker.show<String>(
+                    context: context,
+                    title: 'Select your year',
+                    items: options,
+                    labelBuilder: (y) => y,
+                  );
+                  if (result != null) setState(() => _selectedYear = result);
+                },
+              ),
+            ],
 
             if (_error != null) ...[
               const SizedBox(height: 16),
