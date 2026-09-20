@@ -16,7 +16,7 @@ import 'features/onboarding/google_signin_screen.dart';
 import 'features/onboarding/profile_setup_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/profile/profile_screen.dart';
-import 'features/community/community_screen.dart';
+import 'features/library/library_screen.dart';
 import 'features/marketplace/marketplace_screen.dart';
 import 'features/messages/messages_screen.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -101,7 +101,7 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   _RouteState _state = _RouteState.splash;
-  final _communityKey = GlobalKey<CommunityScreenState>();
+  final _libraryKey = GlobalKey<LibraryScreenState>();
   final _marketplaceKey = GlobalKey<MarketplaceScreenState>();
   late final StreamSubscription<AuthState> _authSub;
 
@@ -194,11 +194,11 @@ class _AuthGateState extends State<AuthGate> {
         return ResponsiveShell(
           screens: [
             const HomeScreen(),
-            CommunityScreen(key: _communityKey),
+            LibraryScreen(key: _libraryKey),
             const MessagesScreen(),
             MarketplaceScreen(key: _marketplaceKey),
           ],
-          communityKey: _communityKey,
+          libraryKey: _libraryKey,
           marketplaceKey: _marketplaceKey,
           onAvatarTap: () async {
             await Navigator.of(context).push(

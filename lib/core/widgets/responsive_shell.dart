@@ -4,19 +4,19 @@ import '../theme/app_theme.dart';
 import '../config/cached_fetch.dart';
 import 'kampus_mark.dart';
 import 'blurhash_image.dart';
-import '../../features/community/community_screen.dart';
+import '../../features/library/library_screen.dart';
 import '../../features/marketplace/marketplace_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 
 class ResponsiveShell extends StatefulWidget {
   final List<Widget> screens;
   final Future<void> Function()? onAvatarTap;
-  final GlobalKey<CommunityScreenState> communityKey;
+  final GlobalKey<LibraryScreenState> libraryKey;
   final GlobalKey<MarketplaceScreenState> marketplaceKey;
   const ResponsiveShell({
     super.key,
     required this.screens,
-    required this.communityKey,
+    required this.libraryKey,
     required this.marketplaceKey,
     this.onAvatarTap,
   });
@@ -80,13 +80,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
             ),
             ListTile(
-              leading: const Icon(Icons.groups_rounded, color: AppColors.accent),
-              title: const Text('Community post', style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.menu_book_rounded, color: AppColors.accent),
+              title: const Text('Library resource', style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(sheetContext);
                 setState(() => _selectedIndex = 1);
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  widget.communityKey.currentState?.openComposer();
+                  widget.libraryKey.currentState?.openUpload();
                 });
               },
             ),
@@ -110,7 +110,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   static const _destinations = [
     _NavItem(icon: Icons.home_rounded, label: 'Home'),
-    _NavItem(icon: Icons.groups_rounded, label: 'Community'),
+    _NavItem(icon: Icons.menu_book_rounded, label: 'Library'),
     _NavItem(icon: Icons.chat_bubble_rounded, label: 'Messages'),
     _NavItem(icon: Icons.storefront_rounded, label: 'Marketplace'),
   ];
