@@ -29,11 +29,13 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   int _selectedIndex = 0;
   String? _avatarUrl;
   String? _avatarBlurhash;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadAvatar();
+    _loadUnreadCount();
   }
 
   Future<void> _loadAvatar() async {
@@ -60,6 +62,23 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       });
     } catch (_) {
       // Keep whatever the cache gave us -- not worth surfacing an error for a nav icon.
+    }
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) return;
+      final data = await Supabase.instance.client
+          .from('notifications')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('read', false)
+          .timeout(const Duration(seconds: 6));
+      if (!mounted) return;
+      setState(() => _unreadCount = (data as List).length);
+    } catch (_) {
+      // Keep whatever count we already had -- not worth surfacing an error for a nav badge.
     }
   }
 
