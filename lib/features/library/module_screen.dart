@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import 'resource_viewer_screen.dart';
 
 class ModuleScreen extends StatefulWidget {
   final int moduleId;
@@ -71,8 +72,21 @@ class _ModuleScreenState extends State<ModuleScreen> {
   }
 
   void _openResource(Map<String, dynamic> resource) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Viewer coming soon.')),
+    final fileUrls = List<String>.from(resource['file_urls'] as List);
+    if (fileUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This resource has no file attached.')),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ResourceViewerScreen(
+          title: _typeLabel(resource['resource_type'] as String),
+          fileFormat: resource['file_format'] as String,
+          fileUrls: fileUrls,
+        ),
+      ),
     );
   }
 
