@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/config/cached_fetch.dart';
 import 'module_screen.dart';
+import 'upload_resource_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -29,9 +30,11 @@ class LibraryScreenState extends State<LibraryScreen> {
   }
 
   void openUpload() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Library uploads are coming soon.')),
-    );
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const UploadResourceScreen()),
+    ).then((added) {
+      if (added == true) _load();
+    });
   }
 
   Future<void> _load() async {
@@ -88,23 +91,51 @@ class LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _loadModules() async {
-    var query = _supabase
-        .from('study_modules')
-        .select('id, name, semester, ue_category, study_resources(count)');
-
-    if (!_browsingAll) {
-      query = query.eq('academic_year', _myYear as Object);
-      if (_myDomainId != null) {
-        query = query.or('domain_id.eq.$_myDomainId,speciality_id.eq.$_mySpecialityId');
-      } else {
-        query = query.eq('speciality_id', _mySpecialityId as Object);
-      }
+    if (_browsingAll) {
+      final data = await _supabase
+          .from('study_modules')
+          .select('id, name, semester, ue_category, study_resources(count)')
+          .order('semester')
+          .order('name');
+      if (!mounted) return;
+      setState(() {
+        _modules = List<Map<String, dynamic>>.from(data as List);
+        _loading = false;
+      });
+      return;
     }
 
-    final data = await query.order('semester').order('name');
+    // Prefer speciality-specific modules over domain-wide ones for this
+    // year. Some specialities (e.g. Arabic Literature, Journalism &
+    // Communication) have their own correct L1 content even though most
+    // of their domain shares one L1 -- if speciality-scoped rows exist
+    // for this year, domain-wide rows must NOT also be shown, or the
+    // student sees both the right and the wrong curriculum stacked
+    // together.
+    final specialityRows = await _supabase
+        .from('study_modules')
+        .select('id, name, semester, ue_category, study_resources(count)')
+        .eq('academic_year', _myYear as Object)
+        .eq('speciality_id', _mySpecialityId as Object)
+        .order('semester')
+        .order('name');
+
+    List<Map<String, dynamic>> modules = List<Map<String, dynamic>>.from(specialityRows as List);
+
+    if (modules.isEmpty && _myDomainId != null) {
+      final domainRows = await _supabase
+          .from('study_modules')
+          .select('id, name, semester, ue_category, study_resources(count)')
+          .eq('academic_year', _myYear as Object)
+          .eq('domain_id', _myDomainId as Object)
+          .order('semester')
+          .order('name');
+      modules = List<Map<String, dynamic>>.from(domainRows as List);
+    }
+
     if (!mounted) return;
     setState(() {
-      _modules = List<Map<String, dynamic>>.from(data as List);
+      _modules = modules;
       _loading = false;
     });
   }

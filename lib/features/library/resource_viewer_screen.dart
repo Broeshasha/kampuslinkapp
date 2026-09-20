@@ -5,6 +5,7 @@ import 'package:pdfx/pdfx.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 
 class ResourceViewerScreen extends StatefulWidget {
@@ -72,6 +73,19 @@ class _ResourceViewerScreenState extends State<ResourceViewerScreen> {
     }
   }
 
+  Future<void> _download() async {
+    final url = widget.fileFormat == 'image_set'
+        ? widget.fileUrls[_currentImagePage]
+        : widget.fileUrls.first;
+    final uri = Uri.parse(url);
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not start the download.')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _pdfController?.dispose();
@@ -85,19 +99,23 @@ class _ResourceViewerScreenState extends State<ResourceViewerScreen> {
       appBar: AppBar(
         title: Text(widget.title, overflow: TextOverflow.ellipsis),
         backgroundColor: AppColors.surface,
-        actions: widget.fileFormat == 'image_set' && widget.fileUrls.length > 1
-            ? [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: Center(
-                    child: Text(
-                      '${_currentImagePage + 1} / ${widget.fileUrls.length}',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                    ),
-                  ),
+        actions: [
+          if (widget.fileFormat == 'image_set' && widget.fileUrls.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  '${_currentImagePage + 1} / ${widget.fileUrls.length}',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
-              ]
-            : null,
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.download_rounded),
+            tooltip: 'Download',
+            onPressed: _download,
+          ),
+        ],
       ),
       body: _buildBody(),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import 'upload_resource_screen.dart';
 import 'resource_viewer_screen.dart';
 
 class ModuleScreen extends StatefulWidget {
@@ -91,9 +92,16 @@ class _ModuleScreenState extends State<ModuleScreen> {
   }
 
   void _uploadToThisModule() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Uploads are coming soon.')),
-    );
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UploadResourceScreen(
+          preselectedModuleId: widget.moduleId,
+          preselectedModuleName: widget.moduleName,
+        ),
+      ),
+    ).then((added) {
+      if (added == true) _load();
+    });
   }
 
   @override
