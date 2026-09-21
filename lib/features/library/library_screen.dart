@@ -48,13 +48,17 @@ class LibraryScreenState extends State<LibraryScreen> {
 
       final cached = await CachedFetch.readCacheMap('my_profile');
       Map<String, dynamic> profile;
-      if (cached != null) {
+      // Don't trust a cached profile that predates the speciality_id/
+      // academic_year fields -- an older cached copy would silently
+      // make Library look empty for every year, not just this one.
+      if (cached != null && cached.containsKey('speciality_id') && cached.containsKey('academic_year')) {
         profile = cached;
       } else {
         profile = await _supabase
             .rpc('get_my_profile', params: {'viewer_id': userId})
             .single()
             .timeout(const Duration(seconds: 8));
+        await CachedFetch.writeCacheMap('my_profile', profile);
       }
 
       final specialityId = profile['speciality_id'] as int?;

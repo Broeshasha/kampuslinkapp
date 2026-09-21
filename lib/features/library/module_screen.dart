@@ -25,17 +25,33 @@ class _ModuleScreenState extends State<ModuleScreen> {
     _load();
   }
 
+  static const _typeOrder = {
+    'cours': 0,
+    'td': 1,
+    'exercices_corriges': 2,
+    'exam': 3,
+    'notes': 4,
+    'memoire': 5,
+  };
+
   Future<void> _load() async {
     setState(() => _loading = true);
     final data = await _supabase
         .from('study_resources')
         .select()
-        .eq('module_id', widget.moduleId)
-        .order('trust_label')
-        .order('upvote_count', ascending: false);
+        .eq('module_id', widget.moduleId);
     if (!mounted) return;
+    final resources = List<Map<String, dynamic>>.from(data as List);
+    resources.sort((a, b) {
+      final typeA = _typeOrder[a['resource_type'] as String] ?? 99;
+      final typeB = _typeOrder[b['resource_type'] as String] ?? 99;
+      if (typeA != typeB) return typeA.compareTo(typeB);
+      final upvoteA = a['upvote_count'] as int? ?? 0;
+      final upvoteB = b['upvote_count'] as int? ?? 0;
+      return upvoteB.compareTo(upvoteA);
+    });
     setState(() {
-      _resources = List<Map<String, dynamic>>.from(data as List);
+      _resources = resources;
       _loading = false;
     });
   }

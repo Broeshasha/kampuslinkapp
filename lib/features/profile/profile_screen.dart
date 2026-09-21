@@ -11,7 +11,6 @@ import '../../core/widgets/fullscreen_image_viewer.dart';
 import '../../core/widgets/skeleton_loader.dart';
 import '../../core/widgets/searchable_picker.dart';
 import '../../core/config/algeria_universities.dart';
-import 'my_posts_tab.dart';
 import 'my_listings_tab.dart';
 import 'blocked_users_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -33,7 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _loadProfile();
   }
 
@@ -277,7 +276,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 unselectedLabelColor: AppColors.textSecondary,
                 tabs: const [
                   Tab(text: 'Settings'),
-                  Tab(text: 'My Posts'),
                   Tab(text: 'My Listings'),
                 ],
               ),
@@ -287,7 +285,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   controller: _tabController,
                   children: [
                     _settingsTab(),
-                    const MyPostsTab(),
                     const MyListingsTab(),
                   ],
                 ),

@@ -24,6 +24,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _priceController = TextEditingController();
   final _descController = TextEditingController();
   String _category = 'other';
+  String _visibility = 'university';
   bool _submitting = false;
   String? _error;
 
@@ -172,6 +173,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         'image_urls': readyPhotos.map((p) => p.url).toList(),
         'image_blurhashes': readyPhotos.map((p) => p.blurhash).toList(),
         'university_id': profile['university_id'],
+        'visibility': _visibility,
       }).timeout(const Duration(seconds: 8));
 
       if (mounted) Navigator.of(context).pop(true);
@@ -252,6 +254,35 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                         border: Border.all(color: selected ? AppColors.accent : AppColors.border),
                       ),
                       child: Text(c.$2,
+                          style: TextStyle(
+                              color: selected ? Colors.white : AppColors.textSecondary,
+                              fontSize: 13)),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+              const Text('Who can see this listing?',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ('university', 'My university only'),
+                  ('everyone', 'Everyone'),
+                ].map((v) {
+                  final selected = _visibility == v.$1;
+                  return GestureDetector(
+                    onTap: () => setState(() => _visibility = v.$1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.accent : AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: selected ? AppColors.accent : AppColors.border),
+                      ),
+                      child: Text(v.$2,
                           style: TextStyle(
                               color: selected ? Colors.white : AppColors.textSecondary,
                               fontSize: 13)),
