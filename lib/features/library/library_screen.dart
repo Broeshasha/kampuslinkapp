@@ -51,7 +51,7 @@ class LibraryScreenState extends State<LibraryScreen> {
       // Don't trust a cached profile that predates the speciality_id/
       // academic_year fields -- an older cached copy would silently
       // make Library look empty for every year, not just this one.
-      if (cached != null && cached.containsKey('speciality_id') && cached.containsKey('academic_year')) {
+      if (cached != null && cached['speciality_id'] != null && cached['academic_year'] != null) {
         profile = cached;
       } else {
         profile = await _supabase
