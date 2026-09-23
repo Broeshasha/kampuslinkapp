@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -151,47 +151,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _loadProfile();
   }
 
-  Future<void> _showLanguagePicker() async {
-    final userId = _supabase.auth.currentUser!.id;
-    final current = _profile?['preferred_language'] ?? 'en';
-
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Text('Language', style: TextStyle(color: Colors.white, fontSize: 16)),
-            ),
-            ListTile(
-              title: const Text('English', style: TextStyle(color: Colors.white)),
-              trailing: current == 'en' ? const Icon(Icons.check, color: AppColors.accent) : null,
-              onTap: () => Navigator.pop(context, 'en'),
-            ),
-            ListTile(
-              title: const Text('Français', style: TextStyle(color: Colors.white)),
-              trailing: current == 'fr' ? const Icon(Icons.check, color: AppColors.accent) : null,
-              onTap: () => Navigator.pop(context, 'fr'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (selected != null && selected != current) {
-      await _supabase.from('profiles').update({'preferred_language': selected}).eq('id', userId);
-      _loadProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved — full translation is coming soon.')),
-        );
-      }
-    }
-  }
-
   Future<void> _openLink(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -316,12 +275,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           const SizedBox(height: 20),
 
           _sectionCard([
-            _editableRow(
-              'Language',
-              (_profile!['preferred_language'] ?? 'en') == 'fr' ? 'Français' : 'English',
-              _showLanguagePicker,
-            ),
-            const Divider(color: AppColors.border, height: 1, indent: 16),
             _settingsRow('Notifications', Icons.notifications_none, onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const NotificationsScreen()),

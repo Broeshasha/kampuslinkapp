@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +11,6 @@ import 'core/config/auth_service.dart';
 import 'core/config/connectivity_service.dart';
 import 'core/config/outbox_service.dart';
 import 'core/config/notification_service.dart';
-import 'features/onboarding/language_screen.dart';
 import 'features/onboarding/google_signin_screen.dart';
 import 'features/onboarding/profile_setup_screen.dart';
 import 'features/home/home_screen.dart';
@@ -171,13 +170,7 @@ class _AuthGateState extends State<AuthGate> {
         return const SplashScreen();
 
       case _RouteState.needsAuth:
-        return LanguageScreen(
-          onContinue: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const GoogleSignInScreen()),
-            );
-          },
-        );
+        return const GoogleSignInScreen();
 
       case _RouteState.needsProfile:
         return ProfileSetupScreen(
