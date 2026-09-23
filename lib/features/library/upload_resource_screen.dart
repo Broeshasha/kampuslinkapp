@@ -209,9 +209,12 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add to Library')),
-      body: _prefillLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-          : ListView(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: _prefillLoading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              : ListView(
               padding: const EdgeInsets.all(20),
               children: [
                 const Text('Type', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
@@ -369,6 +372,8 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
                 ),
               ],
             ),
+        ),
+      ),
     );
   }
 

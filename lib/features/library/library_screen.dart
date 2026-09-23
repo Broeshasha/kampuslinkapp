@@ -33,11 +33,11 @@ class LibraryScreenState extends State<LibraryScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const UploadResourceScreen()),
     ).then((added) {
-      if (added == true) _load();
+      if (added == true) _load(forceRefresh: true);
     });
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     setState(() {
       _loading = true;
       _error = null;
@@ -83,7 +83,7 @@ class LibraryScreenState extends State<LibraryScreen> {
       _myDomainId = domainId;
       _myYear = year;
 
-      await _loadModules();
+      await _loadModules(forceRefresh: forceRefresh);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -94,48 +94,72 @@ class LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _loadModules() async {
+  // Keyed by mode + speciality/year, so switching Browse-all <-> mine, or
+  // the student's own speciality/year changing, naturally lands on a
+  // different cache entry instead of needing manual invalidation.
+  String get _modulesCacheKey =>
+      _browsingAll ? 'library_modules_all' : 'library_modules_${_mySpecialityId}_$_myYear';
+
+  // Cache-once: modules and their resource counts don't change often
+  // enough to justify hitting Supabase every time a student opens
+  // Library. Once cached, we trust it until the user pulls to refresh
+  // or uploads a resource (see openUpload's forceRefresh) -- not daily,
+  // not on every screen open.
+  Future<void> _loadModules({bool forceRefresh = false}) async {
+    final cacheKey = _modulesCacheKey;
+
+    if (!forceRefresh) {
+      final cached = await CachedFetch.readCache(cacheKey);
+      if (cached.isNotEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _modules = cached;
+          _loading = false;
+        });
+        return;
+      }
+    }
+
+    List<Map<String, dynamic>> modules;
+
     if (_browsingAll) {
       final data = await _supabase
           .from('study_modules')
           .select('id, name, semester, ue_category, study_resources(count)')
           .order('semester')
           .order('name');
-      if (!mounted) return;
-      setState(() {
-        _modules = List<Map<String, dynamic>>.from(data as List);
-        _loading = false;
-      });
-      return;
-    }
-
-    // Prefer speciality-specific modules over domain-wide ones for this
-    // year. Some specialities (e.g. Arabic Literature, Journalism &
-    // Communication) have their own correct L1 content even though most
-    // of their domain shares one L1 -- if speciality-scoped rows exist
-    // for this year, domain-wide rows must NOT also be shown, or the
-    // student sees both the right and the wrong curriculum stacked
-    // together.
-    final specialityRows = await _supabase
-        .from('study_modules')
-        .select('id, name, semester, ue_category, study_resources(count)')
-        .eq('academic_year', _myYear as Object)
-        .eq('speciality_id', _mySpecialityId as Object)
-        .order('semester')
-        .order('name');
-
-    List<Map<String, dynamic>> modules = List<Map<String, dynamic>>.from(specialityRows as List);
-
-    if (modules.isEmpty && _myDomainId != null) {
-      final domainRows = await _supabase
+      modules = List<Map<String, dynamic>>.from(data as List);
+    } else {
+      // Prefer speciality-specific modules over domain-wide ones for this
+      // year. Some specialities (e.g. Arabic Literature, Journalism &
+      // Communication) have their own correct L1 content even though most
+      // of their domain shares one L1 -- if speciality-scoped rows exist
+      // for this year, domain-wide rows must NOT also be shown, or the
+      // student sees both the right and the wrong curriculum stacked
+      // together.
+      final specialityRows = await _supabase
           .from('study_modules')
           .select('id, name, semester, ue_category, study_resources(count)')
           .eq('academic_year', _myYear as Object)
-          .eq('domain_id', _myDomainId as Object)
+          .eq('speciality_id', _mySpecialityId as Object)
           .order('semester')
           .order('name');
-      modules = List<Map<String, dynamic>>.from(domainRows as List);
+
+      modules = List<Map<String, dynamic>>.from(specialityRows as List);
+
+      if (modules.isEmpty && _myDomainId != null) {
+        final domainRows = await _supabase
+            .from('study_modules')
+            .select('id, name, semester, ue_category, study_resources(count)')
+            .eq('academic_year', _myYear as Object)
+            .eq('domain_id', _myDomainId as Object)
+            .order('semester')
+            .order('name');
+        modules = List<Map<String, dynamic>>.from(domainRows as List);
+      }
     }
+
+    await CachedFetch.writeCache(cacheKey, modules);
 
     if (!mounted) return;
     setState(() {
@@ -174,7 +198,7 @@ class LibraryScreenState extends State<LibraryScreen> {
 
     return RefreshIndicator(
       color: AppColors.accent,
-      onRefresh: _load,
+      onRefresh: () => _load(forceRefresh: true),
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(

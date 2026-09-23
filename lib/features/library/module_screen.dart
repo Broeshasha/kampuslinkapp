@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/config/cached_fetch.dart';
 import 'upload_resource_screen.dart';
 import 'resource_viewer_screen.dart';
 
@@ -34,8 +35,29 @@ class _ModuleScreenState extends State<ModuleScreen> {
     'memoire': 5,
   };
 
-  Future<void> _load() async {
+  String get _cacheKey => 'module_resources_${widget.moduleId}';
+
+  // Cache-once, not cache-first-then-refresh: once we have resources for
+  // this module cached, we trust them and skip Supabase entirely on
+  // future opens. Only a genuinely empty cache or an explicit pull-to-
+  // refresh (forceRefresh: true) hits the network. This is deliberate --
+  // module content doesn't change often enough to justify re-fetching
+  // every time a student opens a module they've already seen.
+  Future<void> _load({bool forceRefresh = false}) async {
     setState(() => _loading = true);
+
+    if (!forceRefresh) {
+      final cached = await CachedFetch.readCache(_cacheKey);
+      if (cached.isNotEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _resources = cached;
+          _loading = false;
+        });
+        return;
+      }
+    }
+
     final data = await _supabase
         .from('study_resources')
         .select()
@@ -50,6 +72,7 @@ class _ModuleScreenState extends State<ModuleScreen> {
       final upvoteB = b['upvote_count'] as int? ?? 0;
       return upvoteB.compareTo(upvoteA);
     });
+    await CachedFetch.writeCache(_cacheKey, resources);
     setState(() {
       _resources = resources;
       _loading = false;
@@ -116,7 +139,7 @@ class _ModuleScreenState extends State<ModuleScreen> {
         ),
       ),
     ).then((added) {
-      if (added == true) _load();
+      if (added == true) _load(forceRefresh: true);
     });
   }
 
@@ -124,25 +147,30 @@ class _ModuleScreenState extends State<ModuleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.moduleName)),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-          : _resources.isEmpty
-              ? _emptyState()
-              : RefreshIndicator(
-                  color: AppColors.accent,
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _resources.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) => _ResourceCard(
-                      resource: _resources[i],
-                      trustColor: _trustColor(_resources[i]['trust_label'] as String),
-                      typeLabel: _typeLabel(_resources[i]['resource_type'] as String),
-                      onTap: () => _openResource(_resources[i]),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              : _resources.isEmpty
+                  ? _emptyState()
+                  : RefreshIndicator(
+                      color: AppColors.accent,
+                      onRefresh: () => _load(forceRefresh: true),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: _resources.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, i) => _ResourceCard(
+                          resource: _resources[i],
+                          trustColor: _trustColor(_resources[i]['trust_label'] as String),
+                          typeLabel: _typeLabel(_resources[i]['resource_type'] as String),
+                          onTap: () => _openResource(_resources[i]),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.accent,
         onPressed: _uploadToThisModule,
