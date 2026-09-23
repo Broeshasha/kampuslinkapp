@@ -1,6 +1,8 @@
 ﻿import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UploadService {
@@ -13,10 +15,17 @@ class UploadService {
       return null;
     }
 
+    final mimeType = lookupMimeType(filename) ?? 'application/octet-stream';
+
     final request = http.MultipartRequest('POST', Uri.parse(_workerUrl))
       ..fields['folder'] = folder
       ..headers['Authorization'] = 'Bearer ${session.accessToken}'
-      ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename));
+      ..files.add(http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: filename,
+        contentType: MediaType.parse(mimeType),
+      ));
 
     final response = await request.send();
     final body = await response.stream.bytesToString();
