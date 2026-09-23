@@ -1,7 +1,7 @@
 ﻿name: kampuslink
 description: "KampusLink -- connecting students in Algeria with translated news, community, and a marketplace."
 publish_to: 'none'
-version: 1.0.2+4
+version: 1.0.2+5
 environment:
   sdk: ^3.13.0
 dependencies:
