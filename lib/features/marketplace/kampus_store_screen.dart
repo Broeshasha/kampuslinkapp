@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/skeleton_loader.dart';
 import 'kampus_store_product_screen.dart';
 import 'widgets/delivery_marquee_banner.dart';
 import 'widgets/whatsapp_question_bar.dart';
@@ -9,7 +10,7 @@ import 'widgets/floating_whatsapp_button.dart';
 
 // TODO: put your real KampusLink WhatsApp business number here,
 // international format, no + or spaces, e.g. '213555123456'
-const String kKampusStoreWhatsAppNumber = '213551757401';
+const String kKampusStoreWhatsAppNumber = '213000000000';
 
 class KampusStoreScreen extends StatefulWidget {
   const KampusStoreScreen({super.key});
@@ -20,13 +21,22 @@ class KampusStoreScreen extends StatefulWidget {
 
 class _KampusStoreScreenState extends State<KampusStoreScreen> {
   final _supabase = Supabase.instance.client;
-  List<Map<String, dynamic>> _products = [];
+  final _searchController = TextEditingController();
+  List<Map<String, dynamic>> _allProducts = [];
+  List<Map<String, dynamic>> _filtered = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _searchController.addListener(_applyFilter);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -40,12 +50,30 @@ class _KampusStoreScreenState extends State<KampusStoreScreen> {
           .timeout(const Duration(seconds: 8));
       if (!mounted) return;
       setState(() {
-        _products = List<Map<String, dynamic>>.from(data);
+        _allProducts = List<Map<String, dynamic>>.from(data);
         _loading = false;
       });
-    } catch (_) {
+      _applyFilter();
+    } catch (e) {
+      debugPrint('Kampus Store load failed: $e');
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _applyFilter() {
+    final query = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filtered = _allProducts;
+      } else {
+        _filtered = _allProducts.where((p) {
+          final name = (p['display_name'] ?? '').toString().toLowerCase();
+          final category = (p['category'] ?? '').toString().toLowerCase();
+          final desc = (p['display_description'] ?? '').toString().toLowerCase();
+          return name.contains(query) || category.contains(query) || desc.contains(query);
+        }).toList();
+      }
+    });
   }
 
   @override
@@ -56,6 +84,7 @@ class _KampusStoreScreenState extends State<KampusStoreScreen> {
           children: [
             const WhatsAppQuestionBar(phoneNumber: kKampusStoreWhatsAppNumber),
             const DeliveryMarqueeBanner(),
+            _searchBar(),
             Expanded(child: _body()),
           ],
         ),
@@ -64,21 +93,61 @@ class _KampusStoreScreenState extends State<KampusStoreScreen> {
     );
   }
 
+  Widget _searchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Search products...',
+          hintStyle: const TextStyle(color: AppColors.textSecondary),
+          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                  onPressed: () => _searchController.clear(),
+                )
+              : null,
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _body() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+      return GridView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.72,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, i) => SkeletonBox(height: double.infinity, borderRadius: BorderRadius.circular(14)),
+      );
     }
 
-    if (_products.isEmpty) {
+    if (_filtered.isEmpty) {
       return RefreshIndicator(
         color: AppColors.accent,
         onRefresh: _load,
         child: ListView(
-          children: const [
-            SizedBox(height: 200),
+          children: [
+            const SizedBox(height: 200),
             Center(
-              child: Text('No products available right now.',
-                  style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(
+                _allProducts.isEmpty ? 'No products available right now.' : 'No results for that search.',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
             ),
           ],
         ),
@@ -89,21 +158,21 @@ class _KampusStoreScreenState extends State<KampusStoreScreen> {
       color: AppColors.accent,
       onRefresh: _load,
       child: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           childAspectRatio: 0.72,
         ),
-        itemCount: _products.length,
-        itemBuilder: (context, i) => _productCard(_products[i]),
+        itemCount: _filtered.length,
+        itemBuilder: (context, i) => _productCard(_filtered[i]),
       ),
     );
   }
 
   Widget _productCard(Map<String, dynamic> product) {
-    final images = List<String>.from(product['images'] ?? []);
+    final images = (product['images'] is List) ? List<String>.from(product['images']) : <String>[];
     final imageUrl = images.isNotEmpty ? images.first : null;
 
     return GestureDetector(
@@ -125,7 +194,7 @@ class _KampusStoreScreenState extends State<KampusStoreScreen> {
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      placeholder: (_, __) => Container(color: AppColors.border),
+                      placeholder: (_, __) => const SkeletonBox(height: double.infinity),
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.border,
                         child: const Icon(Icons.image_not_supported, color: AppColors.textSecondary),
