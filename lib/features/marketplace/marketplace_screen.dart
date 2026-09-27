@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/blurhash_image.dart';
 import 'create_listing_screen.dart';
 import 'listing_detail_screen.dart';
+import 'kampus_store_screen.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -17,6 +18,7 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _listings = [];
   bool _loading = true;
+  int _tab = 1; // 0 = Student Listings, 1 = Kampus Store (default)
 
   @override
   void initState() {
@@ -61,8 +63,76 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
     if (created == true) _load();
   }
 
+  Widget _segmentedToggle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: Row(
+          children: [
+            Expanded(child: _segmentButton('Student Listings', 0)),
+            Expanded(child: _segmentButton('Kampus Store', 1)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _segmentButton(String label, int index) {
+    final selected = _tab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _tab = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : AppColors.textSecondary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Marketplace',
+                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
+              if (_tab == 0)
+                IconButton(
+                  onPressed: openCreate,
+                  icon: const Icon(Icons.add_circle, color: AppColors.accent, size: 28),
+                ),
+            ],
+          ),
+        ),
+        _segmentedToggle(),
+        Expanded(
+          child: _tab == 0 ? _studentListingsView() : const KampusStoreScreen(),
+        ),
+      ],
+    );
+  }
+
+  Widget _studentListingsView() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: AppColors.accent));
     }
@@ -72,22 +142,6 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
       onRefresh: _load,
       child: CustomScrollView(
         slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-            sliver: SliverToBoxAdapter(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Marketplace',
-                      style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
-                  IconButton(
-                    onPressed: openCreate,
-                    icon: const Icon(Icons.add_circle, color: AppColors.accent, size: 28),
-                  ),
-                ],
-              ),
-            ),
-          ),
           if (_listings.isEmpty)
             const SliverFillRemaining(
               child: Center(
@@ -164,7 +218,3 @@ class MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 }
-
-
-
-
