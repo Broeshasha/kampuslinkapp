@@ -14,6 +14,7 @@ import '../../core/config/algeria_universities.dart';
 import 'my_listings_tab.dart';
 import 'blocked_users_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../admin/kampus_store_orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Map<String, dynamic>? _profile;
   bool _loading = true;
   String? _error;
+  bool _isAdmin = false;
   late final TabController _tabController;
 
   @override
@@ -34,6 +36,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadProfile();
+    _checkAdmin();
+  }
+
+  Future<void> _checkAdmin() async {
+    try {
+      final userId = _supabase.auth.currentUser!.id;
+      final row = await _supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', userId)
+          .single()
+          .timeout(const Duration(seconds: 6));
+      if (mounted) setState(() => _isAdmin = row['is_admin'] == true);
+    } catch (e) {
+      debugPrint('Admin check failed (defaulting to non-admin): $e');
+    }
   }
 
   @override
@@ -304,6 +322,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
           const SizedBox(height: 20),
 
+          if (_isAdmin) ...[
+            _sectionCard([
+              _settingsRow('Kampus Store -- Incoming Orders', Icons.storefront_outlined, onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const KampusStoreOrdersScreen()),
+                );
+              }),
+            ]),
+            const SizedBox(height: 20),
+          ],
+
           _sectionCard([
             _settingsRow('Log out', Icons.logout, danger: true, onTap: () async {
               await NotificationService.clearToken();
@@ -435,12 +464,3 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 }
-
-
-
-
-
-
-
-
-
