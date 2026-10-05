@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/searchable_picker.dart';
+import '../../core/config/dropdz_locations_service.dart';
 
 class KampusStoreCheckoutScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -15,24 +17,99 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _wilayaController = TextEditingController();
-  final _communeController = TextEditingController();
   final _addressController = TextEditingController();
   int _quantity = 1;
   bool _submitting = false;
 
+  Wilaya? _selectedWilaya;
+  Commune? _selectedCommune;
+  List<Wilaya> _wilayas = [];
+  bool _loadingWilayas = true;
+  bool _loadingCommunes = false;
+  String? _locationError;
+
   @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _wilayaController.dispose();
-    _communeController.dispose();
-    _addressController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadWilayas();
+  }
+
+  Future<void> _loadWilayas() async {
+    setState(() {
+      _loadingWilayas = true;
+      _locationError = null;
+    });
+    try {
+      final wilayas = await DropdzLocationsService.getWilayas();
+      if (!mounted) return;
+      setState(() {
+        _wilayas = wilayas;
+        _loadingWilayas = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingWilayas = false;
+        _locationError = 'Could not load wilayas. Check your connection and try again.';
+      });
+    }
+  }
+
+  Future<void> _pickWilaya() async {
+    if (_wilayas.isEmpty) return;
+    final picked = await SearchablePicker.show<Wilaya>(
+      context: context,
+      title: 'Select your wilaya',
+      items: _wilayas,
+      labelBuilder: (w) => '${w.code} -- ${w.name}',
+    );
+    if (picked == null) return;
+
+    setState(() {
+      _selectedWilaya = picked;
+      _selectedCommune = null;
+      _loadingCommunes = true;
+    });
+
+    try {
+      await DropdzLocationsService.getCommunes(picked.id);
+    } finally {
+      if (mounted) setState(() => _loadingCommunes = false);
+    }
+  }
+
+  Future<void> _pickCommune() async {
+    if (_selectedWilaya == null) return;
+    List<Commune> communes;
+    try {
+      communes = await DropdzLocationsService.getCommunes(_selectedWilaya!.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load communes for that wilaya.')),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+
+    final picked = await SearchablePicker.show<Commune>(
+      context: context,
+      title: 'Select your commune',
+      items: communes,
+      labelBuilder: (c) => c.name,
+    );
+    if (picked != null) setState(() => _selectedCommune = picked);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedWilaya == null || _selectedCommune == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your wilaya and commune.')),
+      );
+      return;
+    }
 
     setState(() => _submitting = true);
     try {
@@ -46,8 +123,8 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
         'quantity': _quantity,
         'buyer_full_name': _nameController.text.trim(),
         'buyer_phone': _phoneController.text.trim(),
-        'buyer_wilaya': _wilayaController.text.trim(),
-        'buyer_commune': _communeController.text.trim(),
+        'buyer_wilaya': _selectedWilaya!.name,
+        'buyer_commune': _selectedCommune!.name,
         'buyer_address': _addressController.text.trim(),
         'status': 'pending_call',
       });
@@ -68,8 +145,8 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context)
-                  ..pop() // close product detail
-                  ..pop(); // close product screen back to grid
+                  ..pop()
+                  ..pop();
               },
               child: const Text('OK', style: TextStyle(color: AppColors.accent)),
             ),
@@ -96,6 +173,47 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
+      ),
+    );
+  }
+
+  Widget _pickerField({
+    required String label,
+    required String? value,
+    required bool loading,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: enabled && !loading ? onTap : null,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                value ?? label,
+                style: TextStyle(
+                  color: value != null ? Colors.white : AppColors.textSecondary,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            if (loading)
+              const SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+              )
+            else
+              Icon(Icons.arrow_drop_down,
+                  color: enabled ? AppColors.textSecondary : AppColors.border),
+          ],
+        ),
       ),
     );
   }
@@ -148,6 +266,7 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
                     style: const TextStyle(
                         color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 24),
+
                 TextFormField(
                   controller: _nameController,
                   style: const TextStyle(color: Colors.white),
@@ -163,28 +282,45 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _wilayaController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _fieldDecoration('Wilaya'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _communeController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _fieldDecoration('Commune'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                ),
-                const SizedBox(height: 12),
+
+                if (_locationError != null) ...[
+                  Text(_locationError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                  const SizedBox(height: 6),
+                  TextButton(onPressed: _loadWilayas, child: const Text('Retry')),
+                  const SizedBox(height: 6),
+                ] else if (_loadingWilayas) ...[
+                  const Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                  const SizedBox(height: 12),
+                ] else ...[
+                  _pickerField(
+                    label: 'Select wilaya',
+                    value: _selectedWilaya == null
+                        ? null
+                        : '${_selectedWilaya!.code} -- ${_selectedWilaya!.name}',
+                    loading: false,
+                    enabled: true,
+                    onTap: _pickWilaya,
+                  ),
+                  const SizedBox(height: 12),
+                  _pickerField(
+                    label: _selectedWilaya == null ? 'Select wilaya first' : 'Select commune',
+                    value: _selectedCommune?.name,
+                    loading: _loadingCommunes,
+                    enabled: _selectedWilaya != null,
+                    onTap: _pickCommune,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 TextFormField(
                   controller: _addressController,
                   style: const TextStyle(color: Colors.white),
                   maxLines: 2,
-                  decoration: _fieldDecoration('Full address'),
+                  decoration: _fieldDecoration('Street / building / landmark'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 24),
+
                 PrimaryButton(
                   label: 'Place Order (Cash on Delivery)',
                   loading: _submitting,
