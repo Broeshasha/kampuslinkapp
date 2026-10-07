@@ -8,11 +8,17 @@ import 'blurhash_image.dart';
 class CommentsSheet extends StatefulWidget {
   final String postId;
   final SupabaseClient supabase;
+  // 'community' (default) or 'news' -- decides which tables/RPC this
+  // sheet reads from and writes to. Offline queueing via OutboxService
+  // only supports 'community' right now; 'news' shows a plain error on
+  // failure instead of silently queueing into a shape that doesn't match.
+  final String contentType;
 
   const CommentsSheet({
     super.key,
     required this.postId,
     required this.supabase,
+    this.contentType = 'community',
   });
 
   @override
@@ -28,6 +34,11 @@ class CommentsSheetState extends State<CommentsSheet> {
 
   Map<String, String>? _replyingTo;
 
+  bool get _isNews => widget.contentType == 'news';
+  String get _commentsRpc => _isNews ? 'get_news_post_comments' : 'get_post_comments';
+  String get _commentsTable => _isNews ? 'post_comments' : 'community_comments';
+  String get _commentLikesTable => _isNews ? 'post_comment_likes' : 'comment_likes';
+
   @override
   void initState() {
     super.initState();
@@ -40,7 +51,7 @@ class CommentsSheetState extends State<CommentsSheet> {
 
       final data = await widget.supabase
           .rpc(
-            'get_post_comments',
+            _commentsRpc,
             params: {
               'post_id_param': widget.postId,
               'viewer_id': userId,
@@ -50,15 +61,18 @@ class CommentsSheetState extends State<CommentsSheet> {
 
       final serverComments = List<Map<String, dynamic>>.from(data);
 
-      final pendingLikes = await OutboxService.getAllPendingCommentLikes();
-      for (final c in serverComments) {
-        final pending = pendingLikes[c['id']];
-        if (pending != null) {
-          c['liked_by_viewer'] = pending;
+      if (!_isNews) {
+        final pendingLikes = await OutboxService.getAllPendingCommentLikes();
+        for (final c in serverComments) {
+          final pending = pendingLikes[c['id']];
+          if (pending != null) {
+            c['liked_by_viewer'] = pending;
+          }
         }
       }
 
-      final pending = await OutboxService.getPendingComments(widget.postId);
+      final pending =
+          _isNews ? <Map<String, dynamic>>[] : await OutboxService.getPendingComments(widget.postId);
 
       setState(() {
         _comments = [
@@ -81,7 +95,8 @@ class CommentsSheetState extends State<CommentsSheet> {
     } catch (e) {
       debugPrint('Comments load error: $e');
 
-      final pending = await OutboxService.getPendingComments(widget.postId);
+      final pending =
+          _isNews ? <Map<String, dynamic>>[] : await OutboxService.getPendingComments(widget.postId);
 
       setState(() {
         if (pending.isNotEmpty) {
@@ -134,39 +149,47 @@ class CommentsSheetState extends State<CommentsSheet> {
 
     try {
       await widget.supabase
-          .from('community_comments')
+          .from(_commentsTable)
           .insert({
             'post_id': widget.postId,
             'user_id': userId,
             'content': content,
-            'parent_comment_id': parentId,
+            if (!_isNews) 'parent_comment_id': parentId,
           })
           .timeout(const Duration(seconds: 8));
 
       await _load();
     } catch (e) {
       debugPrint('Comment send error: $e');
-      await OutboxService.queueComment(
-        widget.postId,
-        content,
-        parentCommentId: parentId,
-      );
-      setState(() {
-        _comments.add({
-          'id': null,
-          'content': content,
-          'created_at': DateTime.now().toIso8601String(),
-          'username': 'You',
-          'avatar_url': null,
-          'avatar_blurhash': null,
-          'like_count': 0,
-          'liked_by_viewer': false,
-          'parent_comment_id': parentId,
-          'pending': true,
+
+      if (_isNews) {
+        setState(() {
+          _error = 'Could not send your comment. Check your connection and try again.';
+          _replyingTo = wasReplyingTo;
         });
-        _error = null;
-        _replyingTo = wasReplyingTo;
-      });
+      } else {
+        await OutboxService.queueComment(
+          widget.postId,
+          content,
+          parentCommentId: parentId,
+        );
+        setState(() {
+          _comments.add({
+            'id': null,
+            'content': content,
+            'created_at': DateTime.now().toIso8601String(),
+            'username': 'You',
+            'avatar_url': null,
+            'avatar_blurhash': null,
+            'like_count': 0,
+            'liked_by_viewer': false,
+            'parent_comment_id': parentId,
+            'pending': true,
+          });
+          _error = null;
+          _replyingTo = wasReplyingTo;
+        });
+      }
     }
 
     setState(() => _sending = false);
@@ -190,19 +213,27 @@ class CommentsSheetState extends State<CommentsSheet> {
     try {
       if (alreadyLiked) {
         await widget.supabase
-            .from('comment_likes')
+            .from(_commentLikesTable)
             .delete()
             .eq('comment_id', commentId)
             .eq('user_id', userId);
       } else {
-        await widget.supabase.from('comment_likes').insert({
+        await widget.supabase.from(_commentLikesTable).insert({
           'comment_id': commentId,
           'user_id': userId,
         });
       }
     } catch (e) {
       debugPrint('Comment like toggle error: $e');
-      await OutboxService.queueCommentLike(commentId, !alreadyLiked);
+      if (!_isNews) {
+        await OutboxService.queueCommentLike(commentId, !alreadyLiked);
+      } else {
+        setState(() {
+          _comments[index]['liked_by_viewer'] = alreadyLiked;
+          _comments[index]['like_count'] =
+              (_comments[index]['like_count'] ?? 0) + (alreadyLiked ? 1 : -1);
+        });
+      }
     }
   }
 

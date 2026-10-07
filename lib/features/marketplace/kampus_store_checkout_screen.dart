@@ -61,7 +61,7 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
       context: context,
       title: 'Select your wilaya',
       items: _wilayas,
-      labelBuilder: (w) => '${w.code} -- ${w.name}',
+      labelBuilder: (w) => w.name,
     );
     if (picked == null) return;
 
@@ -99,7 +99,19 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
       items: communes,
       labelBuilder: (c) => c.name,
     );
-    if (picked != null) setState(() => _selectedCommune = picked);
+    if (picked == null) return;
+
+    setState(() => _selectedCommune = picked);
+
+    // Prefill the address field with "Commune, Wilaya" so the person only
+    // has to add street/building detail -- same convenience as location-picker
+    // apps like InDrive, without needing GPS or a map.
+    if (_addressController.text.trim().isEmpty && _selectedWilaya != null) {
+      _addressController.text = '${picked.name}, ${_selectedWilaya!.name}, ';
+      _addressController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _addressController.text.length),
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -296,7 +308,7 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
                     label: 'Select wilaya',
                     value: _selectedWilaya == null
                         ? null
-                        : '${_selectedWilaya!.code} -- ${_selectedWilaya!.name}',
+                        : _selectedWilaya!.name,
                     loading: false,
                     enabled: true,
                     onTap: _pickWilaya,
