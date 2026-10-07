@@ -18,6 +18,7 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+  final _referralController = TextEditingController();
   int _quantity = 1;
   bool _submitting = false;
 
@@ -138,6 +139,9 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
         'buyer_wilaya': _selectedWilaya!.name,
         'buyer_commune': _selectedCommune!.name,
         'buyer_address': _addressController.text.trim(),
+        'referral_code': _referralController.text.trim().isEmpty
+            ? null
+            : _referralController.text.trim(),
         'status': 'pending_call',
       });
 
@@ -330,6 +334,13 @@ class _KampusStoreCheckoutScreenState extends State<KampusStoreCheckoutScreen> {
                   maxLines: 2,
                   decoration: _fieldDecoration('Street / building / landmark'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+
+                TextFormField(
+                  controller: _referralController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _fieldDecoration('Referral code (optional)'),
                 ),
                 const SizedBox(height: 24),
 

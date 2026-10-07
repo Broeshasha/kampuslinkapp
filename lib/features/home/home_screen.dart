@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,6 +11,7 @@ import '../profile/user_profile_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/config/image_processing_service.dart';
 import '../../core/config/upload_service.dart';
+import '../../core/widgets/comments_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
   String _filter = 'All';
 
-  final _categories = const ['All', 'University', 'Residence', 'Opportunity', 'News'];
+  final _categories = const ['All', 'University', 'Residence', 'Opportunity', 'News', 'Community'];
 
   @override
   void initState() {
@@ -52,13 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
           : await _supabase.from('profiles').select('university_id').eq('id', userId).maybeSingle();
       final universityId = profile?['university_id'];
 
-      final posts = await _supabase
-          .from('posts')
-          .select()
-          .gt('expires_at', DateTime.now().toUtc().toIso8601String())
-          .order('created_at', ascending: false)
-          .limit(20)
-          .timeout(const Duration(seconds: 8));
+      final posts = userId == null
+          ? []
+          : await _supabase
+              .rpc('get_home_feed', params: {'viewer_id': userId, 'limit_count': 20})
+              .timeout(const Duration(seconds: 8));
 
       final dining = universityId == null
           ? null
@@ -256,6 +255,18 @@ class _PostCard extends StatefulWidget {
 
 class _PostCardState extends State<_PostCard> {
   bool _expanded = false;
+  late bool _liked;
+  late int _likeCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _liked = widget.post['liked_by_viewer'] == true;
+    _likeCount = (widget.post['like_count'] as num?)?.toInt() ?? 0;
+  }
+
+  bool get _isCommunity => widget.post['source'] == 'community';
+  String get _likesTable => _isCommunity ? 'community_likes' : 'post_likes';
 
   static ({Color color, String label, IconData icon}) _trustMeta(String trust) {
     switch (trust) {
@@ -282,6 +293,8 @@ class _PostCardState extends State<_PostCard> {
         return Icons.event_outlined;
       case 'telegram':
         return Icons.send_outlined;
+      case 'community':
+        return Icons.groups_outlined;
       default:
         return Icons.newspaper_outlined;
     }
@@ -331,6 +344,55 @@ class _PostCardState extends State<_PostCard> {
     }
   }
 
+  Future<void> _toggleLike() async {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final wasLiked = _liked;
+    setState(() {
+      _liked = !wasLiked;
+      _likeCount += wasLiked ? -1 : 1;
+    });
+
+    try {
+      if (wasLiked) {
+        await supabase
+            .from(_likesTable)
+            .delete()
+            .eq('post_id', widget.post['id'])
+            .eq('user_id', userId);
+      } else {
+        await supabase.from(_likesTable).insert({
+          'post_id': widget.post['id'],
+          'user_id': userId,
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _liked = wasLiked;
+        _likeCount += wasLiked ? 1 : -1;
+      });
+    }
+  }
+
+  void _openComments() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => CommentsSheet(
+        postId: widget.post['id'],
+        supabase: Supabase.instance.client,
+        contentType: _isCommunity ? 'community' : 'news',
+      ),
+    );
+  }
+
   /// True if [text] would need more than 2 lines at [maxWidth] with [style].
   bool _isOverflowing(String text, TextStyle style, double maxWidth) {
     final painter = TextPainter(
@@ -344,11 +406,13 @@ class _PostCardState extends State<_PostCard> {
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
-    final trust = _trustMeta(post['trust_label']);
+    final trust = _trustMeta(post['trust_label'] as String? ?? 'community');
     final imageUrl = post['image_url'] as String?;
     final content = post['content'] as String?;
     final sourceUrl = post['source_url'] as String?;
     final sourceName = post['source_name'] as String? ?? 'Source';
+    final title = post['title'] as String?;
+    final category = post['category'] as String? ?? 'community';
     final favicon = _faviconUrl(sourceUrl);
     const descStyle =
         TextStyle(color: AppColors.textSecondary, fontSize: 13.5, height: 1.45);
@@ -381,9 +445,9 @@ class _PostCardState extends State<_PostCard> {
               children: [
                 Row(
                   children: [
-                    Icon(_categoryIcon(post['category']), size: 15, color: AppColors.textSecondary),
+                    Icon(_categoryIcon(category), size: 15, color: AppColors.textSecondary),
                     const SizedBox(width: 6),
-                    Text((post['category'] as String).toUpperCase(),
+                    Text(category.toUpperCase(),
                         style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 10,
@@ -398,12 +462,39 @@ class _PostCardState extends State<_PostCard> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text(post['title'],
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        height: 1.3)),
+                if (_isCommunity) ...[
+                  Row(
+                    children: [
+                      ClipOval(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: post['author_avatar_url'] != null
+                              ? BlurHashImage(
+                                  imageUrl: post['author_avatar_url'],
+                                  blurhash: post['author_avatar_blurhash'] as String?,
+                                )
+                              : Container(
+                                  color: AppColors.background,
+                                  child: const Icon(Icons.person,
+                                      size: 15, color: AppColors.textSecondary),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('@${post['author_username'] ?? 'unknown'}',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ] else if (title != null)
+                  Text(title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3)),
                 if (content != null && content.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   LayoutBuilder(
@@ -435,22 +526,58 @@ class _PostCardState extends State<_PostCard> {
                       );
                     },
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.auto_awesome, size: 11, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        _expanded ? 'Summarized by AI' : 'AI',
-                        style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 10,
-                            fontStyle: FontStyle.italic),
-                      ),
-                    ],
-                  ),
+                  if (!_isCommunity) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.auto_awesome, size: 11, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          _expanded ? 'Summarized by AI' : 'AI',
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 10,
+                              fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _toggleLike,
+                      child: Row(
+                        children: [
+                          Icon(_liked ? Icons.favorite : Icons.favorite_border,
+                              size: 16, color: _liked ? AppColors.danger : AppColors.textSecondary),
+                          if (_likeCount > 0) ...[
+                            const SizedBox(width: 4),
+                            Text('$_likeCount',
+                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: _openComments,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.mode_comment_outlined,
+                              size: 16, color: AppColors.textSecondary),
+                          if ((post['comment_count'] as num? ?? 0) > 0) ...[
+                            const SizedBox(width: 4),
+                            Text('${post['comment_count']}',
+                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

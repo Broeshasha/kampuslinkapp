@@ -171,6 +171,18 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
           const SizedBox(height: 4),
           Text(o['buyer_phone'] ?? '',
               style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+          if (o['referral_code'] != null && (o['referral_code'] as String).trim().isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('Referral: ${o['referral_code']}',
+                  style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
