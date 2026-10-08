@@ -1,7 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
+
+// TODO: put your real order-submit Worker URL here once deployed
+const String kOrderSubmitWorkerUrl = 'https://order-submit.chidafarai06.workers.dev';
 
 class KampusStoreOrdersScreen extends StatefulWidget {
   const KampusStoreOrdersScreen({super.key});
@@ -73,6 +78,70 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
     _load();
   }
 
+  /// Saves the call notes, then asks the order-submit Worker to send this
+  /// order to DropDz. The order only leaves the inbox once DropDz has
+  /// actually accepted it; if anything fails it stays here so you can retry.
+  Future<void> _confirmAndSubmit(String orderId, String notes) async {
+    final userId = _supabase.auth.currentUser?.id;
+
+    try {
+      await _supabase.from('kampus_store_orders').update({
+        'call_notes': notes,
+        'called_at': DateTime.now().toIso8601String(),
+        'called_by': userId,
+      }).eq('id', orderId);
+    } catch (e) {
+      debugPrint('Saving call notes failed (continuing anyway): $e');
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Submitting to DropDz...')),
+      );
+    }
+
+    try {
+      final resp = await http
+          .post(
+            Uri.parse(kOrderSubmitWorkerUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'orderId': orderId}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      final data = jsonDecode(resp.body);
+      if (!mounted) return;
+
+      if (resp.statusCode == 200 && data['ok'] == true) {
+        final number = data['dropdzOrderNumber'];
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(number != null
+                ? 'Sent to DropDz: $number'
+                : 'Order was already sent to DropDz.'),
+          ),
+        );
+      } else {
+        final err = data['error'];
+        final message = err is Map ? (err['message'] ?? err['error'] ?? err.toString()) : err;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('DropDz rejected the order: ${message ?? 'unknown error'}'),
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not reach the order Worker: $e')),
+        );
+      }
+    }
+
+    _load();
+  }
+
   void _showNotesDialog(String orderId, String targetStatus) {
     final controller = TextEditingController();
     showDialog(
@@ -80,7 +149,7 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: Text(
-          targetStatus == 'confirmed_by_call' ? 'Confirm order' : 'Cancel order',
+          targetStatus == 'confirmed_by_call' ? 'Send to DropDz' : 'Cancel order',
           style: const TextStyle(color: Colors.white),
         ),
         content: TextField(
@@ -99,10 +168,14 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
-              _markStatus(orderId, targetStatus, notes: controller.text);
+              if (targetStatus == 'confirmed_by_call') {
+                _confirmAndSubmit(orderId, controller.text);
+              } else {
+                _markStatus(orderId, targetStatus, notes: controller.text);
+              }
             },
             child: Text(
-              targetStatus == 'confirmed_by_call' ? 'Confirm' : 'Cancel order',
+              targetStatus == 'confirmed_by_call' ? 'Send order' : 'Cancel order',
               style: TextStyle(
                 color: targetStatus == 'confirmed_by_call' ? AppColors.accent : AppColors.danger,
               ),
@@ -205,7 +278,7 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
                 : [
                     OutlinedButton(
                       onPressed: () => _showNotesDialog(o['id'], 'confirmed_by_call'),
-                      child: const Text('Confirm'),
+                      child: const Text('Call API -- Send to DropDz'),
                     ),
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),

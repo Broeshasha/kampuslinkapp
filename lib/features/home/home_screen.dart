@@ -78,7 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('Home _load() failed: $e\n$st');
       if (mounted) setState(() => _loading = false);
     }
   }
