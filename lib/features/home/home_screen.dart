@@ -163,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                       ..._filteredPosts.map((p) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: _PostCard(post: p),
+                            child: _PostCard(key: ValueKey(p['id']), post: p),
                           )),
                       if (_filteredPosts.isEmpty && _dining == null)
                         const Padding(
@@ -248,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
-  const _PostCard({required this.post});
+  const _PostCard({super.key, required this.post});
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -264,6 +264,17 @@ class _PostCardState extends State<_PostCard> {
     super.initState();
     _liked = widget.post['liked_by_viewer'] == true;
     _likeCount = (widget.post['like_count'] as num?)?.toInt() ?? 0;
+  }
+
+  @override
+  void didUpdateWidget(covariant _PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The feed shows the cached copy first, then swaps in fresh data.
+    // Re-read like state so the card never keeps the stale first copy.
+    if (!identical(oldWidget.post, widget.post)) {
+      _liked = widget.post['liked_by_viewer'] == true;
+      _likeCount = (widget.post['like_count'] as num?)?.toInt() ?? 0;
+    }
   }
 
   bool get _isCommunity => widget.post['source'] == 'community';
@@ -369,6 +380,20 @@ class _PostCardState extends State<_PostCard> {
           'user_id': userId,
         });
       }
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      if (e.code == '23505') {
+        // Already liked on the server (our copy was stale): keep it liked.
+        setState(() {
+          _liked = true;
+          _likeCount -= 1;
+        });
+        return;
+      }
+      setState(() {
+        _liked = wasLiked;
+        _likeCount += wasLiked ? 1 : -1;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {

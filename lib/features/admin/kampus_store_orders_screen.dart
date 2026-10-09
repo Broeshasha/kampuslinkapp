@@ -44,12 +44,25 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
     }
   }
 
-  Future<void> _callBuyer(String orderId, String phone) async {
+  Future<void> _callBuyer(String orderId, String phone, String status) async {
     final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-      await _markStatus(orderId, 'called');
+    bool launched = false;
+    try {
+      if (await canLaunchUrl(uri)) launched = await launchUrl(uri);
+    } catch (_) {}
+
+    if (!launched) {
+      // e.g. Chrome on a computer has no dialer -- show the number instead.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No dialer on this device. Call manually: $phone')),
+        );
+      }
+      return;
     }
+
+    // Just bookkeeping -- the Call API button below no longer depends on this.
+    if (status == 'pending_call') await _markStatus(orderId, 'called');
   }
 
   Future<void> _whatsappBuyer(String phone) async {
@@ -216,7 +229,7 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
   }
 
   Widget _orderCard(Map<String, dynamic> o) {
-    final isPending = o['status'] == 'pending_call';
+    final wasCalled = o['status'] == 'called';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -229,8 +242,24 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(o['buyer_full_name'] ?? '--',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+          Row(
+            children: [
+              Expanded(
+                child: Text(o['buyer_full_name'] ?? '--',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+              ),
+              if (wasCalled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text('Called',
+                      style: TextStyle(color: Color(0xFF25D366), fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text('Wants: ${o['product_display_name'] ?? '--'} (x${o['quantity']})',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
@@ -257,35 +286,49 @@ class _KampusStoreOrdersScreenState extends State<KampusStoreOrdersScreen> {
             ),
           ],
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: isPending
-                ? [
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.call, size: 17),
-                      label: const Text('Call'),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
-                      onPressed: () => _callBuyer(o['id'], o['buyer_phone']),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.chat, size: 17),
-                      label: const Text('WhatsApp'),
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
-                      onPressed: () => _whatsappBuyer(o['buyer_phone']),
-                    ),
-                  ]
-                : [
-                    OutlinedButton(
-                      onPressed: () => _showNotesDialog(o['id'], 'confirmed_by_call'),
-                      child: const Text('Call API -- Send to DropDz'),
-                    ),
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
-                      onPressed: () => _showNotesDialog(o['id'], 'cancelled'),
-                      child: const Text('Cancel'),
-                    ),
-                  ],
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.call, size: 17),
+                  label: const Text('Call'),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
+                  onPressed: () => _callBuyer(o['id'], o['buyer_phone'], o['status']),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.chat, size: 17),
+                  label: const Text('WhatsApp'),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                  onPressed: () => _whatsappBuyer(o['buyer_phone']),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.send, size: 17),
+              label: const Text('Call API -- Send to DropDz'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              onPressed: () => _showNotesDialog(o['id'], 'confirmed_by_call'),
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+              onPressed: () => _showNotesDialog(o['id'], 'cancelled'),
+              child: const Text('Cancel order'),
+            ),
           ),
         ],
       ),
