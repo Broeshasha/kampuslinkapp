@@ -104,3 +104,13 @@ function Show-Where {
   git log --oneline -5 | Out-Host
 }
 Write-Host 'KampusLink helpers loaded: Write-Kampus, Replace-InFile, Step-Check, Step-Commit, Show-Where' -ForegroundColor Cyan
+
+# Push the current branch and PROVE GitHub has the same commit (no red noise).
+function Step-Push {
+  $ErrorActionPreference = 'Continue'
+  git push --quiet 2>&1 | Out-Null
+  $local = (git rev-parse HEAD).Trim()
+  $remote = (git rev-parse '@{u}' 2>$null)
+  if ($local -eq $remote) { Write-Host ('PUSHED OK: ' + $local.Substring(0, 7)) -ForegroundColor Green }
+  else { Write-Host ('PUSH NOT CONFIRMED: local ' + $local.Substring(0, 7) + ' / github ' + $remote) -ForegroundColor Red }
+}

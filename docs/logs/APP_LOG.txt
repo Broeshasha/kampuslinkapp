@@ -34,3 +34,8 @@ NEXT: WP2 foundations (tokens light+dark, l10n en/fr/ar + Cairo, go_router 3-tab
 DID: flutter_riverpod + flutter_localizations + intl; gen-l10n (lib/l10n en/fr/ar); LocaleController (saved choice, else phone language, else fr: D-012); temporary splash with language chips; Step-Check now sets $KampusCheckOk for auto-commit.
 TESTED: 3 tests (English start, instant Arabic RTL, fallback to French).
 NEXT: WP2.2 design tokens + light/dark themes following the phone (D-011).
+[2026-10-19 15:30] LANE: B1 | AI/Person: founder + Claude | WP: 2.2 theme
+DID: tokens.dart (space, radius, motion, breakpoints 600/840/720, 12 module accents); KampusColors dark+light ThemeExtension (context.kc); ThemeMode.system (D-011); splash uses theme colours; Step-Push helper.
+TESTED: 7 tests (l10n x3, theme follows phone x2, WCAG 4.5 text contrast, module accents).
+RISKS: white on dark accent button = 3.9:1 (fine for bold 16+, recheck in design pass).
+NEXT: WP2.3 fonts (Cairo + Noto fallbacks bundled offline).

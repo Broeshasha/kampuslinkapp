@@ -13,6 +13,7 @@ class SplashPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final current = Localizations.localeOf(context).languageCode;
+    final kc = context.kc;
     final names = {
       'ar': l10n.languageNameAr,
       'fr': l10n.languageNameFr,
@@ -28,8 +29,8 @@ class SplashPage extends ConsumerWidget {
               children: [
                 Text(
                   l10n.appTitle,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: kc.textPrimary,
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
                   ),
@@ -38,15 +39,12 @@ class SplashPage extends ConsumerWidget {
                 Text(
                   l10n.splashTagline,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: kc.textSecondary, fontSize: 16),
                 ),
                 const SizedBox(height: 32),
                 Text(
                   l10n.languageLabel,
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: kc.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
