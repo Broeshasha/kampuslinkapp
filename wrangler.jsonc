@@ -1,0 +1,10 @@
+{
+  // Cloudflare Workers Builds: serve the Flutter web build as static assets.
+  "name": "kampuslinkapp",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./build/web",
+    // go_router deep links (/modules/12) must load index.html, not 404
+    "not_found_handling": "single-page-application"
+  }
+}
