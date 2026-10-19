@@ -42,3 +42,10 @@ const moduleAccents = <Color>[
 
 Color moduleAccent(int moduleId) =>
     moduleAccents[moduleId.abs() % moduleAccents.length];
+
+/// Bundled fonts (offline). Cairo for Arabic + Latin; Noto fills the gaps
+/// (Greek, modifier letters like U+1D35, arrows like U+27F6, symbols).
+abstract final class KFonts {
+  static const family = 'Cairo';
+  static const fallback = ['NotoSans', 'NotoSansMath', 'NotoSansSymbols'];
+}

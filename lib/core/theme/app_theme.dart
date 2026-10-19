@@ -129,6 +129,8 @@ abstract final class AppTheme {
         );
     return ThemeData(
       useMaterial3: true,
+      fontFamily: KFonts.family,
+      fontFamilyFallback: KFonts.fallback,
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: c.background,

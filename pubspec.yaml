@@ -44,6 +44,27 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/fonts/OFL-Cairo.txt
+    - assets/fonts/OFL-Noto.txt
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
+    - family: NotoSansMath
+      fonts:
+        - asset: assets/fonts/NotoSansMath-Regular.ttf
+    - family: NotoSansSymbols
+      fonts:
+        - asset: assets/fonts/NotoSansSymbols-Regular.ttf
 
 flutter_launcher_icons:
   android: true

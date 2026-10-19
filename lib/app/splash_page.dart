@@ -41,6 +41,12 @@ class SplashPage extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: kc.textSecondary, fontSize: 16),
                 ),
+                const SizedBox(height: 16),
+                // Temporary glyph check (CONTENT_FORMAT 2): must show NO empty boxes.
+                Text(
+                  'H\u2082SO\u2084   Na\u2082\u1D35O   \u27F6   \u21CC   \u0394H',
+                  style: TextStyle(color: kc.accentText, fontSize: 18),
+                ),
                 const SizedBox(height: 32),
                 Text(
                   l10n.languageLabel,
