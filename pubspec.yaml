@@ -34,12 +34,16 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   firebase_crashlytics: ^5.4.0
+  drift_flutter: ^0.3.1
+  uuid: ^4.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
+  drift_dev: ^2.35.1
+  build_runner: ^2.16.2
 flutter:
   generate: true
   uses-material-design: true

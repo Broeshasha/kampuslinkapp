@@ -59,3 +59,7 @@ NEXT: WP2.6b Firebase init + Crashlytics sink (needs founder OK: adds the Crashl
 DID: firebase_crashlytics; initFirebase() (5 s timeout, never throws, skipped on web) plugs CrashlyticsSink into appLog; crashlytics gradle plugin 3.0.8; debug page "Send test report" button; main.dart rewritten.
 TESTED: analyze clean, 28 tests pass. Android build NOT run (too slow on this PC): first flutter run will confirm the gradle change.
 NEXT: WP3 data layer (Drift db + bundle download + outbox + sync).
+[2026-10-19 23:30] LANE: D1 | AI/Person: founder + Claude | WP: 3a data layer
+DID: drift + drift_flutter + uuid (+ drift_dev, build_runner); AppDatabase (12 tables, web options ready); BundleImporter (schema_version 2, one transaction, refuses newer schema); Leitner mirror of review_card; OutboxRepository (replaceKey, backoff 5s/30s/2m/10m/15m, applied/duplicate/rejected) + OutboxSync (200/batch, single flight, unanswered ops retried); ProgressRepository (review, lesson_done, reading_position, study_time: local first + outbox in one transaction); Riverpod providers; android/.kotlin ignored.
+TESTED: +12 tests (leitner x3, bundle import x3, outbox/progress x6), all pass.
+NEXT: WP3b Supabase init + get_my_modules/get_module_bundle download + sync triggers, and the Modules tab showing the real 20 modules from the local DB.

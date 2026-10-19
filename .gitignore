@@ -56,3 +56,6 @@ android/key.properties
 
 # course content with unknown rights: local only (D-013)
 fixtures/*.json
+
+# Kotlin compiler session files (Android build)
+android/.kotlin/
