@@ -1,0 +1,15 @@
+{
+  "@@locale": "en",
+  "appTitle": "KampusLink",
+  "@appTitle": { "description": "App name, never translated" },
+  "splashTagline": "Study smarter. Even offline.",
+  "@splashTagline": { "description": "One-line promise under the logo" },
+  "languageLabel": "Language",
+  "@languageLabel": { "description": "Title above the language picker" },
+  "languageNameAr": "\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
+  "@languageNameAr": { "description": "Always written in Arabic" },
+  "languageNameFr": "Fran\u00e7ais",
+  "@languageNameFr": { "description": "Always written in French" },
+  "languageNameEn": "English",
+  "@languageNameEn": { "description": "Always written in English" }
+}

@@ -1,34 +1,17 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/theme/app_theme.dart';
+import 'app/app.dart';
+import 'core/l10n/locale_controller.dart';
 
-/// WP1 purge: empty shell. The real bootstrap (Firebase, Supabase, Drift,
-/// Riverpod, router, l10n) arrives in WP2.
-void main() {
-  runApp(const KampusLinkApp());
-}
-
-class KampusLinkApp extends StatelessWidget {
-  const KampusLinkApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KampusLink',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'KampusLink',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(
+    ProviderScope(
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+      child: const KampusLinkApp(),
+    ),
+  );
 }

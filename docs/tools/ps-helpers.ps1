@@ -55,6 +55,7 @@ function Replace-InFile {
 # pub get + format + analyze + tests, then a one-line summary to paste back.
 function Step-Check {
   param([switch]$SkipTests)
+  $global:KampusCheckOk = $false
   Write-Host '== flutter pub get ==' -ForegroundColor Cyan
   flutter pub get | Select-Object -Last 2 | Out-Host
   if ($LASTEXITCODE -ne 0) { throw 'flutter pub get failed' }
@@ -79,6 +80,7 @@ function Step-Check {
     } else { $testNote = 'no test folder yet' }
   }
 
+  $global:KampusCheckOk = ($analyzeExit -eq 0 -and $testExit -eq 0)
   $analyzeNote = if ($analyzeExit -eq 0) { 'clean' } else { 'ISSUES' }
   $color = if ($analyzeExit -eq 0 -and $testExit -eq 0) { 'Green' } else { 'Red' }
   Write-Host ("STEP-CHECK SUMMARY: analyze=" + $analyzeNote + " | tests=" + $testNote) -ForegroundColor $color

@@ -30,3 +30,7 @@ DID: deleted 57 old lib files + 14 root scripts; removed 6 packages; removed sha
 FILES: lib/main.dart, test/widget_test.dart, pubspec.yaml, AndroidManifest.xml, docs/logs/PURGE_MAP.txt, docs/tools/ps-helpers.ps1
 TESTED: analyze clean, 1 test pass. Identity untouched (applicationId, signing, google-services, versionCode 5).
 NEXT: WP2 foundations (tokens light+dark, l10n en/fr/ar + Cairo, go_router 3-tab shell, errors, logger, connectivity).
+[2026-10-19 15:00] LANE: B1 | AI/Person: founder + Claude | WP: 2.1 l10n
+DID: flutter_riverpod + flutter_localizations + intl; gen-l10n (lib/l10n en/fr/ar); LocaleController (saved choice, else phone language, else fr: D-012); temporary splash with language chips; Step-Check now sets $KampusCheckOk for auto-commit.
+TESTED: 3 tests (English start, instant Arabic RTL, fallback to French).
+NEXT: WP2.2 design tokens + light/dark themes following the phone (D-011).
