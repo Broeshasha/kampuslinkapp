@@ -11,5 +11,17 @@
   "languageNameFr": "Fran\u00e7ais",
   "@languageNameFr": { "description": "Always written in French" },
   "languageNameEn": "English",
-  "@languageNameEn": { "description": "Always written in English" }
+  "@languageNameEn": { "description": "Always written in English" },
+  "tabHome": "Home",
+  "@tabHome": { "description": "Bottom tab: flashcard feed" },
+  "tabModules": "Modules",
+  "@tabModules": { "description": "Bottom tab: the student's modules (Arabic: maqayis)" },
+  "tabProfile": "Profile",
+  "@tabProfile": { "description": "Bottom tab: account and settings" },
+  "comingSoon": "Coming soon",
+  "@comingSoon": { "description": "Placeholder under a screen that is not built yet" },
+  "modulesPlaceholder": "Your modules, lessons, library and chat",
+  "@modulesPlaceholder": { "description": "Placeholder title on the Modules tab" },
+  "profilePlaceholder": "Your account, language and reminders",
+  "@profilePlaceholder": { "description": "Placeholder title on the Profile tab" }
 }

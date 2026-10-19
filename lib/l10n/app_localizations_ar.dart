@@ -26,4 +26,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get languageNameEn => 'English';
+
+  @override
+  String get tabHome => 'الرئيسية';
+
+  @override
+  String get tabModules => 'المقاييس';
+
+  @override
+  String get tabProfile => 'حسابي';
+
+  @override
+  String get comingSoon => 'قريبًا';
+
+  @override
+  String get modulesPlaceholder => 'مقاييسك، دروسك، مكتبتك والدردشة';
+
+  @override
+  String get profilePlaceholder => 'حسابك، لغتك وتذكيراتك';
 }

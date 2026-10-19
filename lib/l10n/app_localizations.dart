@@ -135,6 +135,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get languageNameEn;
+
+  /// Bottom tab: flashcard feed
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get tabHome;
+
+  /// Bottom tab: the student's modules (Arabic: maqayis)
+  ///
+  /// In en, this message translates to:
+  /// **'Modules'**
+  String get tabModules;
+
+  /// Bottom tab: account and settings
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get tabProfile;
+
+  /// Placeholder under a screen that is not built yet
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoon;
+
+  /// Placeholder title on the Modules tab
+  ///
+  /// In en, this message translates to:
+  /// **'Your modules, lessons, library and chat'**
+  String get modulesPlaceholder;
+
+  /// Placeholder title on the Profile tab
+  ///
+  /// In en, this message translates to:
+  /// **'Your account, language and reminders'**
+  String get profilePlaceholder;
 }
 
 class _AppLocalizationsDelegate

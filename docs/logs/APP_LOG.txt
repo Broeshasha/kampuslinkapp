@@ -43,3 +43,7 @@ NEXT: WP2.3 fonts (Cairo + Noto fallbacks bundled offline).
 DID: bundled Cairo 400/600/700 (static instances made from the Google Fonts variable file) + NotoSans 400/700, NotoSansMath, NotoSansSymbols (+ OFL licences, registered in LicenseRegistry). Theme fontFamily Cairo + fallbacks. Temporary glyph line on splash.
 TESTED: 9 tests. Coverage check on fixture chapter 02: 96 distinct non-ASCII chars, 0 missing (Cairo 78, NotoSans 13, NotoSansMath 5). Fonts ~3 MB.
 NEXT: WP2.4 go_router shell: 3 tabs (Home, Modules, Profile), responsive bar/rail, tab state kept.
+[2026-10-19 16:30] LANE: B1 | AI/Person: founder + Claude | WP: 2.4 shell
+DID: go_router StatefulShellRoute (exactly 3 branches /home /modules /profile); AppShell responsive (bar <600, rail 600-840, extended rail >=840); MaxWidth 720; ComingSoon placeholder; LanguagePicker moved to Profile; splash removed; nav themes; wrangler.jsonc for Cloudflare preview builds.
+TESTED: 21 tests incl. 10 responsive runs (320x568, 360x800, 412x915, 768x1024, 1280x800 at text x1 and x1.5) with zero overflow, tab state kept.
+NEXT: WP2.5 errors + logging (AppFailure, global handlers, friendly error page, Crashlytics).

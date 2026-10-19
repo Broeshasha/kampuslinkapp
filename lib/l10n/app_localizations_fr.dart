@@ -26,4 +26,22 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get languageNameEn => 'English';
+
+  @override
+  String get tabHome => 'Accueil';
+
+  @override
+  String get tabModules => 'Modules';
+
+  @override
+  String get tabProfile => 'Profil';
+
+  @override
+  String get comingSoon => 'Bientôt disponible';
+
+  @override
+  String get modulesPlaceholder => 'Tes modules, leçons, bibliothèque et chat';
+
+  @override
+  String get profilePlaceholder => 'Ton compte, ta langue et tes rappels';
 }

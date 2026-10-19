@@ -5,5 +5,11 @@
   "languageLabel": "Langue",
   "languageNameAr": "\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
   "languageNameFr": "Fran\u00e7ais",
-  "languageNameEn": "English"
+  "languageNameEn": "English",
+  "tabHome": "Accueil",
+  "tabModules": "Modules",
+  "tabProfile": "Profil",
+  "comingSoon": "Bient\u00f4t disponible",
+  "modulesPlaceholder": "Tes modules, le\u00e7ons, biblioth\u00e8que et chat",
+  "profilePlaceholder": "Ton compte, ta langue et tes rappels"
 }

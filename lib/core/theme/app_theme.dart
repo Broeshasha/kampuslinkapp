@@ -160,6 +160,14 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(KRadius.chip),
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: c.surface,
+        indicatorColor: c.accent.withValues(alpha: 0.18),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: c.background,
+        indicatorColor: c.accent.withValues(alpha: 0.18),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: c.accent,
