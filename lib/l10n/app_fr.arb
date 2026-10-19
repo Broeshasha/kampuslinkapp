@@ -11,5 +11,15 @@
   "tabProfile": "Profil",
   "comingSoon": "Bient\u00f4t disponible",
   "modulesPlaceholder": "Tes modules, le\u00e7ons, biblioth\u00e8que et chat",
-  "profilePlaceholder": "Ton compte, ta langue et tes rappels"
+  "profilePlaceholder": "Ton compte, ta langue et tes rappels",
+  "errorTitle": "Un probl\u00e8me est survenu",
+  "errorOffline": "Tu es hors ligne. Connecte-toi \u00e0 Internet et r\u00e9essaie.",
+  "errorSession": "Ta session a expir\u00e9. Reconnecte-toi.",
+  "errorForbidden": "Tu n'as pas acc\u00e8s \u00e0 ceci.",
+  "errorNotFound": "Ce contenu n'est plus disponible.",
+  "errorRateLimited": "Doucement ! R\u00e9essaie dans une minute.",
+  "errorServer": "Notre serveur a un souci. R\u00e9essaie dans un instant.",
+  "errorUnknown": "Une erreur inattendue s'est produite. R\u00e9essaie.",
+  "retry": "R\u00e9essayer",
+  "loading": "Chargement\u2026"
 }

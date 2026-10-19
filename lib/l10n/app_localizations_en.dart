@@ -44,4 +44,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profilePlaceholder => 'Your account, language and reminders';
+
+  @override
+  String get errorTitle => 'Something went wrong';
+
+  @override
+  String get errorOffline =>
+      'You\'re offline. Connect to the internet and try again.';
+
+  @override
+  String get errorSession => 'Your session ended. Please sign in again.';
+
+  @override
+  String get errorForbidden => 'You don\'t have access to this.';
+
+  @override
+  String get errorNotFound => 'This is no longer available.';
+
+  @override
+  String get errorRateLimited =>
+      'Slow down a little and try again in a minute.';
+
+  @override
+  String get errorServer => 'Our server had a problem. Try again in a moment.';
+
+  @override
+  String get errorUnknown => 'Something unexpected happened. Try again.';
+
+  @override
+  String get retry => 'Try again';
+
+  @override
+  String get loading => 'Loading…';
 }

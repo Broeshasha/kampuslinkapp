@@ -44,4 +44,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profilePlaceholder => 'حسابك، لغتك وتذكيراتك';
+
+  @override
+  String get errorTitle => 'حدث خطأ ما';
+
+  @override
+  String get errorOffline => 'أنت غير متصل. اتصل بالإنترنت وحاول مجددًا.';
+
+  @override
+  String get errorSession => 'انتهت جلستك. يرجى تسجيل الدخول من جديد.';
+
+  @override
+  String get errorForbidden => 'ليس لديك صلاحية الوصول إلى هذا.';
+
+  @override
+  String get errorNotFound => 'هذا المحتوى لم يعد متاحًا.';
+
+  @override
+  String get errorRateLimited => 'تمهّل قليلًا وحاول بعد دقيقة.';
+
+  @override
+  String get errorServer => 'حدثت مشكلة في الخادم. حاول بعد لحظات.';
+
+  @override
+  String get errorUnknown => 'حدث أمر غير متوقع. حاول مجددًا.';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get loading => 'جارٍ التحميل…';
 }

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -27,9 +29,17 @@ class ProfilePage extends StatelessWidget {
             const SizedBox(height: KSpace.xl),
             // Temporary glyph check (CONTENT_FORMAT 2): must show NO empty boxes.
             Text(
-              'H\u2082SO\u2084   Na\u2082\u1D35O   \u27F6   \u21CC   \u0394H',
+              '4Na + O\u2082 \u27F6 2Na\u2082\u1D35O   \u21CC   \u0394H',
+              textAlign: TextAlign.center,
               style: TextStyle(color: kc.accentText, fontSize: 18),
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: KSpace.lg),
+              TextButton(
+                onPressed: () => context.go('/profile/states'),
+                child: const Text('UI states (debug)'),
+              ),
+            ],
           ],
         ),
       ),

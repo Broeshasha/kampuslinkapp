@@ -47,3 +47,7 @@ NEXT: WP2.4 go_router shell: 3 tabs (Home, Modules, Profile), responsive bar/rai
 DID: go_router StatefulShellRoute (exactly 3 branches /home /modules /profile); AppShell responsive (bar <600, rail 600-840, extended rail >=840); MaxWidth 720; ComingSoon placeholder; LanguagePicker moved to Profile; splash removed; nav themes; wrangler.jsonc for Cloudflare preview builds.
 TESTED: 21 tests incl. 10 responsive runs (320x568, 360x800, 412x915, 768x1024, 1280x800 at text x1 and x1.5) with zero overflow, tab state kept.
 NEXT: WP2.5 errors + logging (AppFailure, global handlers, friendly error page, Crashlytics).
+[2026-10-19 17:00] LANE: B1 | AI/Person: founder + Claude | WP: 2.5 errors
+DID: sealed AppFailure (+OnboardingRequired) and ONE mapper (contract codes, 42501, PGRST301, timeouts, http ClientException); Result + guard() (every failure logged, offline as info); AppLogger (200-line ring, CrashSink slot); global handlers (FlutterError.onError, platformDispatcher.onError, runZonedGuarded); FriendlyBuildError replaces the red screen; LoadingView/EmptyView/ErrorView with Retry; debug-only UI states page (/profile/states); glyph line is now a real reaction with +.
+TESTED: 26 tests (errors_test: mapper x3, guard + sink, ErrorView retry, friendly build error) + all previous.
+NEXT: WP2.6 Firebase init + Crashlytics sink (touches android/ gradle: will warn first), connectivity + offline banner.

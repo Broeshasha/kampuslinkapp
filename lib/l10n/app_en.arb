@@ -23,5 +23,15 @@
   "modulesPlaceholder": "Your modules, lessons, library and chat",
   "@modulesPlaceholder": { "description": "Placeholder title on the Modules tab" },
   "profilePlaceholder": "Your account, language and reminders",
-  "@profilePlaceholder": { "description": "Placeholder title on the Profile tab" }
+  "@profilePlaceholder": { "description": "Placeholder title on the Profile tab" },
+  "errorTitle": "Something went wrong",
+  "errorOffline": "You're offline. Connect to the internet and try again.",
+  "errorSession": "Your session ended. Please sign in again.",
+  "errorForbidden": "You don't have access to this.",
+  "errorNotFound": "This is no longer available.",
+  "errorRateLimited": "Slow down a little and try again in a minute.",
+  "errorServer": "Our server had a problem. Try again in a moment.",
+  "errorUnknown": "Something unexpected happened. Try again.",
+  "retry": "Try again",
+  "loading": "Loading\u2026"
 }

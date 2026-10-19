@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../features/home/home_page.dart';
 import '../features/modules/modules_page.dart';
 import '../features/profile/profile_page.dart';
+import '../features/profile/states_demo_page.dart';
 import 'app_shell.dart';
 
 /// Exactly 3 branches (home, modules, profile); each keeps its own stack.
@@ -26,7 +27,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/profile', builder: (_, _) => const ProfilePage()),
+              GoRoute(
+                path: '/profile',
+                builder: (_, _) => const ProfilePage(),
+                routes: [
+                  // Debug-only page (the button exists only in debug runs).
+                  GoRoute(
+                    path: 'states',
+                    builder: (_, _) => const StatesDemoPage(),
+                  ),
+                ],
+              ),
             ],
           ),
         ],

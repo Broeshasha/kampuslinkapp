@@ -44,4 +44,36 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profilePlaceholder => 'Ton compte, ta langue et tes rappels';
+
+  @override
+  String get errorTitle => 'Un problème est survenu';
+
+  @override
+  String get errorOffline =>
+      'Tu es hors ligne. Connecte-toi à Internet et réessaie.';
+
+  @override
+  String get errorSession => 'Ta session a expiré. Reconnecte-toi.';
+
+  @override
+  String get errorForbidden => 'Tu n\'as pas accès à ceci.';
+
+  @override
+  String get errorNotFound => 'Ce contenu n\'est plus disponible.';
+
+  @override
+  String get errorRateLimited => 'Doucement ! Réessaie dans une minute.';
+
+  @override
+  String get errorServer =>
+      'Notre serveur a un souci. Réessaie dans un instant.';
+
+  @override
+  String get errorUnknown => 'Une erreur inattendue s\'est produite. Réessaie.';
+
+  @override
+  String get retry => 'Réessayer';
+
+  @override
+  String get loading => 'Chargement…';
 }
