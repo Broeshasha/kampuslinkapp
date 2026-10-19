@@ -1,0 +1,333 @@
+================================================================================
+KAMPUSLINK - STANDARD PROMPTS FOR THE AI ENGINEERS                2026-10-17
+================================================================================
+HOW TO USE
+  1. Open a new chat with the AI and give it the repository (or a zip) plus docs/.
+  2. Paste P0 (universal header) FIRST, then ONE work-package prompt (P1...P13).
+  3. The AI answers with its 5-line understanding. Check it, then say "go".
+  4. Run the AI's PowerShell, paste the output back. One step at a time.
+  Only the work-package prompt changes between lanes. P0 never changes.
+  Replace <REPO> in the prompts with your repo folder (for example C:\kampuslink).
+
+================================================================================
+P0  UNIVERSAL HEADER (paste first, every session, every AI)
+================================================================================
+You are a senior engineer on KampusLink: a Flutter (Android first) + Supabase app for university
+students in Algeria. It is offline-first and trilingual (Arabic RTL, French, English). You work inside
+ONE lane and ONE work package, given below. Another AI works in other lanes at the same time.
+
+BEFORE WRITING ANY CODE, read these files in this order:
+  1 AGENTS.md   2 docs/MASTER_PLAN_V2.txt   3 docs/CONTENT_FORMAT.txt   4 docs/BACKEND_CONTRACT.txt
+  5 the last 20 entries of docs/logs/APP_LOG.txt   6 the OPEN items of docs/logs/DECISIONS.txt
+  7 the existing code inside your lane's folders.
+Then reply with exactly 5 lines: (1) your lane and work package, (2) the folders you may edit,
+(3) what already exists there, (4) what you will build first, (5) anything in the plan or contracts
+that is unclear or contradicts the code. Do not write code before I answer "go".
+
+HOW WE WORK
+- I run your commands in Windows PowerShell and paste the output back. You never assume a step worked:
+  read my output before the next step.
+- One step = one idea, at most 5 files, at most ~150 lines per file. Several small steps beat one big one.
+- Every step is a single PowerShell block that starts with:   cd <REPO>   then
+  . .\docs\tools\ps-helpers.ps1      (it provides Write-Kampus, Replace-InFile, Step-Check, Step-Commit)
+- Create or overwrite files with Write-Kampus -Path 'lib\x.dart' -Content @' ... '@   (single-quoted
+  here-string, UTF-8 without BOM). The closing '@ must be at the start of a line. For a long file,
+  write it in parts with -Append.
+- Change existing files with Replace-InFile -Path -Old -New (the old text must occur exactly once).
+  Do not rewrite a whole existing file for a small change.
+- End every step with  Step-Check  (pub get, dart format, flutter analyze, flutter test) and then
+  Step-Commit "type: short message". Tell me exactly what I should SEE (output or screen) and what to paste back.
+- Work on the branch for your work package: wp/<number>-<name>. Never touch main. Never force-push.
+
+HARD RULES
+- Edit only your lane's folders. If you need a change elsewhere (pubspec, router, theme tokens, a contract,
+  the database), write it as a CORE CHANGE REQUEST at the end of your answer and stop that part.
+- The backend contract is docs/BACKEND_CONTRACT.txt. Call only the functions listed there. Never invent a
+  table, a column or an error code. Never use a service key or any secret. Never touch Kampus Store things.
+- The app reads only from the local database (Drift) once WP3 exists. Network code lives in repositories.
+- No hard-coded user-facing text (use l10n keys), no hard-coded colours (use theme tokens), no hard-coded
+  left/right (use start/end), no print() (use the logger).
+- Every state is handled: loading, empty, error (with retry), offline, and "content newer than this app".
+- Never use setState for app state, never block the UI thread with JSON parsing or file work.
+- Do not add a package that is not in MASTER_PLAN section 6 without a CORE CHANGE REQUEST.
+- Do not change applicationId, signing, or the version.
+- Tests are part of the work: no step that adds logic is finished without a test for it.
+
+END OF EVERY SESSION write this entry (I will paste it into docs/logs/APP_LOG.txt):
+  [YYYY-MM-DD HH:MM] LANE: __ | AI: __ | WP: __
+  DID: ...   FILES: ...   TESTED: ...   RISKS: ...   NEXT: ...   NEEDS: (requests to other lanes) ...
+
+================================================================================
+P1  PURGE   (Lane B1, WP1)  Delete everything the new app does not need
+================================================================================
+GOAL: from the current repo (old 4-tab app, version 1.0.2+5) make a compiling app that has only:
+Google sign-in, language, profile setup (onboarding), and 3 EMPTY tabs (Home, Modules, Profile).
+BRANCH: first run git tag pre-v1-reset (if missing), then create branch v1-reset, then wp/1-purge from it.
+DO NOT TOUCH: applicationId, android signing, google-services, .env handling, ios/web folders.
+STEPS (one commit each; the app must compile after each; run Step-Check each time):
+ 1 Root cleanup: remove the 12 old PowerShell patch scripts (add_campus_now_*.ps1, create_profile_screen.ps1,
+   fix*.ps1, fix_*.ps1, wire_profile_tap*.ps1) and the 2 CSV files (copy the CSV files outside the repo first).
+   Rewrite README.md (3 lines: what the app is, see docs/).
+ 2 Delete the features: lib/features/marketplace/ (all), lib/features/admin/, lib/features/messages/,
+   lib/features/community/, lib/features/library/, lib/features/profile/my_listings_tab.dart,
+   my_posts_tab.dart, user_profile_screen.dart.
+ 3 Delete the services tied to them: lib/core/config/dropdz_locations_service.dart, residence_service.dart,
+   outbox_service.dart, feed_cache_service.dart and lib/core/widgets/comments_sheet.dart.
+ 4 Fix what no longer compiles, with the smallest edits:
+   - lib/main.dart: remove imports/uses of OutboxService, share-intent (receive_sharing_intent), marketplace,
+     messages, library, community; keep dotenv, Firebase init (never blocks startup), Supabase init,
+     ConnectivityService.init, AuthGate; keep the AuthGate logic (session -> profile -> ready).
+   - lib/core/widgets/responsive_shell.dart: exactly 3 destinations: Home, Modules, Profile (icons
+     home_rounded, menu_book_rounded, person_rounded). Each page is a simple placeholder widget with the
+     tab name centered. Remove the notifications-bell/unread queries that read dropped tables.
+   - lib/features/home/home_screen.dart: replace the whole file with an empty Scaffold body "Home".
+   - lib/features/profile/profile_screen.dart: keep only avatar+username (from public data you already have),
+     sign out, delete account (rpc delete_my_account), links to privacy/terms; no listings/posts.
+   - lib/features/onboarding/profile_setup_screen.dart: remove the residence picker and the
+     missing-entry suggestion call (those tables no longer exist). Leave the rest working as it is today
+     (it will be rewritten in WP7).
+ 5 pubspec.yaml: for each package below, search lib/ for its import; if nothing imports it, remove it:
+   workmanager, receive_sharing_intent, photo_view, share_plus, blurhash_dart, cupertino_icons.
+   Keep: supabase_flutter, firebase_*, google_sign_in, pdfx, file_picker, image_picker, http, mime,
+   http_parser, image, cached_network_image, flutter_blurhash, connectivity_plus, flutter_dotenv,
+   shared_preferences, path_provider, url_launcher, flutter_secure_storage, drift (used in WP3).
+   Remove the Android permissions/intent filters that only the share-intent feature needed (show me the
+   manifest diff before changing it).
+ 6 Run flutter analyze (must be clean) and flutter run.
+ACCEPTANCE: tag pre-v1-reset on GitHub; analyze clean; app starts; sign in -> onboarding -> 3 empty tabs;
+no file or import mentions marketplace, community, messages, kampus_store, residence, dropdz.
+REPORT BACK: output of git status, flutter analyze, and a one-line list of what is left in lib/.
+
+================================================================================
+P2  FOUNDATIONS   (Lane B1, WP2)  Theme, language, router, errors, config
+================================================================================
+GOAL: the skeleton every other lane builds on.
+BUILD
+ a lib/core/theme/tokens.dart + app_theme.dart: keep the AppColors values from the current file; add the 12
+   module accents, semantic colours, spacing (4/8/12/16/24), radii (12/16/24), durations (150/250 ms);
+   ColorScheme from tokens; a ModuleAccent.of(moduleId) helper. Details: MASTER_PLAN section 9.
+ b Fonts: ask me to put Cairo (Regular, Medium, SemiBold, Bold) and Noto Sans Math + Noto Sans Symbols 2
+   in assets/fonts/ (OFL licences) and to confirm the file names; declare them in pubspec; Cairo is the
+   default text font.
+ c l10n: lib/l10n/app_en.arb, app_fr.arb, app_ar.arb with gen-l10n; MaterialApp supportedLocales en/fr/ar;
+   locale stored in shared_preferences and later synced with the profile; RTL automatic; keys for common
+   words and for every error code in BACKEND_CONTRACT (error_not_in_module, error_rate_limited ...).
+ d Router: go_router with StatefulShellRoute (3 branches: /home, /modules, /profile) plus routes for
+   /onboarding, /signin, /lesson/:id, /module/:id, /quiz/:lessonId, /chat/:moduleId (placeholders). The
+   current AuthGate becomes a redirect function (no session -> /signin; onboarding_version < 1 -> /onboarding).
+ e lib/core/errors/: sealed AppFailure + FailureMapper (PostgrestException message codes, Socket/Timeout,
+   401) and widgets: LoadingState, EmptyState(icon,title,action), ErrorState(failure, onRetry), OfflineBanner,
+   StaleDataLabel. Unit-test the mapper with every code of the contract.
+ f lib/core/config/: AppConfigService (reads app_config at start and every 6 h, caches it; exposes
+   minSupportedBuild; shows an UpdateRequired screen when the build is lower).
+ g Logger (wrapper over debugPrint + Crashlytics if added), connectivity provider (Riverpod stream).
+ h A hidden debug "gallery" screen (long-press the Profile title) showing every state widget in all 3 languages.
+ i main.dart wraps runApp in runZonedGuarded + FlutterError.onError -> logger.
+ACCEPTANCE: switching language changes the UI immediately and mirrors layouts in Arabic; tabs keep their
+state; every failure code maps to a message in 3 languages; the gallery screen shows all states; tests green.
+
+================================================================================
+P3  DATA LAYER AND SYNC   (Lane D1, WP3)  The offline engine
+================================================================================
+GOAL: lib/data/ gives every feature a local-first API and keeps it in sync. Read MASTER_PLAN section 7
+completely before starting; it is the specification.
+BUILD
+ a Drift database (lib/data/db/): tables modules, lessons, lesson_i18n(lang, title, summary, blocks_json),
+   cards, card_i18n, questions, question_i18n, resources, glossary, content_versions, card_progress,
+   lesson_progress, reading_position, study_daily, user_stats, chat_cache, outbox, kv_settings.
+   Add drift_dev, build_runner, sqlite3_flutter_libs (CORE CHANGE REQUEST to B1 for pubspec).
+ b Repositories (abstract + implementation): ModulesRepository, LessonsRepository, CardsRepository,
+   ProgressRepository, ChatRepository, ProfileRepository, FilesRepository. They expose Streams from Drift.
+ c BundleSync: get_my_modules() -> compare versions -> get_module_bundle(module, [langs]) -> one
+   transaction replace; JSON parsing in an isolate; per-module state stream (not downloaded / downloading /
+   up to date / update available / failed); Wi-Fi-only setting; schema_version guard (section 7.9).
+ d Outbox + sync_progress: ops table, enqueue(kind, payload) with op_id, replace-latest rule for
+   reading_position, batch flush (<= 200), result handling (applied/duplicate/rejected/transport error),
+   backoff schedule, 401 handling, a stream of the pending count.
+ e Local-first progress: Leitner in Dart with the same intervals as the server; applyReviewLocal();
+   pull-and-merge after sync (rules in section 7.6).
+ f FilesRepository: download by hash into the documents folder, LRU cache cap, "clear downloads".
+ g SyncCoordinator: triggers (start, resume, connectivity, pull-to-refresh, 15-min timer, after enqueue).
+TESTS (required): outbox ordering and replacement; duplicate/rejected handling; Leitner table; progress
+merge rules; bundle replace is atomic (a failed download leaves old content intact); schema_version guard.
+Use a fake RPC client interface so tests need no network.
+ACCEPTANCE: a scripted airplane-mode test (integration_test) passes: download -> offline -> 10 reviews + 1
+answer + reading position queued -> reconnect -> outbox empty, server values match, no double counting.
+
+================================================================================
+P4  CONTENT RENDERER   (Lane D2, WP4)  Blocks, LaTeX, SVG, tables, highlights
+================================================================================
+GOAL: lib/render/ turns student blocks into widgets. Read docs/CONTENT_FORMAT.txt sections 4, 5 and 7 and
+work against fixtures/chapter_02_chimie_minerale.json (convert one language to student blocks with a small
+test helper; the real importer comes from Lane C). You can start BEFORE the data layer exists.
+BUILD
+ a Models: LessonBlock (sealed per type) + parser tolerant of unknown types (never throws).
+ b BlockRenderer registry and widgets: heading, paragraph, bullet_list, definition, example, note,
+   application, chemical_reaction, equation, table, figure (with the asset-less placeholder card).
+ c Highlights: the algorithm of section 5.3 as a pure, unit-tested function returning TextSpans; term taps call
+   an onTermTap(termText) callback (the glossary sheet is built by Lane D3).
+ d LaTeX with flutter_math_fork: block (scrollable) + inline \( ... \) inside text; fallback to plain_text on error.
+   Test all 30 formulas of the fixture: report which ones fail and why before inventing workarounds.
+ e SVG with flutter_svg: placeholders {{fg}} {{muted}} {{accent}} {{bg}} {{ok}} {{warn}} replaced from theme
+   tokens; size and safety checks; zoom viewer. Create 3 small test SVGs in test fixtures.
+ f RTL: formulas and Latin identifiers as LTR islands inside Arabic; table column mirroring.
+ g A GlyphTest screen (debug) printing the 37 special characters of CONTENT_FORMAT section 2 in the body font.
+ h LessonView widget: lazy list of blocks, reports first-visible block id and progress through callbacks
+   (onVisibleBlock(blockId, progress)), supports scrollToBlock(blockId), text-size steps.
+TESTS: unit (parser, highlights), widget tests per block type, golden tests of the whole chapter in fr/ar/en.
+ACCEPTANCE (Milestone M1): the sample chapter renders in all 3 languages, offline, all formulas render or
+fall back with plain_text, no missing-glyph boxes in the glyph test, tables scroll, goldens committed.
+REPORT: the list of formulas/glyphs that needed fallbacks.
+
+================================================================================
+P5  MODULES, LESSON READER, RESUME   (Lane D3, WP5)
+================================================================================
+GOAL: the Modules tab and the lesson experience, built on lib/data/ and lib/render/ (WP3, WP4 must be accepted).
+BUILD
+ a Modules list: the 20 modules of the student grouped by semester, each card with the module accent, name,
+   UE chip, download state (button + progress), progress ring (lessons_done/lessons).
+ b Module page: tabs LESSONS (episodes grouped by unit: "Chapter 2 - Oxygen and oxides"), LIBRARY (files by
+   type, trust label chips, open/download, upvote), QUIZZES (shortcut), CHAT (opens /chat/:moduleId).
+ c Lesson reader: header (title, estimated minutes, unit), LessonView, "Back to where you stopped" chip,
+   text-size control, language switch (ui/content language) keeping the position, glossary bottom sheet from
+   term taps, "Open original page" for source_pages, "Mark as done" -> quiz entry or lesson_done.
+ d Resume: save position as MASTER_PLAN 7.7 (debounced, on exit, on background), restore on open.
+ e Library file viewer with pdfx: open from cache, download on demand, open at a page number, error states.
+ f Continue source: ProgressRepository.continueItems() (local) used by Home (Lane D4 builds the card).
+STATES: not downloaded, downloading, update available, offline with nothing downloaded, empty module (no
+lessons yet: friendly message), content newer than the app.
+TESTS: resume restores the right block (also after changing language); download state machine; widget tests
+for empty/offline states.
+ACCEPTANCE (Milestone M2): download a module, airplane mode, read two lessons, kill the app, reopen: both are
+where you left them; the list shows progress.
+
+================================================================================
+P6  FEED AND QUIZZES   (Lane D4, WP6)
+================================================================================
+GOAL: the Home tab and the study loop.
+BUILD
+ a Home feed: vertical PageView of flashcards from CardsRepository (local order: due, new, soonest due, as the
+   server's get_home_cards); tap = flip (soft 3D turn, haptic tick); buttons "I knew it / Again" -> applyReviewLocal +
+   outbox 'review'; like, save, comment count; swipe up for next; module chip with the module accent;
+   end-of-feed state ("All done for now" + next due time).
+ b Comments bottom sheet (get_card_comments / add_card_comment, offline: read cached, writes need connection
+   with a clear message; delete own comment).
+ c Top of Home: streak flame, XP, today's study progress vs goal, the Continue card (from Lane D3's source),
+   an offline banner, the pending-sync count only in Profile.
+ d Study timer (active time only, section 7.7) with log_study_time through the outbox.
+ e Quiz flow for a lesson: one question per screen, MCQ and true/false, immediate feedback + explanation,
+   progress bar, results screen with score and a button to review missed cards; answers via outbox 'answer';
+   wrong answers push the lesson's cards back locally; completing -> 'lesson_done'. Interrupted quiz resumes.
+ f Small celebrations: confetti on lesson done and on first goal of the day (lightweight, respects reduce motion).
+TESTS: feed ordering, flip/review state, quiz resume, timer counts active time only, outbox ops produced.
+ACCEPTANCE (Milestone M3): offline, do 20 cards and a quiz, reconnect: server xp/streak/progress match, nothing
+doubled.
+
+================================================================================
+P7  ONBOARDING AND PROFILE   (Lane B2, WP7)
+================================================================================
+GOAL: first 90 seconds and the Profile tab. Read MASTER_PLAN section 1 and BACKEND_CONTRACT section A.
+BUILD
+ a Flow: Splash -> Language (ar/fr/en, saved at once, UI switches) -> Google sign-in -> Details: university,
+   speciality, year, section/group (optional), username with live check (is_username_taken) -> Modules preview
+   (colored cards) -> first flashcard within 60 s (download the first module in the background, show a skeleton)
+   -> notification permission asked AFTER the first card, with a clear reason.
+ b Options come from get_onboarding_options() (cached; remove dependence on lib/core/config/algeria_universities.dart
+   when the cache works). Validation errors map to field messages (invalid_username, username_taken ...).
+ c Existing users (onboarding_version < 1): skip sign-in, ask only what is missing, one "What's new" screen.
+ d Resumable: closing the app mid-flow returns to the same step; works offline until the sign-in/complete call.
+ e Profile tab: avatar (upload through the upload service), name, university/speciality/year, language, text size,
+   study goal, reminders on/off (set_reminders), downloads storage + "clear downloads", pending sync count,
+   privacy/terms links, sign out (unregister push token), delete account (confirm twice; rpc delete_my_account;
+   then local wipe). Blocked users screen.
+ f Push: register_push_token after permission; unregister on sign-out.
+ACCEPTANCE: new user reaches the first card in < 60 s on a mid-range phone; existing user reaches Home in < 20 s;
+every screen works in ar (RTL), fr, en; delete-account works against a test account.
+
+================================================================================
+P8  CHAT AND TRANSLATION UI   (Lane E1, WP8)
+================================================================================
+GOAL: the module chatroom. Read KAMPUS_TRANSLATION_PLAN.txt and BACKEND_CONTRACT section D.
+BUILD
+ a Chat screen: message list (newest at the bottom, load older on scroll), bubbles with name/avatar (from
+   public_profiles data returned by get_chat_messages), reply-to, date separators, own vs others, RTL aware
+   (the bubble direction follows the message language).
+ b Composer: text, send, attach file (pick -> hash -> upload -> p_file), script-based lang guess for p_lang,
+   client_id per message, optimistic bubble "sending..." -> sent -> "tap to retry" after 3 failures.
+ c Realtime: subscribe to module_chat_messages (filter module_id) and message_translations; merge into the local
+   cache; fall back to polling every 20 s if the socket drops.
+ d Translation display: reader language text first with a "Translated" label and a tap for the original;
+   quiet "translating..." marker for the first 2 minutes; lang 'und' shows the original only; a long-press
+   action "translate this" (only when the contract supports request_translation).
+ e Moderation: long-press menu: copy, reply, report (reports table), block user (blocked_users), delete own.
+ f Files in chat: card with title/type, opens in the Library viewer (Lane D3 component).
+ g Offline: cached messages readable, queued sends.
+TESTS: client_id retry never posts twice; ordering with realtime + cache merge; translation swap; state widgets.
+ACCEPTANCE (Milestone M4): two phones, two languages: messages appear live, translations arrive in 20-85 s,
+a message sent in airplane mode is delivered once after reconnecting.
+
+================================================================================
+P9  HARDENING SWEEP   (all lanes, one at a time, WP11)
+================================================================================
+For the screens of your lane, in this order: (1) every state exists: loading, empty, error+retry, offline, stale,
+content-newer-than-app; (2) kill the network at every step of every flow and confirm no crash and a clear message;
+(3) RTL and large-font checks; (4) low-end phone: scroll performance, memory, cold start; (5) accessibility labels;
+(6) logs: no print(), no secrets, no personal text in logs; (7) remove dead code and unused strings; (8) add the
+missing tests. Report a table: screen | state tested | result | fix.
+
+================================================================================
+P10  DESIGN PASS   (Lane B1 + screen owners, WP12)
+================================================================================
+Apply MASTER_PLAN section 9 to a screen that is ALREADY functionally accepted. Change only styling and motion:
+tokens, module accents, spacing, icons, empty-state illustrations (simple vector shapes, no external images),
+card flip and confetti polish, streak/XP widgets, skeleton loaders, transitions (150-250 ms). Never change logic,
+data flow or strings' meaning. Colours come only from theme tokens. Show before/after screenshots in the report.
+Check: contrast AA, touch targets >= 48 dp, reduce-motion setting respected, Arabic layout intact.
+
+================================================================================
+P11  QA AND RELEASE   (Lane F, WP13)
+================================================================================
+GOAL: prove it works and ship it safely. Read MASTER_PLAN sections 12 and 13.
+DO: run the OFFLINE SCRIPT and RENDERER SCRIPT on the three-device matrix; run the security checks (backend
+test block A of file 07 still green; no secrets in the repo: scan git history and the APK strings); measure cold
+start, scroll, APK size; prepare the Play listing text/screenshots in 3 languages, the privacy-policy changes and
+the Data safety answers; produce the release checklist; build the release bundle with the SAME applicationId and
+signing; versionCode above Play's highest; staged rollout plan with crash thresholds.
+You only open issues and write reports; fixes are done by the owning lane. Output: a go/no-go report.
+
+================================================================================
+P12  CONTENT PIPELINE TOOLS   (Lane C, WP10)   Python, run in PowerShell
+================================================================================
+GOAL: tools/content/ makes content safe and fast. Read docs/CONTENT_FORMAT.txt completely. Use Python 3.11+, no
+exotic dependencies (jsonschema, supabase-py or plain requests). The Supabase SERVICE key is read from an
+environment variable on the founder's PC ($env:KAMPUS_SERVICE_KEY) and is NEVER written to a file or printed.
+BUILD
+ a validate_chapter.py <file>: all rules of section 7, a report (counts, errors, warnings, special glyphs, size
+   per language) saved as <file>.report.txt; exit code 1 on errors.
+ b split_episodes.py: section 3 rule (episodes of 8-40 blocks split at level-2 sections), previews the plan.
+ c build_student_blocks.py: chapter JSON + language -> student blocks (section 4), strips editorial fields.
+ d import_chapter.py <file> --module-id N [--dry-run]: creates lessons (draft), lesson_i18n with blocks,
+   glossary, unit info, needs_review/review_reason from unresolved issues, rights_status from --rights, links the
+   source PDF resource; idempotent by (chapter_ref, episode index); never publishes by itself.
+ e extras_prompt.py + validate_extras.py: builds the AI prompt for cards/questions of one episode (from its blocks,
+   language-neutral) and validates the returned lesson_extras JSON (section 6 rules); import_extras.py loads it.
+ f publish.py --lesson-ids ...: sets status 'published' (the database refuses if rights unknown or review open).
+ g qa_report.py: per module: lessons, cards, questions, unresolved issues, rights, reviewer.
+TESTS: run everything on fixtures/chapter_02_chimie_minerale.json with --dry-run; add small failing fixtures.
+ACCEPTANCE: the sample passes validate with only warnings you explain; dry-run import prints the 5-episode plan;
+nothing is written without --dry-run off and the env key set.
+
+================================================================================
+P13  BACKEND AND MICROS   (Lane A)
+================================================================================
+GOAL: finish the server side. Read backend/sql/*, KAMPUS_TRANSLATION_PLAN.txt, docs/BACKEND_CONTRACT.txt.
+DO (one item per session): (1) run 09 + 10 and report; (2) file 11 SQL for translation (columns translate_state,
+translate_attempts, translate_after on module_chat_messages; tables translation_requests, translation_cache,
+translation_usage; service functions module_reader_languages, claim_translation_batch, save_translations,
+release_translations; student function request_translation; post_chat_message sets 'skipped' for file-only) with a
+rolled-back test block like file 07; (3) Cloudflare Worker m-translate (cron every minute, Workers AI m2m100,
+rules of the plan, secret key only as a Worker secret); (4) extend the upload worker (folders avatars/ and
+files/{module_id}/, hash, size/type limits, delete-user-files covers new prefixes); (5) m-notify worker using
+due_reminders()/mark_reminder_sent(); (6) R2 wipe commands with the pre-wipe checklist; (7) service key rotation.
+Every change: additive first, a test block, a log entry, and the Kampus Store check afterwards.
+================================================================================

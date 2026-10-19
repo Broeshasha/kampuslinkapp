@@ -1,0 +1,243 @@
+================================================================================
+KAMPUSLINK - REPO MAP (APP vs BACKEND)          scan date: 2026-10-16
+================================================================================
+Source   : github.com/Broeshasha/kampuslinkapp, branch main
+Commit   : c7e858e "Add api call"  (the repo has ONE commit: no history to fall back on)
+Stack    : Flutter, supabase_flutter, firebase_messaging/analytics, workmanager,
+           google_sign_in, pdfx, image/blurhash, share_plus
+Identity : applicationId com.kampuslink.kampuslink | pubspec version 1.0.2+5
+           (versionName 1.0.2, versionCode 5 -> verify against Play Console)
+Web      : web/ exists and .github/workflows/deploy.yml builds Flutter web and deploys
+           to Cloudflare Pages (project kampuslink-app) on every push to main.
+STATUS   : This map is from the APP CODE only. It shows what the app CALLS.
+           It cannot show what else lives in Supabase (news pipeline, cron jobs, Store
+           tables). KAMPUS_BACKEND_AUDIT.sql (Q1-Q4) fills that gap. Nothing below is
+           approved for deletion until the dependency map is complete (master plan 5.4).
+
+--------------------------------------------------------------------------------
+1. WHAT THE LIVE APP IS TODAY (differs from the v1 plan)
+--------------------------------------------------------------------------------
+Bottom navigation today (responsive_shell.dart): 4 items
+  Home | Library | Messages | Marketplace
+Home        : news + community feed ("Campus Now"), dining menus, exchange rates
+Library     : study modules and resources (PDF/images per module)  <- seed of new MODULES
+Messages    : direct messages between users about marketplace listings
+Marketplace : student listings + Kampus Store (products, checkout, admin orders)
+Languages   : onboarding offers EN and FR only (no Arabic UI yet)
+Auth        : Google sign-in
+Offline     : "drift" is in pubspec but is NOT used anywhere in lib/. There is no local
+              content store yet (only feed cache + an outbox queue for likes/comments/posts).
+Account deletion exists (delete_my_account RPC + R2 file purge). KEEP (store policy).
+
+--------------------------------------------------------------------------------
+2. BACKEND OBJECTS THE APP USES
+--------------------------------------------------------------------------------
+2.1 TABLES (call count = how many .from() calls in lib/)
+  profiles (15)              id, username, avatar_url, avatar_blurhash, university_id,
+                             speciality_id, academic_year, onboarding_complete, is_admin,
+                             fcm_token
+  community_likes (8)        post_id, user_id
+  marketplace_listings (7)   seller_id, title, description, category, price_dzd,
+                             image_urls, status
+  community_posts (6)        user_id, content, image_url, image_blurhash, is_campus_now,
+                             expires_at, created_at
+  study_modules (5)          id, name, semester, ue_category, academic_year, domain_id,
+                             speciality_id
+  notifications (3)          user_id, read, created_at
+  messages (3)               sender_id, recipient_id, listing_id, content, read_at
+  kampus_store_orders (3)    student_id, product_id, quantity, status, buyer_full_name,
+                             buyer_phone, buyer_wilaya, call_notes, called_at, called_by
+  blocked_users (3)          blocker_id, blocked_id  (FK to profiles)
+  study_resources (2)        module_id, uploader_id, resource_type, file_urls,
+                             file_format, image_set, trust_label
+  specialities (2)           id, domain_id
+  comment_likes (2)          comment_id, user_id
+  community_comments (1)     post_id, user_id, content, parent_comment_id
+  reports (1)                reporter_id, target_type, target_id, reason, details
+  residences (1)             id, name, dou_id, dous(name, wilaya_id)
+  wilayas (1)                id
+  dz_communes (1)            wilaya_id, name
+  dining_menus (1)           university_id, meal_date
+  exchange_rates (1)         currency, buy_rate
+  missing_entry_suggestions (1)  user_id, entry_type, suggested_value
+  kampus_store_products (1)  is_active, category
+  pending_kampus_store_orders (1)
+  kampus_store_order_events (1)  order_id, event_type, detail, notes
+  NOTE: only columns visible in code are listed. Real columns come from Q1.
+
+2.2 RPCs (database functions called by the app)
+  get_my_profile            library_screen, profile_screen
+  is_username_taken         profile_setup_screen
+  get_home_feed             home_screen   (viewer_id, limit_count) -> news + community
+  get_campus_now_posts      home_screen
+  get_campus_now_fallback   home_screen
+  get_community_feed        community_screen
+  get_message_threads       messages_screen
+  get_user_profile          user_profile_screen
+  get_user_posts            user_profile_screen
+  delete_my_account         profile_screen
+  get_post_comments / get_news_post_comments   comments_sheet.dart (chosen at runtime;
+                            the news variant is not implemented in the app yet)
+  HIDDEN: get_home_feed returns rows with category 'news' and 'telegram'. Those rows come
+  from tables/jobs that the app never touches directly. Source of truth = Q3 (function
+  source) and Q5 (cron). The two root CSVs (source_validation_results.csv,
+  wordpress_check_results.csv) are results of checking university websites for scraping,
+  so a news-ingestion pipeline exists OUTSIDE this repo.
+
+2.3 FILES / R2 (through a Cloudflare Worker, not Supabase Storage)
+  Worker: https://upload.kampus-link.com   (POST multipart, Bearer = Supabase access token)
+          POST /delete-user-files  (purges every file of the logged-in user)
+  Folders the app sends:
+      avatars      profile_setup_screen, avatar_picker
+      community    community_screen, share_to_campus_now_screen, home_screen
+      library      upload_resource_screen          <-- the DOCUMENTS (study resources)
+      marketplace  create_listing_screen
+  Returned URL is stored in the database (profiles.avatar_url, community_posts.image_url,
+  marketplace_listings.image_urls, study_resources.file_urls).
+  Worker 2: order-submit (workers.dev URL hard-coded in kampus_store_orders_screen.dart)
+  Not in this repo: the source of both workers. NEEDED before any R2 change.
+
+  >>> R2 WIPE WARNING <<<
+  "Wipe all documents" must mean ONLY the `library` folder. avatars/, community/ and
+  marketplace/ hold live profile photos, posts and Store/marketplace images referenced by
+  rows in profiles, community_posts and marketplace_listings. Wiping the whole bucket
+  would break every avatar and every Store listing image, including Kampus Store.
+  After the library wipe, study_resources rows still point to deleted files: they must be
+  deleted or flagged "unavailable" in the same operation (master plan section 7).
+
+2.4 OTHER EXTERNAL THINGS
+  site.kampus-link.com/privacy.html, terms.html, community-guidelines.html (keep: needed
+  for the Play listing). logo.clearbit.com (news source logos). wa.me links (Store support).
+
+--------------------------------------------------------------------------------
+3. FILE-BY-FILE MAP AND PROPOSED ACTION  (PROPOSAL, founder approves)
+--------------------------------------------------------------------------------
+Legend: KEEP | REWRITE (same purpose, new design/tables) | REMOVE-APP (delete from app,
+        backend untouched) | CHECK (unclear, do not touch yet)
+
+lib/main.dart ........................ REWRITE  (3 tabs, no marketplace imports; reads profiles)
+lib/core/theme/app_theme.dart ......... REWRITE  (colors move to design tokens)
+lib/core/config/
+  auth_service.dart .................. KEEP
+  block_service.dart ................. KEEP     (blocked_users)
+  cached_fetch.dart .................. KEEP
+  connectivity_service.dart .......... KEEP
+  feed_cache_service.dart ............ REWRITE  (becomes the offline JSON content store)
+  outbox_service.dart ................ REWRITE  (queues likes/comments/posts for community_* tables;
+                                                new tables need their own queue)
+  image_processing_service.dart ...... KEEP
+  notification_service.dart .......... KEEP     (profiles.fcm_token; same Firebase project)
+  upload_service.dart ................ KEEP + EXTEND (new folders; worker must be extended too)
+  algeria_universities.dart .......... KEEP     (universities/specialities are HARD-CODED here;
+                                                ids map to specialities.id. Never renumber.
+                                                Later move to tables/JSON.)
+  countries.dart ..................... CHECK
+  residence_service.dart ............. CHECK     (residences; confirm which screen uses it)
+  dropdz_locations_service.dart ...... REMOVE-APP (wilayas/dz_communes: Store checkout)
+lib/core/widgets/
+  avatar_picker, blurhash_image, fullscreen_image_viewer, kampus_mark, offline_banner,
+  primary_button, report_dialog, responsive_page, retry_banner, searchable_picker,
+  skeleton_loader, splash_screen .... KEEP
+  responsive_shell.dart .............. REWRITE  (4 tabs -> 3; also queries notifications/profiles)
+  comments_sheet.dart ................ REWRITE  (reuse UI for flashcard comments; today it is
+                                                tied to community/news RPCs)
+lib/features/
+  onboarding/google_signin_screen ... KEEP (restyle)
+  onboarding/language_screen ......... REWRITE  (EN/FR -> add Arabic + RTL)
+  onboarding/profile_setup_screen .... REWRITE  (university, department, year, section, language;
+                                                must handle EXISTING users with missing fields)
+  home/home_screen ................... REWRITE  (news/community/dining/rates -> flashcard feed)
+  library/library_screen ............. REWRITE -> MODULES tab
+  library/module_screen .............. REWRITE -> episodes, library, quizzes, chat
+  library/resource_viewer_screen ..... KEEP (PDF fallback viewer) 
+  library/upload_resource_screen ..... REWRITE  (uploads feed new files/ structure)
+  notifications/notifications_screen . KEEP
+  profile/profile_screen ............. REWRITE  (basic; today it links marketplace items;
+                                                keep delete account + legal links)
+  profile/blocked_users_screen ....... KEEP
+  profile/my_listings_tab ............ REMOVE-APP
+  profile/my_posts_tab ............... REMOVE-APP (community posts leave v1)
+  profile/user_profile_screen ........ REMOVE-APP or reduce to a tiny public card
+  community/community_screen ......... REMOVE-APP (community_* tables frozen, not dropped)
+  community/share_chooser_screen ..... REMOVE-APP
+  community/share_to_campus_now_screen REMOVE-APP
+  messages/chat_screen ............... REMOVE-APP (DMs are tied to marketplace listing_id;
+  messages/messages_screen ........... REMOVE-APP  module chat = NEW table, do not reuse `messages`)
+  marketplace/ (9 files) ............. REMOVE-APP create_listing, kampus_store_checkout,
+                                                kampus_store_product, kampus_store, listing_detail,
+                                                marketplace, widgets/delivery_marquee_banner,
+                                                widgets/floating_whatsapp_button,
+                                                widgets/whatsapp_question_bar
+  admin/kampus_store_orders_screen ... REMOVE-APP (Store admin; confirm Store has its own copy)
+
+Repo root (not part of the app):
+  8 PowerShell patch scripts (add_campus_now_*.ps1, create_profile_screen.ps1, fix*.ps1,
+  wire_profile_tap*.ps1) ........ REMOVE after checking nothing runs them. They are old
+                                  one-off patches with hard-coded C:\kampuslink paths.
+  source_validation_results.csv, wordpress_check_results.csv ... MOVE out of the repo
+                                  (keep an archive if the news pipeline stays)
+  README.md ......................... REWRITE (still the Flutter default)
+
+--------------------------------------------------------------------------------
+4. PROPOSED BACKEND DISPOSITION (decide AFTER the audit results)
+--------------------------------------------------------------------------------
+Rule: nothing is dropped now. Everything goes through master plan section 6.
+
+KEEP AS CORE (shared with Kampus Store, never break):
+  auth.users, profiles, notifications, blocked_users, reports, delete_my_account,
+  get_my_profile, is_username_taken, specialities
+EVOLVE (new columns, new rows, old rows keep working):
+  profiles (+ language, department, section, verification status, onboarding version),
+  study_modules (+ episodes order, color, version), study_resources (+ file_hash,
+  source message id, review status)
+SUPERSEDED (2026-10-16): the audit found a learn_* schema already in the database
+  (lessons, cards, questions, i18n fr/ar/en, progress). v1 REUSES it. See
+  KAMPUS_V1_DROP_PLAN.txt section 2 for the real reuse / extend / new list.
+FROZEN, NOT USED BY V1 APP (candidates for the 30-day deprecation path, only if the audit
+shows no other user): community_posts, community_likes, community_comments, comment_likes,
+  get_home_feed, get_campus_now_*, get_community_feed, get_user_posts,
+  dining_menus, exchange_rates, residences, missing_entry_suggestions
+PROTECTED WHILE KAMPUS STORE EXISTS (do not touch):
+  marketplace_listings, messages (listing DMs), kampus_store_products,
+  kampus_store_orders, pending_kampus_store_orders, kampus_store_order_events,
+  wilayas, dz_communes, get_message_threads
+UNKNOWN UNTIL Q3/Q5: the news pipeline tables/jobs behind get_home_feed
+  (decision needed: keep running for the Store/other app, or retire).
+
+--------------------------------------------------------------------------------
+5. FINDINGS THAT CHANGE THE PLAN
+--------------------------------------------------------------------------------
+F1  R2 wipe = `library` folder only (section 2.3). Highest risk item.
+F2  Kampus Store code (screens, orders, admin) also lives INSIDE this repo. If the
+    standalone Store app has its own repo, confirm it, and confirm which tables/worker
+    it uses before cutting anything here.
+F3  A news pipeline exists outside the repo. The v1 plan has no news feed: decide to
+    keep it running (data only) or retire it. Do not turn it off blind.
+F4  Arabic is not supported in the UI today; v1 needs Arabic (RTL), French, English.
+F5  Offline JSON store is greenfield (drift unused). Plan for it as new work.
+F6  Security: anon key ships inside the app (.env is bundled as an asset). That is normal
+    ONLY if RLS is correct on every table. Q2 is the first thing to read.
+    Good: .env, keystore and google-services files are NOT tracked in git.
+    Check: where the release keystore / upload key lives (you must keep using the same).
+F7  Version: repo says 1.0.2+5. The next Play upload needs a versionCode higher than the
+    highest ever uploaded (check Play Console, it may be above 5).
+F8  The repo has a single commit. Before any deletion: tag the commit, make a backup
+    branch, export the database and R2 (master plan 9.1).
+F9  Hard-coded config in code: upload worker URL, order worker URL, WhatsApp numbers.
+    Move to remote config so micros can change without an app release.
+F10 CI deploys the WEB build to Cloudflare Pages on every push to main. Deleting
+    features also changes the live website. Decide whether the web build stays.
+F11 New tables must be added to delete_my_account and to the worker's delete-user-files
+    (store policy: deletion must remove user data).
+
+--------------------------------------------------------------------------------
+6. NEXT STEPS
+--------------------------------------------------------------------------------
+ 1. Run KAMPUS_BACKEND_AUDIT.sql Q1, Q2, Q3, Q4 in the Supabase SQL editor and paste the
+    four JSON results back.
+ 2. Send the source of the two Cloudflare Workers (upload, order-submit) with secrets
+    removed, plus the R2 bucket names and folder list.
+ 3. Tell us: does Kampus Store use its own repo, and does it read the same R2 folders?
+ 4. With those, the dependency map (master plan 5.4) gets filled and every line in
+    sections 3 and 4 becomes KEEP / REMOVE / DROP-LATER with evidence.
+================================================================================

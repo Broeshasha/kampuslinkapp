@@ -1,0 +1,19 @@
+KAMPUSLINK DECISIONS (append-only). Status: OPEN | APPROVED | REJECTED
+Template: [YYYY-MM-DD] D-### (status): decision. REASON: ... CHANGES: files/sections updated.
+A CORE CHANGE REQUEST is an entry with: WHAT, WHY, AFFECTS (lanes, contracts, data), PROPOSAL.
+
+[2026-10-17] D-001 (APPROVED): Sign-in is Google only; no student verification in v1 (no university emails).
+[2026-10-17] D-002 (APPROVED): Reuse the existing learn_* tables (lessons = episodes, cards, questions, progress).
+[2026-10-17] D-003 (APPROVED): Work directly on the one Supabase project (nobody uses the app); archive schema made first.
+[2026-10-17] D-004 (APPROVED): Pilot = Mining Engineering L2 (speciality 2), 20 modules, then expand.
+[2026-10-17] D-005 (APPROVED): Lessons are structured blocks per language (learn_lesson_i18n.blocks); a lesson cannot be
+             published with unknown rights or open review issues (database trigger, file 09).
+[2026-10-17] D-006 (APPROVED by default): Front-end stack = Riverpod + go_router + Drift; fonts bundled (Cairo + Noto fallbacks).
+[2026-10-17] D-007 (OPEN): Translation engine Cloudflare m2m100 (D1), only used languages (D2), Darija original-only (D3),
+             20 s settle + "translating..." marker (D4). Defaults apply if not answered.
+[2026-10-17] D-008 (OPEN): First exam period start date (sets the real calendar).
+[2026-10-17] D-009 (OPEN): Who asks Dr. M. Dali / the department for written permission, and by when.
+[2026-10-17] D-010 (OPEN): Apply for Play production access now with the tested app (recommended).
+
+[2026-10-19] D-011 (APPROVED by founder): v1 ships light AND dark themes, following the phone setting (ThemeMode.system). Dark palette stays the brand; light is derived from the same tokens. Overrides MASTER_PLAN 9 "Light theme not in v1".
+[2026-10-19] D-012 (APPROVED by default): first-launch UI language = phone language if ar/fr/en, else fr. User can switch any time (instant, no restart). Western digits in Arabic UI.

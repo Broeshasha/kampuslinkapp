@@ -1,0 +1,174 @@
+================================================================================
+KAMPUSLINK - BACKEND CONTRACT (what the app may call)             2026-10-17
+================================================================================
+Source of truth: backend/sql/01..10 (applied to Supabase) + this file. If the database and
+this file disagree, STOP and write a CORE CHANGE REQUEST (docs/logs/DECISIONS.txt).
+The app talks to Supabase with the ANON key and the user's Google login (JWT). The app NEVER
+holds a service key. Every function below checks auth.uid() itself.
+
+HOW ERRORS ARRIVE
+  Our functions fail with  raise exception '<code>'  -> supabase_flutter throws a
+  PostgrestException with  message == '<code>'  (SQLSTATE P0001). Map the code, never show it raw.
+  Other failures: network (SocketException / timeout), 401 (session expired), 403 / "permission
+  denied" / row security (should never happen in normal use: log it).
+
+ERROR CODES -> MEANING -> WHAT THE USER SEES
+  not_authenticated      session gone               -> sign in again
+  onboarding_required    profile not finished       -> go to onboarding
+  not_in_module          not a module of this student -> "This module is not in your year"
+  not_available          lesson/resource hidden or not in module -> refresh, then "no longer available"
+  card_not_available     same, for flashcards       -> skip the card
+  question_not_found     bad question id            -> refresh content
+  rate_limited           too many messages/comments -> "Slow down a little" (retry after 60 s)
+  empty_message / empty_comment  nothing to send    -> disable the send button
+  invalid_file / invalid_file_url / file_too_large   upload rejected -> explain, no retry
+  invalid_username / username_taken / invalid_university / invalid_speciality /
+  invalid_year / invalid_language / profile_missing  -> field errors in onboarding
+  too_many_ops / invalid_ops  sync batch too big / malformed -> split the batch (max 200 ops)
+  forbidden              admin-only call            -> hide the feature
+  publish_blocked        (admin/import only)        -> never shown to students
+
+--------------------------------------------------------------------------------
+A. ONBOARDING AND PROFILE
+--------------------------------------------------------------------------------
+  get_onboarding_options() -> jsonb
+     { universities:[{id,name,city,wilaya_id}], specialities:[{id,name,max_year,year_system('lmd'|'unified'),learn_enabled}] }
+  is_username_taken(check_username text) -> boolean
+  complete_onboarding(p_username text, p_university_id int, p_speciality_id int, p_academic_year text,
+                      p_language text = 'en', p_section text = null, p_group text = null) -> jsonb (same as get_me)
+     username: 3-20 chars [a-z0-9_.] (lower-cased); year: 'L1'..'M2' (lmd) or 'Year 1'..'Year 6' (unified, <= max_year);
+     language: 'ar'|'fr'|'en'. Mining Engineering = speciality 2; the pilot cohort is year 'L2'.
+  set_language(p_lang text) -> void
+  get_me() -> jsonb
+     { id, username, avatar_url, avatar_blurhash, language, university_id, university_name, university_city,
+       speciality_id, speciality_name, academic_year, section, group_name, study_goal_minutes,
+       onboarding_complete, onboarding_version, is_admin, xp, current_streak, longest_streak,
+       today_seconds, reminders_enabled }
+     RULE: a profile is "onboarded" only when onboarding_version >= 1 (old test profiles have 0).
+  Direct table access (row security: own row only): profiles select/insert/update
+     (client may update: avatar_url, avatar_blurhash, study_goal_minutes, section, group_name).
+     Never write is_admin, onboarding_version, username (use complete_onboarding).
+  public_profiles (view, authenticated read): id, username, avatar_url, avatar_blurhash,
+     university_id, speciality_id, academic_year, created_at   <- the ONLY way to read other students.
+  set_reminders(p_enabled boolean) -> void          (day 2/4/7/14 reminder ladder on/off)
+  register_push_token(p_token text, p_platform text = 'android') -> void
+  unregister_push_token(p_token text) -> void       (call on sign-out)
+  delete_my_account() -> void                       (store policy: must be reachable in Profile)
+
+--------------------------------------------------------------------------------
+B. MODULES, THE OFFLINE BUNDLE, FILES
+--------------------------------------------------------------------------------
+  get_my_modules() -> rows
+     { module_id, name, semester, ue_category ('UEF'|'UEM'|'UED'|'UET'|...), academic_year,
+       version (int, 0 = no content yet), lessons (published count), lessons_done, resources }
+     The pilot student sees 20 modules (8 in S3, 12 in S4).
+  get_module_bundle(p_module bigint, p_langs text[] = null) -> jsonb   (schema_version 2)
+     { schema_version, module{id,name,semester,ue_category,academic_year}, version, languages, generated_at,
+       lessons:[{ id, position, source_lang, unit{ref,number,title{lang:..}}, estimated_minutes, source_pages,
+                  i18n:{ lang:{ title, summary, body_md, key_terms, blocks[] } },
+                  cards:[{id,position,i18n:{lang:{front,back}}}],
+                  questions:[{id,kind,correct_index,position,i18n:{lang:{prompt,options[],explanation}}}],
+                  resources:[{resource_id,role}] }],
+       resources:[{ id, type, format, title, file_urls[], trust_label, size_bytes, origin, created_at }],
+       glossary:[{ id, fr, ar, en, definition{lang:..}, note }] }
+     Call with the student's language list, e.g. ['fr','ar'] (UI language + content language).
+     Compare version with the stored one: download only when it is newer.
+  add_module_resource(p_module bigint, p_file jsonb) -> { resource_id }
+  toggle_resource_upvote(p_resource bigint) -> { upvoted, count }
+  register_download(p_resource bigint) -> void      (call when a student opens/downloads a file)
+  p_file = { url, hash, size, mime, title, type, format }
+     url must start with app_config.files_base_url (our upload worker's public address);
+     type in cours|td|tp|textbook|exercices_corriges|exam|notes|memoire|other;
+     format in pdf|image_set|doc|ppt|image|sheet|other; size <= app_config.max_upload_mb (15).
+     The same hash in the same module is stored once (the existing resource id is returned).
+  Direct reads (member of the module only): study_resources (visible), module_glossary,
+     module_content_versions, learn_lesson_resources, study_modules (everyone).
+
+--------------------------------------------------------------------------------
+C. LEARNING: FEED, REVIEWS, QUIZZES, LESSONS, TIME, RESUME
+--------------------------------------------------------------------------------
+  get_home_cards(p_limit int = 20) -> rows
+     { card_id, lesson_id, module_id, module_name, front, back, box, due_at, like_count,
+       comment_count, liked, saved }   order: due cards, new cards, soonest due (text in the student's language)
+  review_card(p_card bigint, p_correct boolean) -> { box, due_at }
+     Leitner: right = box+1 (max 5), wrong = box 1; delays 10 min / 1 d / 3 d / 7 d / 14 d.
+     The app mirrors this locally for offline use (same numbers).
+  submit_answer(p_question bigint, p_choice int) -> { correct, correct_index }
+     a wrong answer pulls the lesson's cards back into the feed.
+  complete_lesson(p_lesson bigint, p_score int = null) -> { first_time, next_lesson_id }
+  log_study_time(p_seconds int) -> { today_seconds, goal_seconds, goal_reached }
+     send every 30-60 s of ACTIVE time (max 900 per call); 300 s in a day makes a streak day.
+  save_reading_position(p_lesson bigint, p_block_id text, p_progress real 0..1, p_at timestamptz = null) -> void
+     latest timestamp wins; block ids are language-independent.
+  get_continue_items(p_limit int = 5) -> rows { lesson_id, module_id, module_name, title, progress, block_id, updated_at }
+  sync_progress(p_ops jsonb) -> jsonb array   (OFFLINE REPLAY, max 200 ops, applied in order)
+     op = { "op_id":"<uuid generated on the phone>", "kind":..., "payload":{...} }
+       review            {card_id, correct}
+       answer            {question_id, choice}
+       lesson_done       {lesson_id, score}
+       study_time        {seconds}
+       reading_position  {lesson_id, block_id, progress, at}
+       like | save       {card_id, on}
+     result per op: {op_id, status: applied | duplicate | rejected, message?}.
+     duplicate = already applied (safe to delete from the outbox); rejected = will never work
+     (delete it and log the message); a transport error = keep it and retry later.
+  Direct reads (own rows only): learn_card_progress, learn_lesson_progress, learn_reading_position,
+     study_stats, study_daily.  Published content tables (learn_*) are read through the bundle.
+  Social on cards: toggle_card_like(p_card) -> {liked,count}; toggle_card_save(p_card) -> {saved};
+     add_card_comment(p_card, p_body text <= 500, p_parent uuid = null) -> uuid;
+     get_card_comments(p_card, p_before = null, p_limit = 30) -> rows {id,user_id,username,avatar_url,
+       avatar_blurhash,body,parent_id,created_at,is_mine};  delete_card_comment(p_id) -> boolean
+
+--------------------------------------------------------------------------------
+D. MODULE CHAT AND TRANSLATION
+--------------------------------------------------------------------------------
+  get_chat_messages(p_module bigint, p_before timestamptz = null, p_limit int = 50) -> rows
+     { id, module_id, user_id, username, avatar_url, avatar_blurhash, body, lang, translated_body,
+       translated_lang, reply_to, resource_id, resource_title, resource_type, created_at, is_mine }
+     newest first; blocked users are already filtered out; translated_body is in the reader's
+     language when a translation exists (else null).
+  post_chat_message(p_module bigint, p_body text, p_lang text = 'und', p_reply_to uuid = null,
+                    p_file jsonb = null, p_client_id uuid = null) -> { message_id, resource_id, duplicate }
+     ALWAYS send p_client_id (a uuid created on the phone when the user taps send): a retry then never
+     posts twice. Limits: body <= 4000, 20 messages/minute (app_config). A file sent in chat also
+     appears in the module Library (same resource).
+     p_lang: your script guess ('ar' if mostly Arabic letters, else 'und'); the translation worker corrects it.
+  delete_chat_message(p_id uuid) -> boolean          (own message, or admin)
+  REALTIME (supabase_flutter channels, row security applies):
+     table module_chat_messages  filter module_id=eq.<id>   events INSERT, UPDATE (deleted_at)
+     table message_translations                              event  INSERT  (match message_id locally)
+  The translation job (micro m-translate) fills message_translations 20-85 s after a message; see
+  KAMPUS_TRANSLATION_PLAN.txt. Until then show the original with a quiet "translating..." marker.
+  Reports: insert into reports(reporter_id, target_type, target_id, reason, details) with
+     target_type in user | module_message | flashcard_comment | resource.   Blocks: table blocked_users (own rows).
+
+--------------------------------------------------------------------------------
+E. REMOTE CONFIG, NOTIFICATIONS
+--------------------------------------------------------------------------------
+  app_config (anyone can read; never secrets): chat_rate_limit_per_minute (20),
+     max_upload_mb (15), min_supported_build (0), files_base_url ("https://files.kampus-link.com/").
+     Read at start and every few hours; if the app build < min_supported_build show a "please update" screen.
+  notifications (own rows: select, update read, delete): { id, type streak|reminder|module_update|chat|system,
+     body, module_id, data{}, read, created_at }. Push messages arrive through Firebase (FCM).
+
+--------------------------------------------------------------------------------
+F. FILE UPLOADS (Cloudflare Worker, not Supabase Storage)
+--------------------------------------------------------------------------------
+  Today (repo scan): POST https://upload.kampus-link.com  multipart, header Authorization: Bearer <session access token>,
+     field folder = avatars | library | community | marketplace -> returns the public URL.
+     POST /delete-user-files purges the user's files (account deletion).
+  v1 target (Lane A will extend the worker): folders avatars/ and files/{module_id}/; the app computes
+     the SHA-256 hash and size before upload and sends hash/size/mime in p_file. The worker
+     rejects files over max_upload_mb and unsafe types. Until the worker is extended, module
+     file uploads are disabled behind a feature flag.
+
+--------------------------------------------------------------------------------
+G. WHAT THE APP MUST NEVER DO
+--------------------------------------------------------------------------------
+  - hold or ship a service key, DB password or any secret (the only secrets-like value in the
+    app is the anon key in .env, which is public by design)
+  - read other students' profiles from the profiles table (use public_profiles)
+  - write xp, streaks, progress or likes with direct table writes (use the functions)
+  - call the Kampus Store functions (admin_*, ks_*, advertiser/partner functions, get_my_profile())
+    or touch Store tables: the Store is a separate product
+================================================================================

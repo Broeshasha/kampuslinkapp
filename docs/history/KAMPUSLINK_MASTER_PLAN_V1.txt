@@ -1,0 +1,606 @@
+================================================================================
+KAMPUSLINK - MASTER PLAN V1
+================================================================================
+Status        : DRAFT 1.0 (written 2026-10-16)
+Owner         : Founder (final say on every decision and every CORE change)
+Rule zero     : This file is the single source of truth. If code, chat history,
+                or any AI's memory disagrees with this file, THIS FILE WINS.
+                Change the file first, then change the code.
+Companion files (create next to this one, append-only):
+                KAMPUS_APP_LOG.txt      (engineering changes)
+                KAMPUS_CONTENT_LOG.txt  (content pipeline changes)
+                KAMPUS_DECISIONS.txt    (every decision that changes this plan)
+
+--------------------------------------------------------------------------------
+0. HOW TO USE THIS FILE (READ FIRST, EVERY AI AND EVERY HUMAN)
+--------------------------------------------------------------------------------
+0.1  Before doing anything: read sections 1, 2, 3 and 14 of this file, then the
+     last 30 entries of KAMPUS_APP_LOG.txt.
+0.2  Work only inside YOUR LANE (section 14). Never edit another lane's files.
+0.3  If you need something changed in the CORE (section 4), do not change it.
+     Write a CORE CHANGE REQUEST in the log (template in section 16) and stop.
+0.4  Every session ends with a log entry. No log entry = the work did not happen.
+0.5  If something in this file is unclear or missing, do NOT guess. Write the
+     question in KAMPUS_DECISIONS.txt as OPEN and continue with other work.
+0.6  Never mark something DONE unless it meets its "Done when" line.
+
+--------------------------------------------------------------------------------
+1. PRODUCT IN ONE PAGE
+--------------------------------------------------------------------------------
+Name          : KampusLink
+One line      : Where Algerian university students study, stay informed and
+                connect, in one app that works on weak data.
+First users   : Mining students, year 2 (one cohort, same modules, same exams).
+Then          : Mining year 3 -> other mining years -> other departments in the
+                same faculty -> other faculties -> other universities.
+Focus         : The USER. No monetization work in v1.
+Principles    : 1. Study first, social second.
+                2. Offline-first. Light on data. Works on cheap Android phones.
+                3. Under 3 taps from opening the app to studying.
+                4. Verified students only. Trust is the product.
+                5. Reward progress. Never guilt-trip absence.
+                6. Three languages everywhere: Arabic (RTL), French, English.
+                7. Everything that is content is JSON.
+
+The app is an UPDATE of an existing, live Google Play app. It is NOT a new app.
+See section 3 (identity lock) and section 9 (release rules).
+
+--------------------------------------------------------------------------------
+2. V1 SCOPE (WHAT SHIPS) AND NON-SCOPE (WHAT DOES NOT)
+--------------------------------------------------------------------------------
+IN V1
+  - Onboarding (section 8)
+  - 3 tabs only: HOME, MODULES, PROFILE
+  - HOME    : mixed flashcard feed from all the user's modules (swipe, flip,
+              like, comment, share, save) + study timer + "Continue" card
+  - MODULES : list of modules -> inside each: EPISODES, LIBRARY, QUIZZES, CHAT
+  - Library : textbook, TDs, TPs, exams, student uploads
+  - Chatroom per module (text + document upload)
+  - Documents uploaded in chat appear automatically in that module's Library
+  - Quizzes (mistakes become flashcards)
+  - Timer + daily streak
+  - Offline content stored as JSON on the phone
+  - 3 languages: UI + chat messages translated into each reader's language
+  - Basic profile
+  - Push notifications; re-engagement emails (Duolingo-style, with a hard stop)
+  - Report / block / delete account (required for store policy and trust)
+
+OUT OF V1 (do not build, do not leave half-built code for them)
+  - Marketplace (moved out, see section 5)
+  - Stories rings / lives / disappearing posts (maybe phase 2 as a small
+    "Official" strip)
+  - Camera effects and filters
+  - Focus music
+  - Deep profile customization
+  - Opportunities board, AI-generated flashcards (phase 2+)
+  - Any monetization
+
+--------------------------------------------------------------------------------
+3. IDENTITY LOCK (NEVER CHANGE - THIS IS WHAT KEEPS IT THE SAME APP FOR GOOGLE)
+--------------------------------------------------------------------------------
+Fill the values below ONCE, in Phase 0, copied from the live app and Play
+Console. After that these lines are LOCKED.
+
+  applicationId (package name) : com.kampuslink.kampuslink  (from repo scan, LOCKED)
+  Signing                      : Play App Signing / upload key ____________ (LOCKED)
+  Developer account            : ______________________  (LOCKED)
+  Current live versionName     : 1.0.2 (repo)  versionCode: 5 (repo; VERIFY in Play
+                                 Console, next upload must be higher than any ever uploaded)
+  Store listing title          : ______________________
+  Firebase / push project      : ______________________  (keep same project)
+  Deep link domains / schemes  : ______________________  (keep)
+  Existing backend project     : Supabase (project ref: ________) + media in Cloudflare R2
+                                 behind worker upload.kampus-link.com (keep, shared with
+                                 Kampus Store)
+
+Rules:
+  3.1  Never change applicationId, signing key, or developer account.
+  3.2  Every release increases versionCode (always upward, never reused).
+  3.3  Keep the same store listing; update screenshots, description and the
+       Data Safety form so they match the real app. A listing that no longer
+       matches what the app does is a policy risk.
+  3.4  Keep the same Firebase / push project so existing installs keep
+       receiving notifications.
+  3.5  Existing users must keep their accounts. No forced re-registration.
+  NOTE: These are general store practices. Re-check current Google Play policy
+  text before each release; policies change.
+
+--------------------------------------------------------------------------------
+4. THE CORE (SHARED, PROTECTED, "NEVER OVERLAP")
+--------------------------------------------------------------------------------
+The CORE is the only thing every lane depends on. Only the CORE OWNER lane may
+edit it, and only after a logged founder approval.
+
+  /core/schema/       database schema definitions + migration scripts
+  /core/contracts/    API contracts (request/response shapes), error codes
+  /core/content/      JSON content schemas (module, episode, flashcard, quiz...)
+  /core/i18n/         translation keys (ar, fr, en) - key names are frozen
+  /core/design/       design tokens (colors, spacing, type) as JSON
+  /core/constants/    enums, IDs format, limits (file size, message length...)
+
+Core rules:
+  4.1  Contracts come BEFORE code. No lane builds against something that is not
+       written in /core yet.
+  4.2  Naming: snake_case for JSON keys and database columns; ids are prefixed
+       (usr_, mod_, epi_, fc_, qz_, msg_, fil_); dates ISO 8601 UTC; languages
+       are "ar", "fr", "en"; all text UTF-8.
+  4.3  Every JSON content file has: schema_version, id, updated_at,
+       content_hash. The app only downloads what changed.
+  4.4  Backward compatibility: a change to the core must not break installed
+       old app versions or the Kampus Store app (see section 5). Use
+       EXPAND -> MIGRATE -> CONTRACT (section 6).
+  4.5  Anything not listed in the core is private to its lane.
+
+--------------------------------------------------------------------------------
+4B. MICROS (SMALL SINGLE-PURPOSE SERVICES)
+--------------------------------------------------------------------------------
+A micro is a small service that does ONE job: a Cloudflare Worker or a Supabase Edge
+Function. The project already works this way (upload worker, order-submit worker).
+Everything new that is not a screen or a table becomes a micro.
+
+Rules:
+  M1  One micro = one job, one owning lane, one contract in /core/contracts, one folder
+      /micros/{name} in the repo.
+  M2  A micro owns its tables (prefix) and its R2 prefix. Others use it only through its
+      API or a view declared in /core. Nobody reads another micro's tables directly.
+  M3  Micros never call each other. They talk through the database (queue/event rows)
+      or through the app.
+  M4  Every micro: checks the Supabase JWT, rate-limits, is idempotent (safe to run
+      twice), uses a versioned route (/v1/...), and writes one structured log line.
+  M5  Secrets only in the platform's secret store, never in the repo. Micro URLs live in
+      remote config, not hard-coded in the app.
+  M6  Every micro can be switched off without crashing the app (the app shows a
+      graceful fallback).
+  M7  Each micro must be covered by delete_my_account / delete-user-files if it stores
+      user data.
+
+The micros (build each one only when its phase arrives):
+  m-upload        EXISTS. Extend: new prefixes (files/, content/), hash dedupe, type and
+                  size limits, malware scan, delete-user-files covers new prefixes. LANE A
+  m-content-sync  NEW. Per-module manifest (versions + hashes), signed download URLs,
+                  delta updates for the offline JSON store. LANE A
+  m-content-convert NEW. PDF -> JSON pipeline with a human review queue. LANE C
+  m-translate     NEW. Translate-on-read with cache (message_translations), glossary per
+                  module, "see original". LANE E
+  m-notify        NEW. Push + email ladder with the hard stop (day 2/4/7/14/stop),
+                  quiet hours, unsubscribe. LANE E
+  m-moderation    NEW. Report queue, keyword filter, upload scan results. LANE A + E
+  order-submit    EXISTS, belongs to Kampus Store. FROZEN: nobody touches it in v1.
+Start with m-upload (extend) and m-content-sync only.
+
+4C. SCHEMA AND ENVIRONMENT DECISIONS (from the 2026-10-16 audit)
+  - REUSE the existing learn_* tables (lessons = episodes, cards = flashcards, questions =
+    quizzes, progress tables, i18n fr/ar/en). Do not rebuild them. See KAMPUS_V1_DROP_PLAN.txt.
+  - TWO TRACKS: v1 is built on a DEV Supabase project; drops are rehearsed on DEV and
+    replayed on PROD only at gate G4. The purged front-end lives on branch v1-reset and is
+    never merged to main before a real milestone (main deploys the web build and feeds Play).
+  - Security fixes S1-S4 (KAMPUS_V1_DROP_PLAN.txt section 0) come before any cleanup.
+
+--------------------------------------------------------------------------------
+5. KAMPUS STORE (STANDALONE MARKETPLACE) - PROTECT IT
+--------------------------------------------------------------------------------
+Kampus Store is a separate app that shares the SAME backend and the SAME
+profiles as KampusLink. Removing the marketplace from KampusLink does NOT mean
+removing it from the backend.
+
+  5.1  Remove marketplace SCREENS, CODE and ASSETS from the KampusLink app.
+  5.2  Do NOT drop marketplace tables, columns, storage paths or functions in the
+       shared backend while Kampus Store depends on them.
+  5.3  Shared and PROTECTED (never alter in a breaking way): authentication,
+       users, profiles (including avatar fields), anything the Store reads.
+  5.4  Phase 0 produces a DEPENDENCY MAP: for every table, column, storage
+       prefix, function and API route, mark who uses it:
+         LINK (KampusLink only) / STORE (Kampus Store only) / BOTH / NONE
+       Only items marked NONE or LINK-and-unused may ever be deleted.
+  5.5  Marketplace images and anything else the Store needs must NOT live in
+       the same storage location that is being wiped (see section 7).
+  5.6  Future option: split the backend into two once KampusLink v1 is stable.
+       Not part of v1.
+
+--------------------------------------------------------------------------------
+6. BACKEND CLEANUP - HOW TO DELETE WITHOUT BREAKING ANYTHING
+--------------------------------------------------------------------------------
+Golden rule: NOTHING is deleted until it is proven unused, backed up, and
+deprecated for a waiting period.
+
+Procedure for every table / column / function (EXPAND -> MIGRATE -> CONTRACT):
+  Step 1  INVENTORY   List it in the dependency map (section 5.4).
+  Step 2  PROVE       Search both codebases + check logs / usage counts.
+                      Old installed app versions count as users.
+  Step 3  BACKUP      Export the data. Verify the backup can be restored.
+  Step 4  DEPRECATE   Mark as deprecated in /core/schema. Stop writing to it.
+                      Keep it in place.
+  Step 5  WAIT        Minimum 30 days AND until the old app versions that use
+                      it are below an agreed share of active users.
+  Step 6  DELETE      Drop it. Log it. Keep the backup for 90 days more.
+
+Additive changes (new tables, new nullable columns) are always allowed first.
+Never rename a column in place: add the new one, copy, switch, then retire.
+
+Existing users and their data: every existing profile must still load after the
+migration. New required fields (university, faculty, department, year, section,
+language) are collected by onboarding for EXISTING users the first time they
+open the new version; they are never required at the database level for old rows.
+
+Kill switch / version gate: keep a remote config with "min_supported_version"
+and "force_update" so very old versions can be given a friendly "please update"
+screen after the transition period (never on day one).
+
+--------------------------------------------------------------------------------
+7. R2 STORAGE WIPE AND NEW STRUCTURE
+--------------------------------------------------------------------------------
+Goal: wipe all DOCUMENTS in R2 and restart with a clean structure.
+
+REPO SCAN FINDING (2026-10-16): the app uploads through the worker with exactly 4 folders:
+  avatars | community | library | marketplace
+DOCUMENTS = the `library` folder ONLY. avatars, community and marketplace are live (profile
+photos, posts, Store/marketplace images). Wiping the whole bucket would break them.
+Rows in study_resources.file_urls that point into library/ must be deleted or marked
+unavailable in the same operation. Worker source is not in the repo: get it first.
+
+PRE-WIPE CHECKLIST (all must be YES before anything is deleted)
+  [ ] Every bucket and prefix is listed and classified:
+        DOCUMENTS (to wipe) / AVATARS / STORE IMAGES / OTHER
+  [ ] Only DOCUMENTS are on the wipe list. Avatars and Kampus Store images are
+      confirmed NOT inside it.
+  [ ] A full backup exists elsewhere and a test restore of a sample worked.
+  [ ] Database rows that point to wiped files are handled (deleted or marked
+      "unavailable"), so the app never shows broken links.
+  [ ] Old app versions have a graceful empty state for missing documents.
+  [ ] Founder approval is written in KAMPUS_DECISIONS.txt with the exact list.
+
+NEW STRUCTURE (documents bucket / prefix)
+  content/v1/modules/{module_id}/manifest.json        (module index + hashes)
+  content/v1/modules/{module_id}/episodes/{epi_id}.json
+  content/v1/modules/{module_id}/flashcards/{fc_set_id}.json
+  content/v1/modules/{module_id}/quizzes/{qz_id}.json
+  content/v1/modules/{module_id}/library/{item_id}.json   (textbook, TD, TP)
+  content/v1/media/{content_hash}.{webp|png|jpg}           (images, diagrams)
+  files/{module_id}/{file_hash}.{ext}                      (student uploads)
+  i18n/v1/{ar|fr|en}.json
+  design/v1/tokens.json
+Rules: names never contain spaces or accents; files are addressed by hash so
+duplicates are stored once; public/private access is decided per prefix and
+written in /core/constants.
+
+--------------------------------------------------------------------------------
+8. ONBOARDING (MUST BE EXCELLENT - FIRST 90 SECONDS DECIDE EVERYTHING)
+--------------------------------------------------------------------------------
+Two paths, one flow:
+
+NEW USER
+  1. Splash, then LANGUAGE (Arabic / French / English). Big buttons, saved
+     immediately, UI switches instantly (RTL for Arabic).
+  2. Sign up / sign in (use the existing auth methods, do not invent new ones).
+  3. Student details: university -> faculty -> department -> year -> section /
+     group. For the pilot, preselect Mining / Year 2.
+  4. Verification: university email OR student card photo (card photo deleted
+     after review). Student can enter the app in "limited mode" while pending:
+     read-only content, no chat posting, no uploads.
+  5. Modules are assigned automatically from the details above. Show them as
+     colored cards ("These are your modules").
+  6. QUICK WIN in under 60 seconds: first swipeable flashcard from the student's
+     own modules, then "Start your first study session" (timer begins).
+  7. Notification permission is asked AFTER the quick win, with a reason in
+     plain words. Never at launch.
+  8. Finish: short tour hints (max 3), dismissible, shown once.
+
+EXISTING USER (updated app)
+  - Skip sign-up. Keep session and profile.
+  - Ask only for what is missing (language, department/year/section).
+  - Show a one-screen "What's new" explaining the new KampusLink.
+  - Never wipe or reset their account, streak, or settings.
+
+Onboarding rules: every step can be resumed after closing the app; progress is
+saved; back button works; works offline up to the verification step; every
+screen is available in 3 languages; track drop-off per step (section 13).
+
+Done when: a new student reaches the first flashcard in under 60 seconds on a
+mid-range Android phone, and an existing user reaches Home in under 20 seconds.
+
+--------------------------------------------------------------------------------
+9. APP STRUCTURE AND CLEANUP (APP CODE SIDE)
+--------------------------------------------------------------------------------
+9.1  Pull the whole app into the working repo. Tag the current live release in
+     git (e.g. live-before-v1) so we can always return to it.
+     CURRENT STATE (repo scan): live app = Flutter, 4 tabs (Home news/community, Library,
+     Messages, Marketplace), EN/FR only, 58 Dart files, 1 git commit. The per-file
+     proposal is in KAMPUS_REPO_MAP.txt; the backend queries are in
+     KAMPUS_BACKEND_AUDIT.sql. These two files ARE the Phase 0 inventories until complete.
+9.2  Phase 0 produces a FILE INVENTORY: every screen, route, component, asset,
+     dependency and permission, marked KEEP / REMOVE / REWRITE / UNKNOWN.
+9.3  Remove in this order, one commit each, app must build after each:
+       1) marketplace screens and routes
+       2) marketplace API calls, models, state
+       3) unused assets and libraries
+       4) unused permissions (every removed permission shrinks the Data Safety form)
+9.4  UNKNOWN items are not deleted. They go to DECISIONS as OPEN.
+9.5  Navigation: exactly 3 bottom tabs (Home, Modules, Profile).
+9.6  Release rules (Google Play):
+       - same applicationId and signing (section 3)
+       - increase versionCode every build
+       - go through internal testing, then closed testing, then STAGED rollout
+         (e.g. 5% -> 20% -> 50% -> 100%), watching crashes at each step
+       - update store listing, screenshots, privacy policy and Data Safety form
+         to match the new app before the production rollout
+       - required for apps with accounts and user content: in-app account
+         deletion, report / block tools, and moderation
+       - target the required current Android API level
+       - never submit the new version with unfinished features visible
+
+--------------------------------------------------------------------------------
+10. FEATURE SPECS (SHORT FORM - FULL CONTRACTS LIVE IN /core)
+--------------------------------------------------------------------------------
+10.1 HOME
+  - Flashcard feed, vertical swipe, tap to flip, mixed across all modules.
+  - Ordering: spaced repetition (simple Leitner box scheduling) + new cards +
+    cards from recent mistakes. Balanced across modules.
+  - Actions: like, comment, share (as image to WhatsApp), save.
+  - Top: study timer pill + "Continue: {module}, episode {n}" card.
+  - Social proof: "{n} students studying {module} now".
+Done when: feed loads instantly from local JSON with no connection.
+
+10.2 MODULES
+  - Modules list: each module has its own accent color and progress.
+  - Inside a module, 4 sections:
+      EPISODES : the course as an ordered series of lessons, with progress,
+                 unlocking one after the other, "continue where you stopped".
+                 Each episode = readable blocks (text, formula, image, table),
+                 its flashcards, its quiz, links to matching TD and TP.
+      LIBRARY  : textbook, TDs, TPs, exams, student uploads. Filter by type.
+                 Every uploaded file shows uploader, date, type, and badge
+                 "verified" when a delegate/moderator approves it.
+      QUIZZES  : MCQ, true/false, fill-in, numeric. Wrong answers create
+                 flashcards automatically.
+      CHAT     : the module chatroom (10.3).
+  - "Download for offline" per module, with size shown before download.
+Done when: a student downloads a module on Wi-Fi and studies it fully offline.
+
+10.3 CHATROOM (ONE PER MODULE)
+  - Text, replies, reactions, document and image upload.
+  - Any document uploaded in chat is automatically created in the module
+    Library (same file_hash = same file, no duplicates) and linked back to the
+    message.
+  - Auto-translation: store original text + detected language. Translate to
+    each reader's language on first need, cache per (message, target language),
+    never translate twice. Tap to see original.
+  - Limits: known risk with Darija / Arabizi (Latin-letter Arabic); and mining
+    terms need a per-module glossary so technical words stay consistent.
+  - Safety: report, block, moderator tools, rate limits, file type and size
+    limits, malware scan on uploads.
+Done when: an Arabic message is readable in French and English within seconds
+(online), and uploaded files appear in the Library without manual work.
+
+10.4 TIMER AND STREAK
+  - Starts when the app opens. Counts ACTIVE time only (pauses in background or
+    after ~60 seconds without interaction).
+  - Stored locally, synced when online. One streak per day of >= a small goal.
+  - No guilt messages when the streak breaks; offer a recovery option instead.
+
+10.5 PROFILE (BASIC)
+  - Name, photo, university / faculty / department / year / section, language,
+    theme (dark/light), study stats, streak, notification settings, account
+    deletion, logout. Nothing else in v1.
+
+10.6 NOTIFICATIONS AND EMAIL
+  - Push first, email second. Content must be real information
+    ("5 new cards in {module}"), never empty "come back" spam.
+  - Re-engagement ladder when a student stops opening the app:
+    day 2 -> day 4 -> day 7 -> day 14 -> STOP (hard stop, no more messages
+    until they return on their own).
+  - Quiet hours at night; full control in settings; one-tap unsubscribe.
+  - Language of every message = the user's chosen language.
+
+--------------------------------------------------------------------------------
+11. CONTENT PIPELINE (FOR THE CONTENT LANE AND KAMPUS_CONTENT_LOG.txt)
+--------------------------------------------------------------------------------
+11.1 Everything is JSON except: images/diagrams, scanned pages, and uploaded
+     PDF/Word files. These stay files and are referenced from JSON by hash.
+11.2 Pipeline for each source document:
+       RECEIVED -> SOURCE CHECKED (rights ok?) -> CONVERTED to JSON
+       (AI-assisted) -> HUMAN REVIEWED (a student/teacher checks formulas,
+       Arabic/French text and tables) -> VALIDATED against /core/content
+       schema -> PUBLISHED to R2 -> manifest hash updated.
+11.3 Keep the original PDF as a fallback viewer for anything that fails review.
+11.4 Never publish content with unknown rights. Every item has a source and
+     status in the content log.
+11.5 Start with Mining Year 2: collect the real module list and exam calendar,
+     then textbooks, TDs, TPs, past exams, in that order of student value.
+11.6 Quality bar: formulas render correctly, no missing characters in Arabic,
+     tables intact, every episode has at least 5 flashcards and 1 quiz.
+
+Example episode JSON (the real schema lives in /core/content):
+  {
+    "schema_version": 1,
+    "id": "epi_geo02_004",
+    "module_id": "mod_geo02",
+    "title": { "ar": "...", "fr": "...", "en": "..." },
+    "blocks": [
+      { "type": "text", "lang": "fr", "value": "..." },
+      { "type": "formula", "latex": "..." },
+      { "type": "image", "ref": "content/v1/media/{hash}.webp" }
+    ],
+    "flashcards": ["fc_..."],
+    "quiz": "qz_...",
+    "linked": { "td": "lib_...", "tp": "lib_..." },
+    "updated_at": "2026-10-16T00:00:00Z",
+    "content_hash": "..."
+  }
+
+--------------------------------------------------------------------------------
+12. DESIGN SYSTEM (COLORS AND FEEL)
+--------------------------------------------------------------------------------
+  - Dark by default (night study), light option. Strong contrast.
+  - One brand color + one accent color per module (students recognize modules
+    by color). Suggested start: deep charcoal base, warm amber main accent,
+    teal secondary. Final values are decided once and written to
+    /core/design/tokens.json; nobody hardcodes colors in screens.
+  - RTL-first layouts (Arabic is not an afterthought). Big tap targets.
+  - Light animations only; the app must stay smooth on low-end phones.
+  - Performance budget: cold start under 3 seconds on a mid-range phone,
+    smooth 60 fps scrolling in the feed, no feature may break the budget.
+
+--------------------------------------------------------------------------------
+13. METRICS (MEASURE THE USER, NOT VANITY)
+--------------------------------------------------------------------------------
+  - Onboarding: completion rate and drop-off per step; time to first flashcard
+  - Retention: day-1 / day-7 / day-30
+  - Focused study minutes per student per day (timer, active time only)
+  - Share of the cohort opening a module every week
+  - Flashcards studied, quizzes completed, uploads, chat messages per module
+  - Quality: crash-free sessions, app size, startup time, data used per session
+  - Monthly one-question survey: "Did KampusLink help you study better?"
+  - Expansion gate (all must be true): >= 60% of the cohort installed and
+    verified, day-7 retention > 30%, students add content themselves, several
+    students say they would miss it, no major crash problems.
+
+--------------------------------------------------------------------------------
+14. LANES (MULTI-AI WORKING RULES - SO NOTHING OVERLAPS)
+--------------------------------------------------------------------------------
+One lane = one owner at a time (an AI session or a human). A lane edits ONLY
+its own paths. Lane names are fixed; which AI tool takes which lane can change.
+
+  LANE A  CORE + BACKEND      owns /core/*, database migrations, API, R2 rules,
+                              security rules, cleanup of backend tables
+  LANE B  APP SHELL + DESIGN  owns app navigation, onboarding, Profile, design
+                              system implementation, removal of marketplace code
+  LANE C  CONTENT             owns the content pipeline, JSON files, R2 content
+                              uploads, content log, glossary
+  LANE D  LEARNING FEATURES   owns Home feed, Episodes, Quizzes, flashcard
+                              scheduling, timer, offline storage
+  LANE E  CHAT + LANGUAGES    owns chatrooms, uploads-to-library linking,
+                              translation, i18n files, notifications and email
+  LANE F  QA + RELEASE        owns tests, release builds, Play Console steps,
+                              rollout checklist, crash monitoring (read-only on
+                              all code, can only open issues)
+
+Rules:
+  14.1 Lanes talk to each other ONLY through /core contracts and the logs.
+  14.2 Cross-lane need = write a REQUEST in the log addressed to that lane.
+  14.3 Two lanes must never edit the same file. If it happens, the later one
+       stops, logs a CONFLICT, and waits for the founder.
+  14.4 Shared files (build config, dependency list) belong to LANE B; others
+       request additions.
+  14.5 Every AI starts each session with the "Session start prompt" in
+       section 16 and ends with a log entry.
+  14.6 A new AI taking over a lane must read the lane's last 30 log entries
+       before touching anything.
+  14.7 Branching: one branch per lane per task; merged only by the founder
+       or LANE F after checks pass.
+
+--------------------------------------------------------------------------------
+15. ROADMAP AND "DONE WHEN" GATES
+--------------------------------------------------------------------------------
+PHASE 0  AUDIT AND FREEZE (do not skip)
+  - Fill section 3 values from the live app and Play Console.
+  - Tag the live release. Back up the database and every storage bucket.
+  - Produce: DEPENDENCY MAP (section 5.4) and FILE INVENTORY (section 9.2).
+  - Done when: both inventories are complete and the founder approves them.
+
+PHASE 1  CORE CONTRACTS
+  - Write schema, JSON content schemas, API contracts, i18n keys, tokens.
+  - Done when: every lane can build against /core without asking questions.
+
+PHASE 2  BACKEND EXPAND + R2 RESET
+  - Additive migrations only. Run the R2 pre-wipe checklist, then wipe documents
+    and create the new structure.
+  - Done when: old app versions and Kampus Store still work, new structure exists.
+
+PHASE 3  APP SHELL
+  - Remove marketplace code, 3 tabs, onboarding for new and existing users.
+  - Done when: onboarding targets in section 8 are met.
+
+PHASE 4  MODULES AND LIBRARY OFFLINE
+  - Modules, Library, offline JSON, PDF fallback viewer.
+  - Done when: one real Mining Year 2 module works fully offline.
+
+PHASE 5  CHAT AND UPLOADS
+  - Chatrooms, uploads into the Library, moderation basics.
+  - Done when: section 10.3 first "Done when" is true.
+
+PHASE 6  HOME, EPISODES, QUIZZES, TIMER
+  - Flashcard feed, continue card, quizzes feeding flashcards, streaks.
+  - Done when: students open the app daily in the closed beta.
+
+PHASE 7  TRANSLATION AND NOTIFICATIONS
+  - Auto-translation, push + email ladder.
+  - Done when: section 10.3 second "Done when" and 10.6 are true.
+
+PHASE 8  QA, BETA, STAGED RELEASE
+  - Closed beta (~30 students), fixes, store listing and Data Safety update,
+    staged rollout, 4-week cohort measurement (section 13), expansion decision.
+
+If the January exam period is close: ship phases 3 to 6 for the pilot, phase 7
+can follow. Cut scope, never cut the beta.
+
+--------------------------------------------------------------------------------
+16. LOG FORMATS AND PROMPTS
+--------------------------------------------------------------------------------
+Logs are APPEND-ONLY. Never edit or delete a past entry; add a correction entry.
+
+KAMPUS_APP_LOG.txt - entry template
+  [YYYY-MM-DD HH:MM] LANE: X  |  AI/Person: ______  |  Phase: N
+  DID       : (what changed, in plain words)
+  FILES     : (paths touched - must all be inside the lane)
+  CORE      : none / read-only / CORE CHANGE REQUEST (see below)
+  TESTED    : (how it was checked, result)
+  RISKS     : (what could break, who is affected, incl. old app / Kampus Store)
+  NEXT      : (next step for this lane)
+  NEEDS     : (requests to other lanes: "LANE E: need ...")
+
+KAMPUS_CONTENT_LOG.txt - entry template
+  [YYYY-MM-DD HH:MM] CONTENT: item_id / module_id
+  SOURCE    : (where it came from)  RIGHTS: ok / unknown / blocked
+  STATUS    : received / converted / reviewed / validated / published / rejected
+  CHECKED BY: (who reviewed formulas, Arabic/French text, tables)
+  OUTPUT    : (R2 path, hash)
+  ISSUES    : (anything unresolved)
+
+CORE CHANGE REQUEST (goes in the app log, addressed to LANE A + founder)
+  WHAT      : exact change wanted
+  WHY       : problem it solves
+  AFFECTS   : lanes, old app versions, Kampus Store, existing data
+  PROPOSED  : migration / compatibility plan
+  STATUS    : OPEN until the founder writes APPROVED or REJECTED in DECISIONS
+
+KAMPUS_DECISIONS.txt - entry template
+  [YYYY-MM-DD] DECISION D-###: (one line)  STATUS: OPEN / APPROVED / REJECTED
+  REASON    : ...    CHANGES IN THIS FILE: section numbers updated
+
+SESSION START PROMPT (paste at the start of every AI session)
+  "You are working on KampusLink. Read KAMPUSLINK_MASTER_PLAN_V1.txt sections
+   0-4, 14 and your lane's part of 15, then the last 30 entries of
+   KAMPUS_APP_LOG.txt. You are LANE __. Edit only that lane's files. Do not
+   change /core; write a CORE CHANGE REQUEST instead. Do not delete anything
+   that is not marked safe in the dependency map. Kampus Store and old app
+   versions must keep working. End the session with a log entry."
+
+--------------------------------------------------------------------------------
+17. RISK REGISTER
+--------------------------------------------------------------------------------
+  R1  Breaking Kampus Store or old installs     -> dependency map, expand/contract
+  R2  Looking like a "new app" to Google        -> identity lock, accurate listing
+  R3  Wiping the wrong storage                  -> pre-wipe checklist + backup
+  R4  Two AIs overwriting each other            -> lanes + core + logs
+  R5  Content is the bottleneck                 -> content lane starts in Phase 0
+  R6  Rights on textbooks and past exams        -> rights status on every item
+  R7  Translation quality (Darija, mining terms)-> glossary, "see original"
+  R8  Toxic chat                                -> moderation, report, limits
+  R9  Too much scope for the exam deadline      -> cut scope, keep the beta
+  R10 Slow on cheap phones / weak data          -> performance and data budgets
+
+--------------------------------------------------------------------------------
+18. OPEN QUESTIONS (FILL IN, THEN MOVE TO DECISIONS)
+--------------------------------------------------------------------------------
+  Q1  Backend platform and exact table list: ______________________
+  Q2  R2 bucket names and what lives in each: ______________________
+  Q3  Does Kampus Store use R2 or the same document paths? ____
+  Q4  Current Play Console state, version, rollout track: ______
+  Q5  Exact Mining Year 2 module list and exam dates: ______
+  Q6  Who verifies students and who moderates (delegates?): ______
+  Q7  Which AI tool takes which lane: ______
+  Q8  Rights to use each textbook / past exam: ______
+
+================================================================================
+END OF MASTER PLAN V1 - KEEP THIS FILE UPDATED BEFORE CODE CHANGES
+================================================================================

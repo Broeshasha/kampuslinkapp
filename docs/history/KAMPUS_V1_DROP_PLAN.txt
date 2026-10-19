@@ -1,0 +1,417 @@
+================================================================================
+KAMPUSLINK - V1 DROP PLAN (BACKEND FIRST, THEN FRONT-END)     2026-10-16
+================================================================================
+Inputs     : audit results Q1-Q4 (structure, security, logic, data) + repo scan.
+Companion  : KAMPUSLINK_MASTER_PLAN_V1.txt (rules), KAMPUS_REPO_MAP.txt (files),
+             KAMPUS_AUDIT_ROUND2.sql (4 more read-only queries).
+Nothing in this file has been executed. Every SQL block is a proposal to review.
+Golden rule of the master plan still applies: archive -> prove unused -> wait -> drop.
+
+--------------------------------------------------------------------------------
+0. READ THIS FIRST - SECURITY (do BEFORE any cleanup)
+--------------------------------------------------------------------------------
+S1  CRITICAL  A service_role key is written in plain text inside the function
+              public.call_send_push (it came back in the Q3 result). That key bypasses
+              all row security. Treat it as compromised: it has now been pasted in a
+              chat. On top of that, anon AND authenticated can EXECUTE that function
+              through the public API, so anyone holding the app's anon key can make your
+              project send push notifications to anyone, using your service key.
+              FIX ORDER (each step is safe on its own):
+                a) make the 5 notification trigger functions run as definer, so they
+                   keep working after step b
+                b) revoke execute on call_send_push from anon / authenticated / public
+                c) replace the function body so the key lives in Supabase Vault
+                d) rotate the service key and update everything that uses it
+                   (edge functions, scrapers/n8n/workers, the Vault secret)
+              CAUTION on d): the app ships the anon key inside every installed APK. If
+              you rotate the project's legacy JWT secret, the anon key changes too and
+              EVERY installed app and the Kampus Store break. Use Supabase's separate
+              secret-key mechanism if your project has it, or schedule a JWT-secret
+              rotation together with a forced app update. Read Supabase's current docs
+              before choosing. Read the send-push edge function first (how does it
+              verify its caller?).
+              SQL (steps a-c; put the NEW key in Vault from the SQL editor yourself,
+              never paste a key into chat or into a file):
+                alter function public.trg_notify_comment()      security definer set search_path = public;
+                alter function public.trg_notify_comment_like() security definer set search_path = public;
+                alter function public.trg_notify_like()         security definer set search_path = public;
+                alter function public.trg_notify_message()      security definer set search_path = public;
+                alter function public.trg_notify_new_post()     security definer set search_path = public;
+
+                revoke execute on function public.call_send_push(jsonb) from public, anon, authenticated;
+
+                -- after the new key exists in Vault under the name 'send_push_key':
+                create or replace function public.call_send_push(payload jsonb)
+                returns void language plpgsql security definer set search_path = public as $$
+                declare k text;
+                begin
+                  select decrypted_secret into k from vault.decrypted_secrets where name = 'send_push_key';
+                  perform net.http_post(
+                    url     := 'https://<YOUR-PROJECT-REF>.supabase.co/functions/v1/send-push',
+                    headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||k),
+                    body    := payload);
+                end $$;
+              TEST: like a post / send a message in the app, confirm a push still arrives.
+
+S2  HIGH      notifications has row security OFF while anon and authenticated hold full
+              table rights. Anyone with the anon key can read, change or delete all 143
+              notifications (user ids + message previews). Two other tables are also
+              open: kampus_store_import_queue (412 rows) and domains (8 rows).
+              SQL:
+                alter table public.notifications enable row level security;
+                create policy "own notifications read"   on public.notifications
+                  for select to authenticated using (auth.uid() = user_id);
+                create policy "own notifications update" on public.notifications
+                  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+                alter table public.kampus_store_import_queue enable row level security;  -- no policy: service role only
+                alter table public.domains enable row level security;
+                create policy "domains read" on public.domains for select to anon, authenticated using (true);
+              TEST: notifications screen + unread badge still work; Store import job still runs
+              (service role bypasses row security); Store admin pages still load.
+
+S3  HIGH?     The view pending_kampus_store_orders holds buyer name, phone and address and
+              anon/authenticated both have SELECT on it. If the view is not
+              security_invoker it runs as its owner and BYPASSES row security, so anyone
+              could read customer data. Round-2 query R2 shows the view options.
+              If R2 does not show security_invoker=true, add an admin gate (keeps the
+              Store admin screen working, hides everything from everybody else):
+                create or replace view public.pending_kampus_store_orders as
+                 select o.id, o.buyer_full_name, o.buyer_phone, o.buyer_wilaya, o.buyer_commune,
+                        o.buyer_address, o.quantity, o.status, o.created_at,
+                        p.display_name as product_display_name, p.sell_price, o.referral_code
+                   from kampus_store_orders o
+                   join kampus_store_products p on p.id = o.product_id
+                  where o.status in ('pending_call','called') and ks_is_admin()
+                  order by o.created_at desc;
+              This is a STORE object: apply it, then open the Store admin as admin and as a
+              normal user to confirm the right result in each case.
+
+S4  MEDIUM    get_message_threads(viewer_id) is SECURITY DEFINER and executable by anon, and
+              it trusts the viewer_id you pass in. Anyone can pass someone else's id and
+              read that person's last message in every conversation. (The other viewer_id
+              functions only leak public profile data.) Guard it:
+                create or replace function public.get_message_threads(viewer_id uuid)
+                returns table(other_user_id uuid, other_username text, other_avatar_url text,
+                              other_avatar_blurhash text, last_message text,
+                              last_message_at timestamptz, unread_count bigint)
+                language sql security definer set search_path = public as $$
+                  with thread_partners as (
+                    select distinct case when sender_id = viewer_id then recipient_id else sender_id end as other_id
+                    from messages
+                    where (sender_id = viewer_id or recipient_id = viewer_id)
+                      and viewer_id = auth.uid()                      -- the guard
+                  ), latest as (
+                    select tp.other_id,
+                      (select content from messages m where (m.sender_id = viewer_id and m.recipient_id = tp.other_id)
+                         or (m.sender_id = tp.other_id and m.recipient_id = viewer_id) order by m.created_at desc limit 1) as last_message,
+                      (select created_at from messages m where (m.sender_id = viewer_id and m.recipient_id = tp.other_id)
+                         or (m.sender_id = tp.other_id and m.recipient_id = viewer_id) order by m.created_at desc limit 1) as last_message_at,
+                      (select count(*) from messages m where m.sender_id = tp.other_id and m.recipient_id = viewer_id and m.read_at is null) as unread_count
+                    from thread_partners tp)
+                  select l.other_id, p.username, p.avatar_url, p.avatar_blurhash, l.last_message, l.last_message_at, l.unread_count
+                  from latest l join profiles p on p.id = l.other_id
+                  order by l.last_message_at desc;
+                $$;
+                revoke execute on function public.get_message_threads(uuid) from anon;
+              The app passes its own id, so nothing changes for real users.
+
+S5  MEDIUM    Every signed-in user can read every other user's profiles row, including
+              fcm_token (push address) and is_admin. v1 moves tokens to a private table
+              (section 2). Do not patch with column grants now: old app versions may use
+              select('*') and would break.
+
+S6  MEDIUM    Account deletion is incomplete (store-policy risk). delete_my_account does
+              NOT remove: post_likes, post_comments, post_comment_likes, study_bookmarks,
+              study_resource_upvotes, study_stats, study_resources they uploaded, or
+              kampus_store_orders (student_id points to auth.users with no ON DELETE).
+              A user who liked a news post, bookmarked or uploaded a file, or ordered from
+              the Store will hit a foreign-key error and the deletion FAILS. Rewrite it in
+              the v1 migration (section 2). For Store orders: set student_id = null
+              (keep the order for accounting) - needs Store owner approval.
+
+S7  LOW       anon and authenticated hold TRUNCATE / TRIGGER / REFERENCES on every table
+              (Supabase defaults). The REST API cannot reach TRUNCATE, so row security is
+              what protects you, but revoke these anyway during hardening.
+
+--------------------------------------------------------------------------------
+1. WHAT THE AUDIT PROVED
+--------------------------------------------------------------------------------
+Scale       : 37 auth users (all Google sign-in), 36 profiles, 992 study_modules,
+              3,786 study_resources, 468 store products, 17 advertisers, 5 store orders.
+Tiny user base = low blast radius, BUT the live Play app (1.0.2) and the Store are
+real and must keep working while v1 is built.
+
+THE BIG DISCOVERY - A LEARNING SCHEMA ALREADY EXISTS (0 rows, row security done):
+  learn_lessons (+ _i18n fr/ar/en, status draft/reviewed/published, needs_review,
+                 generated_by, source_pages, resource_id link to study_resources)
+  learn_cards (+ learn_card_i18n)             learn_card_progress (Leitner box 1-5, due_at)
+  learn_questions (+ _i18n, mcq/true_false)   learn_lesson_progress (score)
+  study_stats (xp, streaks)  study_bookmarks  study_resource_upvotes
+  specialities.learn_enabled
+=> This IS the v1 core: episodes = learn_lessons, flashcards = learn_cards, quizzes =
+   learn_questions, progress = learn_*_progress. DO NOT DROP. Reuse and extend. My earlier
+   "new tables" list (episodes, flashcards, quizzes...) is replaced by section 2.
+
+PROTECTED - used by Kampus Store (proven from the database itself):
+  tables   advertisers, advertiser_payouts, advertiser_picks, kampus_store_products,
+           kampus_store_orders, kampus_store_order_events, kampus_store_import_queue,
+           ks_settings, ref_clicks
+  views    store_products_public, pending_kampus_store_orders
+  shared   auth.users, profiles (Store reads id, username, is_admin), wilayas,
+           dz_communes (checkout + FKs from advertisers, universities, dous)
+  triggers on_auth_user_created/handle_new_user, trg_protect_is_admin,
+           trg_ks_snapshot_prices, trg_ks_stamp_delivered, trg_set_product_slug
+  functions admin_*, ks_*, get_my_* (no-argument versions), register_advertiser,
+           update_my_profile, toggle_my_pick, apply_sync, set_costs, set_product_slug,
+           protect_is_admin, handle_new_user, _partner_clean_phone
+  NOTE get_my_profile exists TWICE (overloads): get_my_profile() = advertiser profile
+  (Store), get_my_profile(viewer_id) = student profile (app). Never drop either blindly.
+  EVIDENCE: no Store table has a foreign key to marketplace_listings, messages,
+  community_*, posts, dining_menus, exchange_rates, residences. The Store looks
+  independent of the student marketplace. CONFIRM in the Store's own code/worker
+  (search it for those table names) before the final drop.
+
+THE LIVE APP (1.0.2) STILL CALLS: profiles, community_*, comment_likes, post_* (through
+get_home_feed), marketplace_listings, messages, notifications, study_modules,
+study_resources, specialities, blocked_users, reports, residences/dous, dining_menus,
+exchange_rates, missing_entry_suggestions, wilayas, dz_communes, kampus_store_* and the
+RPCs get_home_feed, get_campus_now_*, get_community_feed, get_message_threads,
+get_post_comments, get_news_post_comments, get_user_posts, get_user_profile,
+get_my_profile(viewer_id), is_username_taken, delete_my_account.
+
+EXTERNAL WRITERS EXIST (service role, not in the app): the scrapers fill posts,
+study_resources, dining_menus, exchange_rates, scrape_sources; the DropDZ sync calls
+apply_sync / set_costs / kampus_store_import_queue. pg_cron + pg_net are installed.
+Cron jobs, edge functions and the scraper host are still UNKNOWN (round-2 R1 + dashboards).
+Dropping a table that one of these still writes to fails silently or noisily at 3am.
+
+R2: files.kampus-link.com holds library = 3,785 files (all study_resources), marketplace = 9,
+avatars = 8, community = 1. One resource points to an outside site (dspace). The library
+files look like scraped page images (png, uuid-timestamp names), i.e. rights unknown.
+
+--------------------------------------------------------------------------------
+2. WHAT V1 NEEDS FROM THE BACKEND (reuse / extend / new)
+--------------------------------------------------------------------------------
+REUSE AS IS      study_modules, learn_* (all 8 tables), study_stats, study_bookmarks,
+                 study_resource_upvotes, universities, specialities, domains,
+                 blocked_users, reports, notifications (table), auth/profiles
+EXTEND (expand-only, nullable or defaulted, old app keeps working)
+  profiles            + section, group_name, verification_status, onboarding_version
+                      (preferred_language en/fr/ar and academic_year L1..M2 already exist)
+  study_resources     + file_hash, size_bytes, mime_type, source_message_id, review_status
+                      (trust_label exists; resource_type already: cours/td/exam/notes/...;
+                       add 'tp' and 'textbook' to the check constraint)
+  learn_lessons       + content_version, content_hash   (offline sync)
+  learn_questions     kind check: add 'fill' and 'numeric' later (not v1)
+  notifications       type check currently allows only like/comment/reply/comment_like/message:
+                      expand to add 'streak','reminder','module_update','chat'
+  reports             target_type check: add 'module_message','flashcard_comment'
+NEW TABLES (proposal; names are final only after the core contracts phase)
+  module_chat_messages   (id, module_id, user_id, body, lang, reply_to, resource_id, created_at)
+  message_translations   (message_id, lang, body, created_at, unique(message_id, lang))
+  module_glossary        (module_id, term, fr, ar, en)
+  learn_card_likes / learn_card_comments / learn_card_saves   (flashcard social)
+  study_sessions         (user_id, day, active_seconds, started_at)   (timer + streak)
+  push_tokens            (user_id, token, platform, updated_at)   private; replaces
+                         profiles.fcm_token (security finding S5)
+  student_verifications  (user_id, method, status, reviewed_by, created_at)
+  user_reminder_state    (user_id, last_active_at, step, last_sent_at, unsubscribed)
+                         (the day 2/4/7/14/stop ladder)
+  content_manifest       (module_id, version, hash, updated_at)   (offline sync)
+REWRITE  delete_my_account   cover every v1 table + the gaps in S6
+         get_my_profile(viewer_id)  add the new profile fields
+Mining Engineering = speciality id 2 (app list; round-2 R3 confirms). Year 2 = 'L2'.
+
+--------------------------------------------------------------------------------
+3. THE TWO-TRACK STRATEGY (THIS SOLVES "DROP FIRST" WITHOUT BREAKING USERS)
+--------------------------------------------------------------------------------
+Problem: if we drop backend objects now, the LIVE Play app (1.0.2) breaks for its users
+until v1 ships, and an update that shows an empty home screen cannot be published (it
+would be an app with almost no function; a store-policy and review risk, and it takes
+features away from existing users).
+Solution: build v1 on a DEV COPY, and replay the exact same drops on PROD at a gate.
+
+TRACK DEV (starts now, drops happen here immediately)
+  D1  Create a second Supabase project "kampuslink-dev" from the PROD schema (CLI schema
+      dump -> restore) plus REFERENCE data only: universities, specialities, domains,
+      study_modules, wilayas, dz_communes. No user data, no orders, no R2 files.
+      A separate dev R2 bucket (or prefix) and a dev copy of the upload worker.
+  D2  Run the whole drop plan (section 4) on DEV. Each batch ends with the STORE SMOKE
+      TEST (section 5). DEV is where the "empty slate" lives.
+  D3  Point the purged front-end (section 6) at DEV through its .env. PROD keys stay out.
+  D4  Build v1 on DEV, phase by phase, with the lanes of the master plan.
+TRACK PROD (only gated actions)
+  P1  Security fixes S1-S4 now (they are small and independent).
+  P2  Archive (section 4, stage 0): tables copied into an archive schema, R2 library
+      copied to a cold bucket.
+  P3  Additive migrations (new tables/columns) when the closed beta starts.
+  P4  DROPS only at gate G4 (section 4) after v1 is rolled out and old versions are gone.
+
+--------------------------------------------------------------------------------
+4. BACKEND DROP PLAN (ORDERED, WITH GATES)
+--------------------------------------------------------------------------------
+STAGE 0  ARCHIVE AND FREEZE (PROD, no drops)
+  - Full database backup + a tagged copy of the Q1-Q3 results as the schema record.
+  - Archive schema (not exposed by the API) and one copy per table that will ever be dropped:
+      create schema if not exists archive_20261016;
+      revoke all on schema archive_20261016 from anon, authenticated;
+      create table archive_20261016.<table> as table public.<table>;
+    for: community_posts, community_comments, community_likes, comment_likes, posts,
+         post_likes, post_comments, post_comment_likes, messages, marketplace_listings,
+         dining_menus, meal_schedule, exchange_rates, residences, dous, scrape_sources,
+         scrape_sources_staging, missing_entry_suggestions, countries, study_resources
+         (3,786 rows, scraped + uploads).
+  - R2: copy the library/ and marketplace/ folders to a cold archive bucket. Verify counts.
+  - Pipeline map: run round-2 R1 (cron), list edge functions, find what runs the scrapers.
+  - Stop the writers you plan to retire (cron jobs / scraper schedules) but do not delete them.
+  GATE G0: backup restores on a test project; archive row counts match; writers listed.
+
+STAGE 1  SAFE NOW (PROD, tiny)
+  - countries: dead mirror (the app has the same list hard-coded, no runtime query, no FK).
+    Archive then drop. That is all that is provably unused by BOTH the live app and the Store.
+  GATE G1: live app + Store smoke test pass.
+
+STAGE 2  DEV ONLY (everything below runs on DEV first, in this order, with smoke tests)
+  2a  Triggers and notification plumbing for retired features:
+        on_community_like, on_community_comment, on_comment_like, on_new_message, on_new_post
+        then functions trg_notify_like, trg_notify_comment, trg_notify_comment_like,
+        trg_notify_message, trg_notify_new_post
+      (keep call_send_push: v1 push uses it)
+  2b  Retired RPCs: get_home_feed, get_campus_now_posts, get_campus_now_fallback,
+        get_community_feed, get_message_threads, get_post_comments,
+        get_news_post_comments, get_user_posts, get_user_profile
+      (get_user_profile: keep a small public-card version only if v1 needs it)
+  2c  Leaf-to-root table order (follow the foreign keys from Q1):
+        comment_likes -> community_comments -> community_likes -> community_posts
+        post_comment_likes -> post_comments -> post_likes -> posts
+        messages -> marketplace_listings
+        dining_menus, meal_schedule, exchange_rates
+        profiles.residence_id (drop the FK + column LAST, after the app no longer sets it)
+          -> residences -> dous
+        missing_entry_suggestions
+        scrape_sources_staging, scrape_sources (only when the new content pipeline replaces them)
+        views modules_needing_enrichment / modules_needing_resources / modules_without_resources
+        + functions get_modules_needing_enrichment / get_unresourced_modules
+          (same moment as scrape_sources: they belong to the old scraper)
+  2d  study_resources: delete the scraped rows (uploader_id is null) and the rows that point
+      into library/. Keep student uploads only if round-2 R4 shows any worth keeping.
+  2e  Expand constraints (notifications.type, reports.target_type, study_resources.resource_type).
+  2f  Add the new v1 tables, columns, policies, indexes (section 2).
+  2g  Rewrite delete_my_account (cover everything, fix S6) and run a deletion test on a dummy user.
+  GATE G2 (DEV): Store smoke test green after EVERY batch; no function body still names a
+      dropped table (search function sources for each name); new schema passes the
+      contract checks of the core.
+
+STAGE 3  V1 BUILD ON DEV (phases 3-8 of the master plan)
+
+STAGE 4  PROD REPLAY (gate G4, all must be true)
+  [ ] v1 released through staged rollout and at 90% of active installs (or the
+      min_supported_version gate has been switched on after the notice period)
+  [ ] Store owner has confirmed (or Store code search proves) that marketplace_listings,
+      messages, community_*, posts, dining_menus, exchange_rates are not used by the Store
+  [ ] All retired writers are stopped (cron, scraper host, edge functions)
+  [ ] Fresh backup + archive taken the same day
+  [ ] Replay the exact DEV drop script in the same order, in one window, with the smoke
+      test after each batch
+  [ ] 30 days later (or after the old-version share is negligible), delete the archive
+      copies you no longer need; keep a final backup for 90 days
+
+NEVER DROP (even in stage 4): everything listed as PROTECTED in section 1, profiles,
+auth.users, wilayas, dz_communes, universities, specialities, domains, study_modules,
+reports, blocked_users, notifications (table), all learn_* tables, study_* tables.
+
+--------------------------------------------------------------------------------
+5. STORE SMOKE TEST (run after EVERY batch, on DEV and again on PROD)
+--------------------------------------------------------------------------------
+  1. select from store_products_public as anon: products load.
+  2. Place a test order through the order worker (web path) and through the app path.
+  3. As Store admin: pending_kampus_store_orders, admin_overview, admin_orders,
+     admin_attention, admin_advertisers, admin_products all return without error.
+  4. As an advertiser: get_my_dashboard, get_my_orders, get_my_clicks, get_my_picks,
+     toggle_my_pick, register_advertiser (new test advertiser), update_my_profile.
+  5. DropDZ sync: apply_sync and set_costs run with a one-row test payload.
+  6. Sign in with Google as a new user: handle_new_user creates the profile.
+  7. Non-admin cannot read pending orders (S3 check) and cannot set is_admin.
+  Any failure: stop, restore the batch from the archive, log it.
+
+--------------------------------------------------------------------------------
+6. R2 PLAN
+--------------------------------------------------------------------------------
+  - Only the library/ folder is "documents" (3,785 files). Protect avatars/, community/
+    and the unknown folders (Store product images may live elsewhere: list the bucket).
+  - marketplace/ (9 files) goes with the marketplace tables at stage 4, not before.
+  - Order on PROD: archive copy -> delete study_resources rows -> delete the R2 files
+    (rows first, so nobody sees broken links) -> create the new content/ and files/ layout.
+  - The upload worker must learn the new prefixes and its delete-user-files route must
+    cover them (account deletion). The worker's source is still needed.
+  - Rights: the library files were scraped; v1 content enters only with a rights status
+    (master plan section 11). Do not re-import the archive into v1 as is.
+
+--------------------------------------------------------------------------------
+7. FRONT-END PURGE PLAN (LEAVES AN EMPTY HOME SCREEN, ON A BRANCH)
+--------------------------------------------------------------------------------
+RULES
+  - Work on branch v1-reset created from main. Tag main as live-1.0.2 first.
+  - NEVER merge to main until a real v1 milestone is ready: the CI deploys the WEB build to
+    Cloudflare Pages on every push to main, and the Play release is built from main.
+  - Point the purged app at DEV (separate .env). Commit after each step; the app must build
+    after each step (flutter analyze + a debug run).
+  - Old code stays reachable through the tag: git show live-1.0.2:<path>.
+STEPS
+  F0  Root cleanup: delete the 8 PowerShell patch scripts, move the 2 CSV files out, rewrite README.
+  F1  Shell: responsive_shell.dart -> exactly 3 destinations (Home, Modules, Profile), each a
+      placeholder screen. Remove every reference to Messages/Marketplace/notifications bell
+      queries that read dropped tables.
+  F2  Delete features/marketplace (9 files), features/admin/kampus_store_orders_screen.dart,
+      features/messages (2), features/community (3), profile/my_listings_tab,
+      profile/my_posts_tab, profile/user_profile_screen. Fix imports in main.dart,
+      profile_screen.dart, responsive_shell.dart.
+  F3  home_screen.dart -> an empty Scaffold ("Home"). Remove its news/community/dining/
+      exchange/Campus Now code and the get_home_feed / get_campus_now_* calls.
+  F4  features/library -> delete (Modules is rebuilt from the learn_* schema). Keep
+      resource_viewer_screen only if it is reused as the PDF fallback viewer.
+  F5  Core services: remove the ones tied to dropped features: outbox_service
+      (community queue), dropdz_locations_service, residence_service, feed_cache_service
+      (rewritten later as the JSON store), comments_sheet. Keep: auth_service, block_service,
+      cached_fetch, connectivity_service, image_processing_service, notification_service,
+      upload_service, algeria_universities, theme, generic widgets.
+  F6  profile_screen -> minimal: name, photo, language, legal links, delete account, sign out.
+  F7  Keep for now (so people can still sign in on DEV): google_signin, language (will add
+      Arabic), profile_setup (will be rewritten in phase 3). Remove the residence picker and
+      the missing-entry suggestion call from profile_setup.
+  F8  pubspec: remove packages that nothing imports any more (check each by searching
+      lib/): drift is already unused; candidates after the purge: workmanager,
+      receive_sharing_intent, photo_view, blurhash if unused, share_plus if unused.
+      Keep firebase_*, supabase_flutter, pdfx, file_picker, http, image, connectivity_plus.
+  F9  Verify: analyze clean, tests (or add 1 smoke test), debug run: sign in -> onboarding ->
+      empty Home -> Modules placeholder -> Profile -> delete account on a DEV test user.
+  RESULT: a compiling app with auth + onboarding + 3 empty tabs, ready for phase 3 onward.
+  Version/identity: do not touch applicationId or signing. Bump version only at release
+  (1.1.0 with a build number above the highest ever uploaded to Play).
+
+--------------------------------------------------------------------------------
+8. ORDER OF WORK (NEXT 10 DAYS)
+--------------------------------------------------------------------------------
+  Day 1   S1 (steps a-b), S2, S4. Run round-2 SQL (R1-R4). List edge functions + R2 folders.
+  Day 2   S3 after R2 result. Read send-push and the two workers. Rotate the service key
+          (S1 d) in a planned window.
+  Day 3   Stage 0 archive on PROD. Confirm with the Store code that it does not use the
+          marketplace / community / posts tables.
+  Day 4   Create the DEV project (D1) and the DEV R2 bucket + worker.
+  Day 5-6 Run stage 2 on DEV with smoke tests. Write the v1 additive migration (2e-2g).
+  Day 7-8 Front-end purge F0-F9 on branch v1-reset against DEV.
+  Day 9   Freeze the core contracts (master plan phase 1) from the real schema.
+  Day 10  Start phase 3 (app shell + onboarding) with the lanes.
+
+--------------------------------------------------------------------------------
+9. WHAT I STILL NEED FROM YOU
+--------------------------------------------------------------------------------
+  1. Round-2 results R1-R4.
+  2. Edge function list + the source of send-push (secrets removed).
+  3. R2: bucket names and top-level folders; source of the two workers (secrets removed).
+  4. What runs the scrapers (n8n? GitHub Actions? a server?) and what it writes.
+  5. Is the student marketplace used by the Kampus Store site/app in any way?
+  6. Highest versionCode on Play; is the web build (Cloudflare Pages) a live product?
+  7. Your OK on the two-track strategy (DEV copy) - it is what lets us "drop everything"
+     without breaking the live app or the Store.
+================================================================================

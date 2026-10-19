@@ -1,0 +1,364 @@
+================================================================================
+KAMPUSLINK - RUNBOOK V1 (ONE STEP AT A TIME)
+================================================================================
+What changed: nobody uses the app (it only finished its 14-day closed test, it is not in
+production). So the DEV-copy strategy in KAMPUS_V1_DROP_PLAN.txt is no longer needed.
+We work directly on the one Supabase project. The Kampus Store is still protected.
+
+HOW TO USE THIS FILE
+  - Do the steps in order. Do ONE phase, then tell me the result before the next phase.
+  - Every step has: DO, CHECK, IF WRONG. Do not continue if a CHECK fails.
+  - Nothing here needs me to see your keys. Never paste keys or passwords anywhere.
+  - SQL goes into Supabase -> SQL Editor. Run one block at a time.
+
+PHASES
+  A  Safety: save everything, archive copy, security patch, find what writes to the tables
+  B  Backend teardown (drops), in small batches, with the Store check after each batch
+  C  New v1 tables (I write this AFTER phase B passes, so it matches your real schema)
+  D  R2 cleanup (files)
+  E  Front-end purge to an empty home screen (commands here; I prepare the exact
+     replacement files for the 5 edited screens after phase B)
+
+PLAY CONSOLE TIP (do it today, 10 minutes): since the 14-day closed test is finished, open
+Play Console -> Dashboard and check whether you can apply for PRODUCTION ACCESS. Apply with
+the app as it was tested. Do NOT publish a production release of the purged app; publish
+only when v1 has real features. Keep the same package name and signing key.
+
+================================================================================
+PHASE A - SAFETY
+================================================================================
+
+A1  SAVE THE RECORD
+  DO     Make a folder kampuslink-backups/2026-10-17/ on your computer. Save into it:
+         - the four JSON results (Q1, Q2, Q3, Q4) from the audit, as .json files
+         - the files I made (master plan, repo map, drop plan, runbook, SQL files)
+  CHECK  Folder has at least 4 .json files.
+
+A2  ARCHIVE COPY INSIDE SUPABASE (every table, so nothing is ever really lost)
+  DO     SQL Editor, run:
+           create schema if not exists archive_20261017;
+           revoke all on schema archive_20261017 from anon, authenticated;
+           do $$
+           declare t text;
+           begin
+             for t in select table_name from information_schema.tables
+                      where table_schema = 'public' and table_type = 'BASE TABLE'
+             loop
+               execute format('create table archive_20261017.%I as table public.%I', t, t);
+             end loop;
+           end $$;
+  CHECK  Run:
+           select
+             (select count(*) from information_schema.tables
+               where table_schema='public' and table_type='BASE TABLE') as public_tables,
+             (select count(*) from information_schema.tables
+               where table_schema='archive_20261017') as archived_tables;
+         The two numbers must be equal (about 50).
+  IF WRONG  Send me the error text.
+  NOTE   This copies data but not the users' logins (auth.users). That is fine: we are not
+         touching auth. If your plan has Supabase backups, also check Dashboard -> Database
+         -> Backups and write down the latest backup time.
+
+A3  GIT SAFETY (on your computer, in the kampuslink folder, PowerShell)
+  DO       git status
+           git checkout main
+           git pull
+           git tag pre-v1-reset
+           git push origin pre-v1-reset
+           git checkout -b v1-reset
+           git push -u origin v1-reset
+  CHECK    git branch --show-current   -> prints v1-reset
+           On GitHub the tag pre-v1-reset exists.
+  WHY      main deploys your web build to Cloudflare Pages on every push. All the purge work
+           stays on v1-reset. Never merge it to main until v1 has real features.
+
+A4  SECURITY PATCH, PART 1 (safe, takes 2 minutes)
+  DO     Run block 1:
+           alter function public.trg_notify_comment()      security definer set search_path = public;
+           alter function public.trg_notify_comment_like() security definer set search_path = public;
+           alter function public.trg_notify_like()         security definer set search_path = public;
+           alter function public.trg_notify_message()      security definer set search_path = public;
+           alter function public.trg_notify_new_post()     security definer set search_path = public;
+         Then block 2:
+           revoke execute on function public.call_send_push(jsonb) from public, anon, authenticated;
+         Then block 3:
+           alter table public.notifications enable row level security;
+           create policy "own notifications read" on public.notifications
+             for select to authenticated using (auth.uid() = user_id);
+           create policy "own notifications update" on public.notifications
+             for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+           alter table public.kampus_store_import_queue enable row level security;
+           alter table public.domains enable row level security;
+           create policy "domains read" on public.domains
+             for select to anon, authenticated using (true);
+  CHECK  Run:
+           select relname, relrowsecurity from pg_class
+           where relnamespace = 'public'::regnamespace and relkind = 'r' and not relrowsecurity;
+         It should return no rows (every table now has row security).
+  IF WRONG  Send me the error. Do not retry blindly.
+
+A5  THE LEAKED SERVICE KEY (decision, not a block of SQL)
+  The key inside call_send_push was pasted in a chat, so replace it. Look in Supabase ->
+  Project Settings -> API Keys:
+   (a) If you see a tab for "Publishable and secret API keys": create a NEW secret key, put it
+       wherever the old service key is used (the send-push edge function secrets, your
+       scrapers/n8n/workers, the Kampus Store's server side), test, then DISABLE the legacy
+       keys. This does not change the anon key inside your app.
+   (b) If you only see the old anon / service_role keys: rotating the JWT secret changes the
+       anon key too. That breaks the Store's site/app and your test APK until they get the
+       new anon key. Only do it when you can update the Store in the same hour.
+  After the new key exists, store it in Vault (SQL editor, type the key yourself, never paste
+  it here):   select vault.create_secret('<NEW KEY>', 'send_push_key');
+  Then replace the function so no key is written inside it:
+           create or replace function public.call_send_push(payload jsonb)
+           returns void language plpgsql security definer set search_path = public as $$
+           declare k text;
+           begin
+             select decrypted_secret into k from vault.decrypted_secrets where name = 'send_push_key';
+             perform net.http_post(
+               url     := 'https://<YOUR-PROJECT-REF>.supabase.co/functions/v1/send-push',
+               headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||k),
+               body    := payload);
+           end $$;
+  Before doing A5, send me the source of the send-push edge function (secrets removed) so
+  I can check how it verifies callers.
+
+A6  FIND WHAT WRITES TO YOUR TABLES (so a drop does not fail at 3am)
+  DO     Run the round-2 SQL block R1 (cron jobs) from KAMPUS_AUDIT_ROUND2.sql.
+         Write down (no keys): the edge functions in Supabase -> Edge Functions, and what
+         runs your scrapers (n8n? GitHub Actions? a server?).
+  CHECK  You have a list: job/function name -> which tables it writes to.
+
+A7  STORE BASELINE (so we can prove the Store survives)
+  DO     Test and write down the result (works / fails) for:
+         1. the Store site/app lists products
+         2. place a test order (web path and app path, whichever exist)
+         3. Store admin screen: pending orders, overview, orders list load
+         4. an advertiser account: dashboard + orders + picks load
+         5. Google sign-in as a new test user creates a profile row
+  CHECK  Everything works BEFORE phase B. If something fails now, tell me first.
+
+>>> STOP HERE. Send me: A2 numbers, A3 branch name, A4 result, the R1 result, the
+>>> edge function list, and the A7 notes. Then start phase B.
+
+================================================================================
+PHASE B - BACKEND TEARDOWN (small batches)
+================================================================================
+Rules: no CASCADE (so any hidden dependency shows up as an error instead of silently
+deleting something). After EVERY batch run the Store check A7. If a batch errors, stop and
+send me the error; the archive copy is your safety net.
+
+B0  CONFIRM THE STORE DOES NOT USE THE STUDENT APP TABLES
+  DO     In the Kampus Store's own code (and the order-submit worker), search for these
+         words: marketplace_listings, messages, community_, post_likes, post_comments,
+         dining_menus, exchange_rates, residences, countries, missing_entry_suggestions
+         (VS Code: Ctrl+Shift+F in the Store folder).
+  CHECK  Zero hits (or hits only in comments). If there are hits, tell me before B4-B5.
+         (The database itself already shows no Store table links to them.)
+
+B1  STOP THE WRITERS
+  DO     In the R1 result, find cron jobs that write to posts, dining_menus, exchange_rates,
+         scrape_sources, study_resources, or call the news/dining/scraper functions.
+         Unschedule each one:   select cron.unschedule(<jobid>);
+         Turn off the external scrapers (n8n workflows, GitHub Actions schedules, servers).
+         KEEP: anything that feeds the Store (DropDZ sync, kampus_store_import_queue,
+         apply_sync, set_costs), and bump_academic_years if it is scheduled.
+  CHECK  select jobid, jobname, active from cron.job;   only Store/keep jobs remain active.
+
+B2  RETIRED FUNCTIONS AND TRIGGERS
+  DO     Run:
+           drop trigger if exists on_comment_like     on public.comment_likes;
+           drop trigger if exists on_community_comment on public.community_comments;
+           drop trigger if exists on_community_like   on public.community_likes;
+           drop trigger if exists on_new_message      on public.messages;
+           drop trigger if exists on_new_post         on public.posts;
+
+           drop function if exists public.trg_notify_like();
+           drop function if exists public.trg_notify_comment();
+           drop function if exists public.trg_notify_comment_like();
+           drop function if exists public.trg_notify_message();
+           drop function if exists public.trg_notify_new_post();
+
+           drop function if exists public.get_home_feed(uuid, integer);
+           drop function if exists public.get_campus_now_posts(uuid);
+           drop function if exists public.get_campus_now_fallback(uuid, integer);
+           drop function if exists public.get_community_feed(uuid, integer);
+           drop function if exists public.get_message_threads(uuid);
+           drop function if exists public.get_post_comments(uuid, uuid);
+           drop function if exists public.get_news_post_comments(uuid, uuid);
+           drop function if exists public.get_user_posts(uuid, uuid);
+           drop function if exists public.get_user_profile(uuid, uuid);
+  CHECK  Store check A7.
+
+B3  NEWS AND COMMUNITY TABLES (leaf first)
+  DO     Run:
+           drop table public.comment_likes;
+           drop table public.community_comments;
+           drop table public.community_likes;
+           drop table public.community_posts;
+           drop table public.post_comment_likes;
+           drop table public.post_comments;
+           drop table public.post_likes;
+           drop table public.posts;
+  CHECK  Store check A7.
+
+B4  STUDENT MARKETPLACE AND DIRECT MESSAGES (only after B0 is clean)
+  DO     Run:
+           drop table public.messages;
+           drop table public.marketplace_listings;
+  CHECK  Store check A7.
+
+B5  FEED EXTRAS, LOCATION TABLES, SCRAPER TABLES
+  DO     Run:
+           drop table public.dining_menus;
+           drop table public.meal_schedule;
+           drop table public.exchange_rates;
+           drop table public.missing_entry_suggestions;
+           drop table public.countries;
+
+           alter table public.profiles drop column if exists residence_id;
+           alter table public.profiles drop column if exists interest_sectors;
+           drop table public.residences;
+           drop table public.dous;
+
+           drop view  if exists public.modules_needing_enrichment;
+           drop view  if exists public.modules_needing_resources;
+           drop view  if exists public.modules_without_resources;
+           drop function if exists public.get_modules_needing_enrichment(integer);
+           drop function if exists public.get_unresourced_modules(integer);
+           drop table public.scrape_sources_staging;
+           drop table public.scrape_sources;
+  CHECK  Store check A7. (wilayas, dz_communes, universities, specialities, domains STAY.)
+
+B6  REWRITE ACCOUNT DELETION (the old one now points at dropped tables, so it would crash)
+  DO     Run:
+           create or replace function public.delete_my_account()
+           returns void language plpgsql security definer set search_path = public as $$
+           declare target_user uuid := auth.uid();
+           begin
+             if target_user is null then raise exception 'Not authenticated'; end if;
+             delete from public.study_resource_upvotes where user_id = target_user;
+             delete from public.study_bookmarks         where user_id = target_user;
+             delete from public.study_stats             where user_id = target_user;
+             update public.study_resources set uploader_id = null where uploader_id = target_user;
+             delete from public.blocked_users where blocker_id = target_user or blocked_id = target_user;
+             delete from public.reports       where reporter_id = target_user;
+             update public.kampus_store_orders set student_id = null where student_id = target_user;
+             update public.kampus_store_orders set called_by  = null where called_by  = target_user;
+             delete from public.profiles where id = target_user;
+             delete from auth.users      where id = target_user;
+           end $$;
+           revoke execute on function public.delete_my_account() from public, anon;
+           grant  execute on function public.delete_my_account() to authenticated;
+         NOTE: this keeps Store orders (for your accounting) but detaches them from the
+         deleted person. learn_* progress and notifications delete themselves (cascade).
+  CHECK  Create a throwaway Google test user, sign in once, delete the account from the app
+         (or run it with that user), confirm no error.
+
+B7  WIPE THE OLD LIBRARY ROWS AND OLD NOTIFICATIONS
+  DO     Run:
+           delete from public.study_resources;            -- the 3,786 scraped files' rows
+           alter sequence public.study_resources_id_seq restart with 1;
+           delete from public.notifications;               -- old like/comment/message types
+  CHECK  select count(*) from public.study_resources;  -> 0
+         select count(*) from public.study_modules;     -> still about 992 (we KEEP modules)
+
+B8  FINAL CHECK OF WHAT IS LEFT
+  DO     select table_name, table_type from information_schema.tables
+         where table_schema = 'public' order by 1;
+  EXPECTED (about 32 objects):
+         advertiser_payouts, advertiser_picks, advertisers, blocked_users, domains,
+         dz_communes, kampus_store_import_queue, kampus_store_order_events,
+         kampus_store_orders, kampus_store_products, ks_settings, learn_card_i18n,
+         learn_card_progress, learn_cards, learn_lesson_i18n, learn_lesson_progress,
+         learn_lessons, learn_question_i18n, learn_questions, notifications,
+         pending_kampus_store_orders (view), profiles, ref_clicks, reports, specialities,
+         store_products_public (view), study_bookmarks, study_modules,
+         study_resource_upvotes, study_resources, study_stats, universities, wilayas
+  If anything else is listed, send it to me. If something expected is missing, STOP and
+  restore it from archive_20261017.
+
+>>> STOP HERE. Send me the B8 list and the Store check result. Then I write phase C
+>>> (new tables for chat, translations, sessions, push tokens, etc.) from your real schema.
+
+================================================================================
+PHASE D - R2 FILES (after phase B)
+================================================================================
+Folders we know: avatars (KEEP), library (wipe), marketplace (wipe), community (wipe).
+Store product images may live in another folder: check before deleting anything.
+
+D1  FIND THE BUCKET
+  DO     Cloudflare -> R2 -> open the bucket whose custom domain is files.kampus-link.com
+         (bucket -> Settings -> Custom domains). List the top-level folders.
+  CHECK  Write them down. Send me the list if there is any folder other than the four above.
+
+D2  INSTALL rclone AND CONNECT TO R2 (Windows: winget install Rclone.Rclone)
+  DO     In Cloudflare -> R2 -> Manage API tokens, create a token with Object Read & Write
+         for that bucket only. Run: rclone config -> new remote "r2" -> type s3 -> provider
+         Cloudflare -> paste the access key id and secret (yours, never shared) ->
+         endpoint https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+  CHECK  rclone lsd r2:        shows your bucket(s)
+
+D3  COUNT, OPTIONAL COLD COPY, THEN WIPE
+  DO       rclone size r2:<bucket>/library              (expect about 3,785 files)
+           rclone copy r2:<bucket>/library r2:<archive-bucket>/library-2026-10-17 --progress   (optional)
+           rclone delete r2:<bucket>/library     --progress
+           rclone delete r2:<bucket>/marketplace --progress
+           rclone delete r2:<bucket>/community   --progress
+  CHECK    rclone lsf r2:<bucket> --dirs-only    -> only avatars/ (and any Store folder) left
+  NOTE     The scraped files came from other sites and their reuse rights are unknown, so the
+           cold copy is only a safety net. New content enters v1 with a rights status.
+
+================================================================================
+PHASE E - FRONT-END PURGE (branch v1-reset only)
+================================================================================
+Do this after phase B. The app must build after each commit.
+
+E0  CHECK
+         git branch --show-current     -> v1-reset
+
+E1  CLEAN THE ROOT (there are 12 old patch scripts, not 8, and 2 CSV files)
+         git rm add_campus_now_strip.ps1 add_campus_now_toggle.ps1 add_campus_now_toggle2.ps1 `
+                create_profile_screen.ps1 fix1.ps1 fix2.ps1 fix2b.ps1 fix_campus_now_refresh.ps1 `
+                fix_campus_now_ux.ps1 fix_profile_responsive.ps1 wire_profile_tap.ps1 wire_profile_tap2.ps1
+         (first copy the two CSV files somewhere outside the repo, then:)
+         git rm source_validation_results.csv wordpress_check_results.csv
+         git commit -m "chore: remove old patch scripts and scrape result files"
+
+E2  DELETE THE FEATURES WE DROPPED
+         git rm -r lib/features/marketplace lib/features/admin lib/features/messages `
+                   lib/features/community lib/features/library
+         git rm lib/features/profile/my_listings_tab.dart lib/features/profile/my_posts_tab.dart `
+                lib/features/profile/user_profile_screen.dart
+         git rm lib/core/config/dropdz_locations_service.dart lib/core/config/residence_service.dart `
+                lib/core/config/outbox_service.dart lib/core/config/feed_cache_service.dart `
+                lib/core/widgets/comments_sheet.dart
+         git commit -m "chore: remove marketplace, store admin, messages, community, library"
+         (The app will NOT compile yet. That is expected. The next step fixes it.)
+
+E3  FIX THE FIVE FILES THAT POINT AT DELETED CODE
+         lib/main.dart, lib/core/widgets/responsive_shell.dart,
+         lib/features/home/home_screen.dart (becomes an empty screen),
+         lib/features/profile/profile_screen.dart (minimal),
+         lib/features/onboarding/profile_setup_screen.dart (remove the residence picker and the
+         missing-entry suggestion call).
+         I prepare the exact replacement code for these five files AFTER phase B, so it matches
+         the final schema. You paste them in, then:
+           flutter pub get
+           flutter analyze
+         and send me any errors.
+
+E4  PRUNE PACKAGES (after E3 compiles)
+         For each package below, search lib/ for its name; if nothing imports it, remove it from
+         pubspec.yaml: drift (already unused), workmanager, receive_sharing_intent, photo_view,
+         flutter_blurhash/blurhash_dart, share_plus.
+         Keep: supabase_flutter, firebase_*, google_sign_in, pdfx, file_picker, http, image,
+         connectivity_plus, cached_network_image, flutter_dotenv, shared_preferences.
+
+E5  RUN IT
+         flutter run   (against the same Supabase project)
+         Sign in -> onboarding -> empty Home -> Modules placeholder -> Profile -> delete a
+         throwaway account. Then commit and push to v1-reset.
+  RESULT: a compiling app with sign-in, onboarding and 3 empty tabs.
+         applicationId, signing key and version stay untouched until a real release.
+================================================================================

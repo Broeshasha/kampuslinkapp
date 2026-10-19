@@ -1,0 +1,226 @@
+================================================================================
+KAMPUSLINK - CONTENT FORMAT (v1)                                  2026-10-17
+================================================================================
+Read by: Lane C (content pipeline), Lane D2 (renderer), Lane D3/D4 (lessons, cards, quizzes).
+Derived from: the real sample file KampusLink_Chapter2_Complete_Multilingual.json
+(Chimie minerale, chapter II, "L'oxygene et les oxydes", Mining L2) and the backend tables.
+Fixture copy for tests: fixtures/chapter_02_chimie_minerale.json  (DEV/TEST ONLY: it is a
+lecturer's course, see section 9 about rights).
+
+THE THREE FORMS OF CONTENT
+  1. SOURCE CHAPTER JSON    editorial file, all 3 languages inline, with audit data
+                            (what the content lane produces and reviews)
+  2. DATABASE ROWS          learn_lessons + learn_lesson_i18n(blocks) + cards + questions
+                            + module_glossary (what the importer writes)
+  3. STUDENT BUNDLE         get_module_bundle(module, langs): small, language-sliced,
+                            no editorial data (what the app stores offline)
+  Flow:  PDF -> (AI-assisted extraction) -> 1 -> validate -> human review -> rights ->
+         import -> 2 -> publish -> 3 -> app
+
+--------------------------------------------------------------------------------
+1. SOURCE CHAPTER JSON (schema_version 1.1.0, content_type "university_chemistry_chapter")
+--------------------------------------------------------------------------------
+  Top level   { schema_version, content_type, course{...}, chapter{...} }
+  content_type is per subject family (university_chemistry_chapter, university_math_chapter...);
+  the block types below are shared by all of them.
+
+  course      institution, program, year, subject, lecturer, academic_year,
+              source_header_footer          each one is {"en":"..","fr":"..","ar":".."}
+  chapter     id ("chapter_02"), number, title{en,fr,ar}, original_title_fr,
+              source{filename,total_pages,page_numbering_note},
+              languages ["en","fr","ar"], language_settings{en:{direction:"ltr"},ar:{direction:"rtl"}...},
+              sections[], glossary[], source_quality_issues[], completeness_audit{}
+
+  section     { id "sec_II_2", number "II.2" (may be null), level 0..3, source_pages [4,5],
+                title{en,fr,ar}, blocks[] }
+              level 0 = chapter title block, 1 = part (I, II), 2 = sub-part (II.1), 3 = (a, b)
+              A section can have zero blocks (a pure heading).
+
+  block       { id, type, source_pages, ...type fields }       id is UNIQUE and STABLE, e.g.
+              "sec_I_2_004": the resume position and notes refer to it. NEVER renumber ids
+              when content is re-imported. Blocks can nest (a list of blocks inside a block).
+
+  BLOCK TYPES FOUND IN THE SAMPLE (count in chapter 2)
+   heading(7)         content{en,fr,ar}
+   paragraph(37)      content{..}, highlights{en:[{text,kind}],fr:[..],ar:[..]}
+   bullet_list(9)     items[ { content{..}, highlights{..} } ]
+   definition(5)      content{..}, highlights{..}
+   example(15)        content{..}, highlights{..}
+   note(2)            content{..}, highlights{..}(optional)
+   application(1)     items[ { content{..}, highlights{..} } ]
+   chemical_reaction(30)  formula{ latex, plain_text }, source_fidelity "transcribed"
+   table(5)           table_number, table_label{..}, caption{..}, columns[{id,label{..}}],
+                      rows[{id,label{..},cells[{value, unit?, note?{..}}]}], footnotes, source_notes
+   figure(2)          figure_number, caption{..}, labels[{text, translation?{..}}],
+                      description{..}, asset_reference{pdf_page,note}, uncertainty_note{..}
+  highlight kinds: term(480) value(57) formula(63) warning(3)
+
+  glossary    [ { id "gloss_001", term{..}, definition{..}, source_pages } ]    (32 in chapter 2)
+  source_quality_issues  [ { id, source_pages, severity (review_required|uncertain|low|info),
+              issue_type, original_content, related_block, description{..},
+              resolution_status (unresolved|resolved|accepted) } ]   (30 in chapter 2: 13 review_required)
+              These are mistakes or doubts found IN THE ORIGINAL COURSE or in the transcription
+              (e.g. "Ar listed as a transition metal"). They are an EDITORIAL tool: students never see them.
+
+--------------------------------------------------------------------------------
+2. MEASURED FACTS ABOUT THE SAMPLE (so nobody guesses)
+--------------------------------------------------------------------------------
+  - 10 PDF pages -> 23 sections, 113 blocks, 32 glossary entries.
+  - File size 272,731 bytes (41,797 gzipped). Every string exists 3 times, and highlights repeat.
+  - A STUDENT slice (one language, editorial fields removed): French 55 KB (12 KB gz),
+    Arabic 63 KB (13 KB gz), English 53 KB (12 KB gz). French + Arabic together: 101 KB (20 KB gz).
+    => a module of 8 chapters is about 0.8 MB for two languages. Cheap enough for offline.
+  - LaTeX appears ONLY inside chemical_reaction.formula.latex (30 formulas, using \mathrm,
+    \longrightarrow, \,, ^{2-}, _2). No inline math in text. No SVG anywhere. Both figures have only a
+    text description ("no image embedded").
+  - Text uses Unicode sub/superscripts everywhere (₂ ⁻ ₃ ² ⁺ ...): 37 distinct special characters.
+    FONT RISK (many fonts lack them): U+1D35 ᴵ (used for oxidation states: Na₂ᴵO), U+2093 ₓ,
+    U+2099 ₙ, U+2092 ₒ, U+209B ₛ, U+27F6 ⟶, U+21CC ⇌, U+21C4 ⇄, U+1D49 ᵉ, U+208D/208E ₍ ₎.
+    Rule: the app bundles fonts that cover them and the QA lane runs a "glyph test" screen.
+  - Arabic is translated text: it must be reviewed by a person before publishing (see section 8).
+
+--------------------------------------------------------------------------------
+3. IMPORT: SOURCE JSON -> DATABASE (Lane C writes tools/content/import_chapter)
+--------------------------------------------------------------------------------
+  EPISODES. One chapter becomes several lessons ("episodes") of 3-8 minutes.
+    Rule: split at level-2 sections (II.1, II.2, ...); a level-1 part without level-2 stays whole;
+    merge neighbours until an episode has 8-40 blocks (about 1,500-4,000 characters per language).
+    Chapter 2 -> about 5 episodes: Oxygen (I) | Classification of oxides (II.1) |
+    Acid-base notions + oxide acid-basicity (II.2-II.3) | Redox + physical properties (II.4-II.5) |
+    Nomenclature + applications (II.6-II.7).
+  learn_lessons       module_id, position (global order in the module), source_lang 'fr',
+                      status 'draft', chapter_ref 'chapter_02', unit_number 2,
+                      unit_title{en,fr,ar}, estimated_minutes (words/180, min 1), source_pages '3-5',
+                      needs_review (true if any related issue is review_required/uncertain and unresolved),
+                      review_reason, rights_status (see section 9), generated_by
+  learn_lesson_i18n   one row per language: lang, title, summary (1-2 sentences, <= 280 chars),
+                      key_terms [{term, definition?}], blocks = STUDENT BLOCKS in THAT language only
+  module_glossary     fr, ar, en, definition{en,fr,ar}  (deduplicate by fr term)
+  learn_cards / learn_card_i18n / learn_questions / learn_question_i18n   from the extras file (section 6)
+  study_resources     the original PDF (origin 'official' or 'imported'), linked with
+                      learn_lesson_resources role 'source'
+  Publishing: set status 'published' only when needs_review = false AND rights_status <> 'unknown'
+  (the database refuses otherwise, file 09 trigger). Publishing bumps module_content_versions,
+  and every app syncs the new version.
+
+--------------------------------------------------------------------------------
+4. STUDENT BLOCK FORMAT (stored in learn_lesson_i18n.blocks, one language per row)
+--------------------------------------------------------------------------------
+  Same block ids and types as the source, but every {en,fr,ar} object is replaced by the string of
+  that language, highlights become a flat list, and editorial fields are dropped
+  (source_fidelity, uncertainty_note, source_notes stay only in the source file).
+  Example (French row):
+   { "id":"sec_I_2_004", "type":"paragraph", "source_pages":[1],
+     "content":"Exceptions, dans le cas des fluorures d'oxygene F₂O et F₂O₂ ...",
+     "highlights":[{"text":"Exceptions","kind":"warning"},{"text":"+I ou +II","kind":"value"}] }
+   { "id":"sec_I_2a_002", "type":"chemical_reaction",
+     "formula":{"latex":"\\mathrm{O} + 2\\,\\mathrm{e}^{-} \\longrightarrow \\mathrm{O}^{2-}",
+                "plain_text":"O + 2 e⁻ ⟶ O²⁻"} }
+   { "id":"sec_II_1b_003", "type":"figure", "figure_number":1, "caption":"...", "description":"...",
+     "labels":[{"text":"SiO₂"},{"text":"doublets sur O (base)","translation":"..."}],
+     "asset":{"type":"none"}, "source_pages":[4] }
+  Student block types (renderer must support all): heading, paragraph, bullet_list, definition,
+  example, note, application, chemical_reaction, table, figure, plus these NEW ones that the
+  content lane may produce from now on:
+   equation   { id, type:"equation", latex, plain_text, display:true, number? }      block math
+   figure.asset  { type:"svg"|"image"|"none", path|url, svg? (inline string), width, height, alt }
+   inline math inside any text string:  \( ... \)   (LaTeX). Example: "On pose \(x = 2\pi\)."
+   unknown type: the renderer shows its text if it has "content", otherwise nothing, and logs it.
+                 Old apps must never crash on a new block type.
+
+--------------------------------------------------------------------------------
+5. RENDERING RULES (the contract for Lane D2: lib/render/)
+--------------------------------------------------------------------------------
+  5.1 One BlockRenderer with a registry type -> widget. A lesson is a lazy list (ListView.builder)
+      of blocks; parsing happens off the UI thread (compute/isolate); parsed models are cached.
+  5.2 Language and direction: the lesson language decides TextDirection (ar = rtl). Formulas,
+      chemical formulas, numbers with units and Latin identifiers are ALWAYS LTR islands inside
+      Arabic text (wrap with Unicode isolates or Directionality(ltr)).
+  5.3 Highlights: for each highlight find its text in the string (first occurrence not yet used,
+      longest first, no overlaps) and style it by kind. If a highlight text is not found, ignore it.
+      term    accent colour, medium weight; tap opens the glossary card (match on term text)
+      value   amber chip-like text
+      formula monospace-like text on a subtle chip (font with the special glyphs)
+      warning orange/red text with a small warning icon
+  5.4 LaTeX: flutter_math_fork (pure Dart, offline). Block math is centred in a horizontally
+      scrollable container; inline math sits on the text baseline. If parsing fails, show
+      plain_text and log the error (never a red error widget). Test ALL 30 formulas of the
+      sample plus a set of maths-heavy samples (fractions, integrals, matrices, sums, Greek).
+      Text scale follows the reader size setting. Do not use WebView / MathJax.
+  5.5 SVG: flutter_svg, offline. Rules for authors: viewBox required, no scripts, no
+      foreignObject, no external hrefs, no event handlers, < 200 KB. Dark-mode contract: draw with
+      the placeholders {{fg}} {{muted}} {{accent}} {{bg}} {{ok}} {{warn}}; the app replaces them with
+      the current theme colours before rendering. Tap opens a zoom viewer (InteractiveViewer).
+      Caption and `alt` are the accessibility text.
+  5.6 Figure without asset (like both figures in the sample): show a card "Diagram" with the
+      caption, the labels, the description (expandable) and a button "Open original page N"
+      that opens the source PDF at that page when it is downloaded.
+  5.7 Tables: horizontal scroll, sticky first column (the row label), units after the value,
+      cell notes small; column order mirrors in RTL; footnotes under the table.
+  5.8 Typography: bundled fonts only (no runtime font download): Cairo (Arabic + Latin) as the
+      main text font + fallback fonts that contain the special glyphs of section 2. Body size has 3
+      user steps; line height 1.6 for Arabic, 1.5 for Latin. Selectable text where allowed.
+  5.9 Every block reports its id when it becomes visible: the lesson screen uses it to save the
+      reading position (see MASTER_PLAN section 7).
+  5.10 Golden tests: render the sample chapter in fr, ar, en and compare screenshots; a unit test per
+      block type; a test that every formula either renders or falls back.
+
+--------------------------------------------------------------------------------
+6. FLASHCARDS AND QUIZZES (the sample has none: this is the new format)
+--------------------------------------------------------------------------------
+  File: lesson_extras (JSON), one per lesson, produced by AI then REVIEWED by a person.
+  { "lesson_ref":"chapter_02/ep_02",
+    "cards":[ { "id":"c_001", "source_block":"sec_II_1a_001",
+                "front":{"en":"..","fr":"..","ar":".."}, "back":{"en":"..","fr":"..","ar":".."} } ],
+    "questions":[ { "id":"q_001", "kind":"mcq"|"true_false", "source_block":"sec_II_1a_001",
+                "prompt":{"en":"..","fr":"..","ar":".."},
+                "options":{"en":["..",".."],"fr":["..",".."],"ar":["..",".."]},   same order in every language
+                "correct_index":1,
+                "explanation":{"en":"..","fr":"..","ar":".."} } ] }
+  Rules: card front <= 160 characters, back <= 400; 6-10 cards per episode; 3-5 questions per
+  episode; MCQ has 3-5 options; true_false has exactly 2 options; the explanation is required;
+  distractors must be plausible; inline chemistry/maths uses \( ... \); no card or question may
+  contradict a block that is flagged in source_quality_issues (flagged facts are reviewed first).
+  Database mapping: learn_cards + learn_card_i18n; learn_questions(kind, correct_index) +
+  learn_question_i18n(prompt, options jsonb, explanation).
+
+--------------------------------------------------------------------------------
+7. VALIDATION (Lane C runs it before anything is imported; CI later)
+--------------------------------------------------------------------------------
+  ERRORS (block the import)
+   - every {en,fr,ar} object has all three keys, non-empty (except lecturer/year style fields)
+   - block ids unique in the chapter; section ids unique; source_pages are integers within total_pages
+   - heading/paragraph/definition/example/note/bullet/application have content in all languages
+   - chemical_reaction/equation: latex non-empty, braces balanced, plain_text present
+   - table: every row has as many cells as columns - 1 (the label column), cell values are strings
+   - figure: description in all languages; asset.type valid; svg passes the SVG rules (5.5)
+   - highlight texts are substrings of their content (warning only if not found)
+   - no HTML tags, no markdown in strings; characters outside the allowlist (Latin, Arabic,
+     digits, punctuation, the special glyph list of section 2) are listed in the report
+   - every unresolved issue with severity review_required or uncertain makes the lesson needs_review
+  WARNINGS (reported, not blocking)
+   - Arabic text shorter than 60% or longer than 140% of the French length (translation drift)
+   - paragraph over 900 characters, episode over 40 blocks
+  OUTPUT: a report file next to the JSON: counts, errors, warnings, special glyphs, size per language.
+
+--------------------------------------------------------------------------------
+8. CONTENT STATES AND REVIEW
+--------------------------------------------------------------------------------
+  extracted -> validated -> reviewed -> rights recorded -> imported (draft) -> published
+  REVIEW (a person, ideally a student who passed the subject, with a teacher for doubtful items):
+   a) resolve every review_required / uncertain issue: fix, accept as printed, or mark the
+      source error (the student version may show a small "check this" marker later)
+   b) read the Arabic of the first 2 chapters of each module line by line; then sample 20%
+   c) check every formula visually in the app against the original PDF page
+   d) check cards and questions against the blocks
+  Reviewer name and date go in KAMPUS_CONTENT_LOG.txt.
+
+--------------------------------------------------------------------------------
+9. RIGHTS (do not skip: the database enforces it)
+--------------------------------------------------------------------------------
+  rights_status per lesson: unknown | permission_granted | public_domain | own_work.
+  The sample is a named lecturer's course from a university. Before it is shown to students, get
+  written permission from the lecturer or the department (an email is enough) and record it in the
+  content log, or use material you own. Until then it may be used only as a development fixture.
+  Never publish a scraped file, a book or a past exam without a recorded permission.
+================================================================================

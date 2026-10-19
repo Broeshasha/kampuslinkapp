@@ -1,0 +1,359 @@
+================================================================================
+KAMPUSLINK - MASTER PLAN V2                                       2026-10-17
+================================================================================
+Owner        : Founder (final say; approves every CORE CHANGE and every release)
+Lead planner : Claude (this plan, the contracts, the prompts, the reviews)
+Replaces     : KAMPUSLINK_MASTER_PLAN_V1.txt (kept only as history)
+Rule zero    : THIS FILE + docs/CONTENT_FORMAT.txt + docs/BACKEND_CONTRACT.txt are the truth.
+               If code, a chat, or an AI's memory disagrees, these files win. Change the
+               document first, then the code.
+
+TABLE OF CONTENTS
+  1 Product            6 Front-end decisions        11 Working protocol with the AIs
+  2 Where we are       7 Offline + resume logic     12 Quality gates
+  3 Architecture       8 Content system             13 Release and policy
+  4 Identity lock      9 Design system              14 Risks
+  5 Repo + lanes      10 Work packages and plan     15 Open decisions
+
+--------------------------------------------------------------------------------
+1. PRODUCT
+--------------------------------------------------------------------------------
+Name        KampusLink (existing app on Google Play, package com.kampuslink.kampuslink)
+One line    The place where Algerian university students study, ask, and stay informed, in their
+            own language, even offline.
+Pilot       Mining Engineering, year 2 (L2), speciality 2, 20 modules (8 in S3, 12 in S4).
+            Then L3 -> other mining years -> other departments -> other universities.
+Languages   Arabic (RTL), French, English: UI, lessons, flashcards, quizzes, and chat.
+Sign-in     Google only. No student verification in v1 (universities have no student emails).
+3 tabs      HOME    mixed flashcard feed + "Continue where you stopped" + study timer/streak
+            MODULES the student's modules -> lessons (episodes) -> library files -> quizzes -> chat
+            PROFILE basics, language, reminders, legal, delete account
+Out of v1   stories rings, camera effects, music, marketplace, news feed, community posts,
+            direct messages, deep profile customisation, monetisation, any Store feature.
+Principles  1 study first   2 offline first   3 three languages everywhere   4 cheap phones, weak data
+            5 reward progress, never guilt   6 nothing reaches students without review and rights.
+
+--------------------------------------------------------------------------------
+2. WHERE WE ARE (verified by the test reports of 2026-10-17)
+--------------------------------------------------------------------------------
+DONE
+  - Backend v1 applied to Supabase and tested as a real user: onboarding, modules (20 for the
+    pilot student), feed, Leitner reviews, quizzes, lessons, study time and streak, module chat
+    with translation rows, file-in-chat -> Library without duplicates, offline JSON bundle,
+    security checks (no profile leaks, no direct writes, anon locked out), account deletion.
+  - Old features dropped: news, community, marketplace, DMs, dining, exchange rates, residences,
+    scrapers. Kampus Store untouched.
+  - Audit and design documents: repo map, drop plan, translation plan, content format.
+PREPARED, NOT YET RUN (files in backend/sql)
+  - 06 fixes (push hole closed: done) | 08 modules report (run: 20 modules, no duplicates)
+  - 09 v1.1: lesson blocks, units, publish gate, reading position, sync_progress, chat client_id,
+    language-sliced bundle      - 10 tests for 09
+STILL OPEN (see section 15): rotate the leaked service key (A5), R2 wipe (library, marketplace,
+  community), upload worker extension, translation worker + file 11, content rights, front-end.
+STATE OF THE APP CODE: the repo (branch main, 1 commit, version 1.0.2+5) still contains the OLD
+  4-tab app (Home news/community, Library, Messages, Marketplace). Nothing of v1 exists in code yet.
+
+--------------------------------------------------------------------------------
+3. ARCHITECTURE
+--------------------------------------------------------------------------------
+   Flutter app (Android first)
+     |-- UI (Riverpod state, go_router)          |-- Local DB (Drift/SQLite): the app reads ONLY from here
+     |-- Content renderer (blocks, LaTeX, SVG)   |-- Sync engine + outbox (pushes/pulls when online)
+     v                                           v
+   Supabase (Postgres + Auth + Realtime)  <---- RPC functions = the only write path (BACKEND_CONTRACT)
+     |  rows protected by row security; content tables written only by the import tool (service role)
+   Cloudflare:  Workers = micros     R2 = files
+     m-upload     extend (new folders, hash, limits, delete-user-files)        Lane A
+     m-translate  cron every minute, Workers AI m2m100, fills message_translations   Lane A/E
+     m-notify     day 2/4/7/14/stop reminders through due_reminders()                 Lane A/E
+   Content pipeline (tools/content, Python): PDF -> chapter JSON -> validate -> review -> import.
+   Firebase: push (FCM) + analytics (+ Crashlytics recommended).
+   Kampus Store: separate product on the same Supabase project. Never touch its tables/functions.
+
+--------------------------------------------------------------------------------
+4. IDENTITY LOCK (never change: this keeps Google treating it as the same app)
+--------------------------------------------------------------------------------
+  applicationId com.kampuslink.kampuslink | same signing key / Play App Signing | same Firebase project |
+  same developer account. versionCode must be higher than the highest ever uploaded to Play
+  (repo says 5: CHECK Play Console). Version for v1: 1.1.0.
+  Secrets: .env holds only SUPABASE_URL and SUPABASE_ANON_KEY (public by design). It stays out of git
+  (already ignored). No service key anywhere in the repo, in the app, or in a chat.
+
+--------------------------------------------------------------------------------
+5. REPO LAYOUT AND LANES (no overlap: one lane = one set of folders)
+--------------------------------------------------------------------------------
+  AGENTS.md                      first file every AI reads
+  docs/                          this plan, CONTENT_FORMAT, BACKEND_CONTRACT, PROMPTS, logs/, tools/
+  backend/sql/                   01..10 (+ later 11): the database history. Lane A only.
+  fixtures/                      sample content for tests (chapter_02...json)
+  tools/content/                 content pipeline (Python). Lane C only.
+  lib/main.dart, lib/app/        app start, router, shell, theme tokens, l10n         Lane B1
+  lib/core/                      config, errors, logging, connectivity, shared widgets  Lane B1
+  lib/data/                      Drift db, repositories, sync engine, outbox            Lane D1
+  lib/render/                    block renderer, LaTeX, SVG, tables, highlights         Lane D2
+  lib/features/modules, lesson   modules list, lesson reader, library, resume           Lane D3
+  lib/features/home, quiz        flashcard feed, quizzes, streak                        Lane D4
+  lib/features/chat              chat + translation UI                                  Lane E1
+  lib/features/onboarding, profile, settings                                            Lane B2
+  test/, integration_test/       owned by the lane that writes the code; Lane F reviews
+  LANES  A backend+micros | B1 shell+core | B2 onboarding+profile | C content | D1 data+sync |
+         D2 renderer | D3 modules+lessons | D4 feed+quizzes | E1 chat | F QA+release
+  RULES  1 edit only your lane's folders   2 shared things (pubspec, router, theme tokens) belong to
+         B1: ask for additions in the log   3 contracts are docs/ files: never edit them yourself,
+         write a CORE CHANGE REQUEST   4 two lanes touching one file = stop, log a CONFLICT.
+
+--------------------------------------------------------------------------------
+6. FRONT-END DECISIONS (final, so every AI builds the same way)
+--------------------------------------------------------------------------------
+  Language/SDK     Flutter, Dart ^3.13 (as in pubspec). Android first; web build stays off.
+  State            flutter_riverpod (providers + notifiers). No setState for app state, no global
+                   statics for new code. Widgets stay small; business logic lives in notifiers/repositories.
+  Navigation       go_router (already a dependency, unused today): StatefulShellRoute with 3 branches
+                   (home, modules, profile) so every tab keeps its stack; deep links for notifications.
+  Local database   Drift (already a dependency, unused today) + sqlite3_flutter_libs.
+  Packages to ADD  flutter_riverpod, drift_dev + build_runner (dev), sqlite3_flutter_libs,
+                   flutter_math_fork (LaTeX), flutter_svg (SVG), flutter_localizations + intl (3 languages),
+                   crypto (file hashes), firebase_crashlytics (recommended).
+  Packages to KEEP supabase_flutter, firebase_core/analytics/messaging, google_sign_in, pdfx,
+                   file_picker, image_picker, http, mime, http_parser, image, cached_network_image,
+                   flutter_blurhash, connectivity_plus, flutter_dotenv, shared_preferences, path_provider,
+                   url_launcher, flutter_secure_storage. REMOVE after the purge if unused: workmanager,
+                   receive_sharing_intent, photo_view, share_plus, blurhash_dart, cupertino_icons (check imports).
+  Fonts            bundled as assets, no runtime download: Cairo (Arabic+Latin) + Noto fallbacks that cover the
+                   special glyphs (CONTENT_FORMAT section 2).
+  i18n             ARB files en/fr/ar in lib/l10n, generated with gen-l10n; RTL follows the locale; every string
+                   in the UI comes from ARB (no hard-coded text). Error codes map to ARB keys.
+  Theme            dark theme from today's AppColors is the identity (section 9). Light theme later.
+  Error model      sealed class AppFailure { Offline, Unauthenticated, Forbidden, NotFound, Validation(code),
+                   RateLimited, Server, Unknown }. One mapper turns PostgrestException/Socket errors/our codes
+                   into AppFailure; screens show a state widget, never a raw exception.
+  Logging          one logger; Crashlytics for fatal and non-fatal; log block types the renderer could not show.
+  Tests            unit (sync, outbox, Leitner, highlight algorithm, failure mapper), widget + golden
+                   (renderer), integration (offline flow). A lane does not finish without tests for its part.
+  Style            dart format, flutter_lints, files under ~400 lines, no TODO without a log entry.
+
+--------------------------------------------------------------------------------
+7. OFFLINE AND RESUME LOGIC (the heart of the app)
+--------------------------------------------------------------------------------
+  7.1 THE APP READS ONLY THE LOCAL DATABASE. The network only fills it and drains the outbox.
+  7.2 LOCAL TABLES (Drift): modules, lessons (+ per-language title/summary/blocks as JSON text), cards,
+      questions, resources (meta) + file cache index, glossary, card_progress, lesson_progress,
+      reading_position, study_daily, stats, chat_cache (last 100 messages per module), outbox, settings,
+      content_versions.
+  7.3 DOWNLOAD UNIT = module bundle. Flow: get_my_modules() -> for each module compare server version
+      with local version -> if newer (or never downloaded) call get_module_bundle(module, [uiLang, contentLang])
+      -> replace the module's rows in one transaction. Parse in an isolate. Show per-module state:
+      not downloaded | downloading (progress) | up to date | update available | failed (retry).
+      Big downloads only on Wi-Fi by default (setting). PDFs/files download on demand into the app
+      documents folder, named by hash, with a storage cap (LRU, default 500 MB, user can clear).
+  7.4 WHEN TO SYNC: app start, app resume, connectivity regained, pull-to-refresh, every 15 min while
+      active, and right after the user finishes an action (outbox flush).
+  7.5 OUTBOX. Every write that must reach the server is saved FIRST in the outbox with a new uuid op_id:
+        review, answer, lesson_done, study_time, reading_position, like, save  -> sent in batches of <= 200
+        through sync_progress() (replay-safe);
+        chat message (client_id), comment, upvote, report, block, settings -> their own calls, each idempotent
+        or tolerant of a retry.
+      Flush rules: oldest first; on success delete; "duplicate" = delete; "rejected" = delete + log the message;
+      network error = keep + exponential backoff (5 s, 30 s, 2 min, 10 min, then every 15 min);
+      401 = stop and ask to sign in again (outbox kept). The UI shows "n waiting to sync" quietly in Profile.
+  7.6 LOCAL-FIRST PROGRESS. A review changes the local card box/due date immediately (same Leitner numbers
+      as the server: 10 min / 1 d / 3 d / 7 d / 14 d), so the feed works offline. After a successful sync
+      the app pulls the server's own rows (learn_card_progress, learn_lesson_progress,
+      learn_reading_position, study_stats, study_daily - own-row reads) and merges: card progress = the row
+      with the newest last_reviewed_at, lesson progress = union, reading position = newest updated_at,
+      streak/xp = server value. Content is always server-wins.
+  7.7 RESUME ("where I stopped")
+      - The lesson reader reports the id of the first visible block + progress (0..1). Save locally on
+        every scroll end (debounced 1.5 s), when leaving the screen and when the app goes to background;
+        queue reading_position in the outbox (latest per lesson only: replace, do not pile up).
+      - Opening a lesson jumps to the saved block id (works across languages: ids are the same). A small
+        "Back to where you stopped" chip appears if the student scrolls away.
+      - HOME "Continue" card = most recent unfinished lesson (progress 0.02-0.98, not completed), from the
+        local table; with no history: the first unread lesson of the module the student opened last.
+      - MODULES list: progress ring per module and per lesson (completed / in progress / new).
+      - Quiz: answered questions are recorded when answered; an interrupted quiz resumes at the first
+        unanswered question. Completed lesson = lesson_done op.
+      - Study timer: counts only ACTIVE time (screen on, app in foreground, a touch or scroll in the last
+        60 s); flush log_study_time every 30-60 s of active time, and on pause. Never counts in background.
+  7.8 CHAT OFFLINE: cached messages stay readable; sending offline queues a message with a client_id and
+      shows it as "sending..."; after 3 failed tries it shows "tap to retry". Translations arrive by
+      realtime or on next open; the original is always shown first when no translation exists.
+  7.9 CONTENT VERSIONING: bundles carry schema_version. An app that meets a newer schema_version than it
+      knows keeps the old local content, shows "update the app for new content", and keeps working.
+  7.10 FIRST RUN OFFLINE: the app opens, shows a friendly "connect once to download your modules" state;
+      it never shows an empty screen without explanation.
+
+--------------------------------------------------------------------------------
+8. CONTENT SYSTEM (summary; the full spec is docs/CONTENT_FORMAT.txt)
+--------------------------------------------------------------------------------
+  Pipeline  PDF -> AI-assisted extraction to chapter JSON (3 languages, block ids, glossary, quality issues)
+            -> validate (tools/content/validate) -> human review (issues, Arabic, formulas) -> rights recorded
+            -> import as DRAFT -> cards + quiz generated and reviewed -> publish -> module version bumps ->
+            apps sync. The database refuses to publish a lesson with unknown rights or open review issues.
+  Size      one chapter = about 60 KB per language (12 KB gz); a module of 8 chapters = about 0.8 MB for
+            two languages. Offline is cheap.
+  Targets   the sample chapter (Chimie minerale, chapter II) becomes about 5 episodes with 6-10 cards and
+            3-5 questions each. Pilot goal: 3 complete modules before launch (Chimie minerale, Maths 3,
+            Mecanique des fluides), then 1-2 modules a week.
+  Roles     Lane C builds and runs the tools; reviewers are students who passed the subject; the founder
+            decides rights. Every item is logged in KAMPUS_CONTENT_LOG.txt with source, rights, reviewer.
+  Flagged   the sample has 30 unresolved issues (13 review_required) in the ORIGINAL course. They are
+            resolved by a person before publishing, never auto-fixed by an AI.
+
+--------------------------------------------------------------------------------
+9. DESIGN SYSTEM (fun for students, faithful to the app's colours)
+--------------------------------------------------------------------------------
+  KEEP (today's AppColors, lib/core/theme/app_theme.dart): background 0E0F11, surface 17181B,
+  border 24262A, accent 3E7BFA (blue), textPrimary F2F3F5, textSecondary A6A9B0, official 2FA86B,
+  verified 3E7BFA, community E0A937, danger D9534F. Cards radius 16, thin border, no shadows.
+  The brand stays dark + blue; trust labels keep their meaning (Official green, Verified blue,
+  Community amber, Unverified grey).
+  ADD (design tokens in lib/core/theme/tokens.dart, nobody hard-codes a colour in a screen):
+   - 12 MODULE ACCENTS, chosen to sit well on the dark base and next to the blue; a module gets its
+     accent from (module_id mod 12):  3E7BFA blue, 2EC4B6 teal, 2FA86B green, A3C93A lime,
+     E0A937 amber, F28C38 orange, E8604C coral, E86AA6 pink, B07CF0 violet, 7C8CF8 indigo,
+     38BDF8 sky, 9AA5B1 steel.   Use: ring, chip, card top edge, icon tint at 100%; surfaces tint at 8-14% alpha.
+   - SEMANTIC: success 2FA86B, warning F28C38, danger D9534F, info 3E7BFA, xp E0A937, streak F28C38.
+   - HIGHLIGHT KINDS in lessons: term = accent blue text; value = amber; formula = chip on surface +
+     monospace-like font; warning = orange with icon.
+  WHAT MAKES IT FUN (no clutter): a streak flame and XP bar on Home; card flip with a soft 3D turn and
+  haptic tick; a small confetti burst when a lesson is completed; progress rings that animate; module
+  accents so each subject has its own colour; friendly empty states with one clear action; short
+  motion (150-250 ms), respecting "reduce motion". No flashing, no guilt messages, no dark patterns.
+  TYPOGRAPHY: Cairo; headings 600, body 400; Arabic line height 1.6; 3 text-size steps for lessons.
+  ACCESSIBILITY: contrast AA on all text, touch targets >= 48 dp, semantics labels for figures/formulas,
+  RTL checked on every screen, works with large system fonts.
+  LIGHT THEME: not in v1. Dark first; tokens are built so a light theme can be added later.
+  DESIGN PASS happens AFTER the functional build of a screen is accepted (section 10, WP12), so
+  colour work never blocks logic.
+
+--------------------------------------------------------------------------------
+10. WORK PACKAGES (WP) AND THE 10-WEEK PLAN  (W1 starts Monday 19 Oct 2026; adjust to your exam date)
+--------------------------------------------------------------------------------
+  Each WP: lane | needs | deliverable | accepted when. "Accepted" = analyze clean, tests pass, runs on a
+  mid-range Android phone, the log entry is written, and the founder has seen it work.
+
+  WP0  BACKEND CLOSE-OUT (W1)  Lane A + founder
+       run 09 and 10; 06 F2/F3 results; R2 wipe (library, marketplace, community; keep avatars);
+       rotate the leaked service key and move it to Vault; extend the upload worker (files/, hash, limits);
+       fix duplicates/odd modules if any; set rights_status plan for the pilot lecturer.
+       Accepted: file 10 report all ok; R2 folders as planned; key rotated; Store check passes.
+  WP1  PURGE (W1)  Lane B1, prompt P1
+       branch v1-reset; delete old features, scripts, packages; app compiles with sign-in + onboarding +
+       3 empty tabs. Accepted: git tag pre-v1-reset exists; app runs; no marketplace/community code left.
+  WP2  FOUNDATIONS (W1-W2)  Lane B1, prompt P2
+       tokens + theme, l10n (en/fr/ar) + Cairo fonts, go_router shell with 3 tabs, AppFailure + state
+       widgets, logger, config reader (app_config), connectivity. Accepted: language switch works (RTL ok),
+       tab state kept, error/empty/loading widgets demoed on a debug screen.
+  WP3  DATA LAYER + SYNC (W2-W3)  Lane D1, prompt P3
+       Drift schema, repositories, bundle downloader, outbox, sync engine, progress merge, file cache.
+       Accepted: unit tests for outbox/merge/Leitner; airplane-mode test script passes (section 12).
+  WP4  CONTENT RENDERER (W2-W4)  Lane D2, prompt P4   [can start before WP3: uses the fixture file]
+       all block types, highlights, LaTeX, SVG, tables, figures, RTL, fonts, glyph test, goldens.
+       MILESTONE M1 (end W3): the sample chapter renders in fr/ar/en, offline, with all 30 formulas.
+  WP5  MODULES + LESSON READER + RESUME (W4-W5)  Lane D3, prompt P5
+       modules list (progress rings), module page (episodes grouped by unit, library, quizzes, chat entry),
+       lesson reader with reading-position save/restore, Continue data source, file viewer (pdfx).
+       MILESTONE M2 (end W5): download a module, go offline, read, close the app, reopen, resume.
+  WP6  FEED + QUIZZES (W5-W6)  Lane D4, prompt P6
+       Home feed (swipe, flip, like, save, comments sheet), Continue card, streak/XP, quiz flow,
+       lesson completion. MILESTONE M3 (end W6): a full study loop works offline and syncs after.
+  WP7  ONBOARDING + PROFILE (W3-W5, parallel)  Lane B2, prompt P7
+       language -> Google -> details (university, speciality, year, section/group, username) -> modules
+       shown -> first card in under 60 s; existing-user path; profile, settings, reminders, delete account.
+  WP8  CHAT + TRANSLATION (W6-W8)  Lane E1 + Lane A, prompt P8 + micro m-translate (+ file 11 SQL)
+       chat UI with realtime, client_id retries, files in chat, translation display, report/block.
+       MILESTONE M4 (end W8): two phones chat in different languages; translations appear in 20-85 s.
+  WP9  NOTIFICATIONS (W7-W8)  Lane A + B2: FCM token registration, deep links, m-notify ladder, quiet hours.
+  WP10 CONTENT (W1 -> W10, parallel)  Lane C + reviewers, prompt P12
+       validate/import tools (W1-W3), chapter 2 imported and reviewed, cards/quizzes for it, then the 3 pilot
+       modules. MILESTONE M5: 3 modules fully published with rights recorded.
+  WP11 HARDENING (W8-W9)  everyone, prompt P9
+       error/offline sweep on every screen, performance, low-end phone tests, size, crash-free target.
+  WP12 DESIGN PASS (W8-W9)  Lane B1 + owners, prompt P10: colours, motion, empty states, icons, polish.
+  WP13 QA + BETA + RELEASE (W9-W10)  Lane F, prompt P11: closed beta with ~30 students, Play listing,
+       Data safety + privacy policy update, staged rollout. Pilot launch at the end of W10.
+  If the schedule slips: cut WP9 (reminders) and WP12 polish first; never cut tests, offline, or content review.
+
+--------------------------------------------------------------------------------
+11. WORKING PROTOCOL WITH THE AIs (how the founder runs the team)
+--------------------------------------------------------------------------------
+  The loop is:  AI gives PowerShell -> founder pastes it -> founder pastes the output back -> AI checks and
+  gives the next step.  The AI never assumes a step worked: it reads the output first.
+  START OF EVERY SESSION: the founder gives the AI the repo access (or the zip) and pastes the P0
+  prompt + the one work-package prompt from docs/PROMPTS.txt. The AI must read AGENTS.md, this plan,
+  the contracts and the last 20 log entries BEFORE writing code, then say in 5 lines what it understood.
+  A STEP is small: one idea, at most 5 files, at most ~150 lines per file, verified at the end.
+  POWERSHELL RULES the AIs must follow:
+   - Start with  cd <repo folder>  and  . .\docs\tools\ps-helpers.ps1  (helpers: Write-Kampus,
+     Replace-InFile, Step-Check, Step-Commit). Write files through Write-Kampus (UTF-8 without BOM).
+   - Use single-quoted here-strings @' ... '@ for code (no variable expansion). The closing '@ must start
+     the line. Split big files into several pastes (a file can be created in parts with -Append).
+   - Edit existing files with Replace-InFile (exact text must occur once) instead of rewriting them.
+   - Every step ends with  Step-Check  (pub get, format, analyze, test) and then  Step-Commit "<message>".
+   - Each step says what the founder should SEE (expected output / screen) and what to paste back.
+   - Never ask the founder to edit code by hand, and never put secrets in a command.
+  BRANCHES: v1-reset is the integration branch. Each work package works on  wp/<number>-<name>  and
+  merges to v1-reset only after acceptance. main is untouched until the release (it deploys the web
+  build and feeds Play).
+  LOGS (append-only, in docs/logs/): APP_LOG (every session ends with an entry), CONTENT_LOG, DECISIONS.
+  When an AI needs a contract change it writes a CORE CHANGE REQUEST in DECISIONS and stops that part.
+  REVIEW: the lead planner (Claude) reviews each accepted WP against the plan; Lane F re-runs the checks.
+  If two AIs disagree, the contract files decide; if they are silent, the founder decides and logs it.
+
+--------------------------------------------------------------------------------
+12. QUALITY GATES
+--------------------------------------------------------------------------------
+  EVERY STEP   flutter analyze clean | tests pass | app starts | the step's own check shown.
+  OFFLINE SCRIPT (run by Lane F at M2, M3, M4 and before release):
+    1 sign in, download one module on Wi-Fi  2 airplane mode  3 open lessons in 2 languages, resume works
+    4 do 10 flashcards + a quiz  5 write a chat message (queued)  6 kill the app, reopen: all still there
+    7 reconnect: outbox empties, nothing counted twice (check xp/streak against the server)
+    8 change language: lesson + UI switch, position kept.
+  RENDERER SCRIPT: sample chapter in fr/ar/en; every formula renders or falls back; glyph test page has no
+    missing-glyph boxes; tables scroll; figure placeholders correct; large font size ok.
+  PERFORMANCE: cold start < 3 s on a mid-range phone; lesson list scrolls at 60 fps; opening a downloaded
+    lesson < 400 ms; APK size tracked every build (target < 45 MB); memory stable on a 40-block lesson.
+  SECURITY: no service key in repo/app; anon can read nothing private; other students' profiles only via
+    public_profiles; direct writes blocked (file 07 test block A stays green).
+  DEVICE MATRIX: one low-end (2-3 GB RAM, Android 9-10), one mid-range, one recent.
+  EXIT METRICS FOR THE PILOT (unchanged): >= 60% of the cohort installed and onboarded, day-7 retention
+    > 30%, crash-free sessions > 99%, students add/ask in chat, "would miss it" yes from several students.
+
+--------------------------------------------------------------------------------
+13. RELEASE AND POLICY
+--------------------------------------------------------------------------------
+  - Same package/signing, versionCode above Play's highest, version 1.1.0.
+  - Play production access: apply NOW with the tested app if the console allows it; publish v1 only when the
+    milestones M1-M5 are accepted. Never publish the purged empty shell.
+  - Internal test -> closed test -> staged rollout 5% / 20% / 50% / 100% with crash monitoring.
+  - Before production: update the store listing + screenshots, privacy policy (chat text is machine-translated by
+    a third-party processor; push tokens; study data) and the Data safety form; in-app account deletion works;
+    report/block exist; user content moderation path documented.
+  - Old test accounts keep their login; they see the new onboarding once (onboarding_version 0 -> 1).
+
+--------------------------------------------------------------------------------
+14. RISKS
+--------------------------------------------------------------------------------
+  R1 content rights (lecturer's course)  -> rights gate in the DB, written permission, own-work fallback
+  R2 content is the bottleneck           -> Lane C starts in W1; validation + import tools first; 3 modules target
+  R3 Arabic translation quality          -> human review of Arabic; chat translation is machine and labelled
+  R4 formulas/glyphs fail on some phones -> bundled fonts, glyph test, plain_text fallback, goldens
+  R5 sync bugs double-count or lose data -> op_id idempotency (server), outbox tests, offline script
+  R6 free translation limits             -> only used languages, cache, daily budget guard, original always shown
+  R7 AIs overwrite each other            -> lanes, branches, contracts, logs, small steps
+  R8 schedule vs exams                   -> cut list in section 10; weekly milestone check
+  R9 service key leak                    -> rotate in WP0; secrets never in chat or repo
+  R10 Darija / Arabizi in chat           -> accepted: shown as original; revisit after the pilot
+
+--------------------------------------------------------------------------------
+15. OPEN DECISIONS AND ITEMS (defaults apply if you do not answer)
+--------------------------------------------------------------------------------
+  D1 translation engine: Cloudflare m2m100 (default)           D2 only used languages (default)
+  D3 Darija/Arabizi original-only (default)                    D4 20 s settle delay + "translating..." (default)
+  D5 exam dates: when does the first exam period start? (sets the real calendar of section 10)
+  D6 lecturer permission for the sample chapter: who asks, by when?
+  D7 state management = Riverpod, router = go_router, db = Drift (decided here; say now if you object)
+  D8 production access application on Play: do it now? (recommended)
+  ITEMS  rotate key | R2 wipe | send-push + upload worker sources | run 09/10 | Play versionCode
+================================================================================

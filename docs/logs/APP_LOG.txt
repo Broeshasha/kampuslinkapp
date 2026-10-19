@@ -1,0 +1,27 @@
+KAMPUSLINK APP LOG (append-only: never edit or delete an old entry; add a correction entry)
+Template:
+[YYYY-MM-DD HH:MM] LANE: __ | AI/Person: __ | WP: __
+DID: ...   FILES: ...   CORE: none | read-only | CORE CHANGE REQUEST   TESTED: ...   RISKS: ...   NEXT: ...   NEEDS: ...
+
+[2026-10-17 20:00] LANE: A | AI/Person: founder + Claude | WP: 0
+DID: ran backend files 01 (drops), 02 (schema), 03 (functions), 04 (security) on Supabase; 06 F1 (push hole closed).
+     Dropped: news, community, marketplace, DMs, dining, exchange rates, residences, scrapers, countries.
+FILES: backend/sql/01..06
+TESTED: file 07 blocks A, B, C all OK (modules 20 for the pilot student, feed, review, quiz, lesson, time/streak,
+     chat + translation row, file dedupe, bundle 1284 chars, security checks, onboarding validation, account deletion).
+RISKS: service key written inside call_send_push still needs rotating (A5); R2 not wiped yet; send-push source unseen.
+NEXT: run 09 + 10; 06 F2/F3 results; R2 wipe; upload worker extension.
+NEEDS: send-push + upload worker sources (secrets removed); R1 cron output; Play versionCode.
+
+[2026-10-17 22:40] LANE: A | AI/Person: Claude | WP: 0
+DID: wrote backend 09 (blocks, units, publish gate, reading position, sync_progress, chat client_id,
+     language-sliced bundle) and 10 (tests); wrote MASTER_PLAN_V2, CONTENT_FORMAT, BACKEND_CONTRACT, PROMPTS.
+FILES: backend/sql/09, 10; docs/*
+TESTED: syntax-checked only (not yet run on Supabase).
+RISKS: 09 drops/recreates get_module_bundle and post_chat_message (new signatures): rerun grants if anything fails.
+NEXT: founder runs 09, then 10, and reports the result.
+
+[2026-10-19 13:45] LANE: B1 | AI/Person: founder + Claude | WP: 1 (Step 0)
+DID: gh browser auth (Broeshasha); tag pre-v1-reset -> c7e858e pushed; branch v1-reset created and pushed; docs zip imported.
+TESTED: baseline on c7e858e: flutter pub get OK; flutter analyze 0 errors, 0 warnings, 39 infos.
+RISKS: repo was public (backend SQL + rights-unknown fixture). NEXT: Step 0.5 repo understanding, then PURGE_MAP.

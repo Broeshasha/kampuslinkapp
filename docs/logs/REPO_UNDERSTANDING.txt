@@ -1,0 +1,15 @@
+KAMPUSLINK - REPO UNDERSTANDING (old app at tag pre-v1-reset = c7e858e)      2026-10-19
+STACK     Flutter 3.47 / Dart 3.13, setState + static services (no Riverpod), Navigator 1 (go_router listed, unused),
+          drift listed but unused, supabase_flutter, firebase core/analytics/messaging, google_sign_in 7.
+ENTRY     lib/main.dart: dotenv(.env asset) -> Firebase (try/catch) -> Supabase -> ConnectivityService -> OutboxService
+          -> AuthGate (splash -> Google sign-in -> ProfileSetup -> 4-tab ResponsiveShell). Share-intent listener (images).
+TABS      Home (news + community, 1218 lines), Library, Messages (DMs), Marketplace (+ Kampus Store checkout); Profile pushed.
+SIZE      58 dart files, 11,579 lines, 32 files talk to Supabase; analyze baseline 0 errors / 0 warnings / 39 infos.
+DROPPED   community, marketplace, messages/DMs, news, residences, dropdz, countries, admin store orders -> all dead code.
+REUSABLE  only AppColors (lib/core/theme/app_theme.dart) + assets/icon/* + launcher/splash config. Ideas only (rewrite):
+          offline banner, skeleton loader, outbox (old one is not op_id based), upload_service.
+ANDROID   applicationId/namespace com.kampuslink.kampuslink, versionCode from pubspec (1.0.2+5), signing from key.properties
+          or env (not in git), google-services plugin, compileSdk 37. Manifest has 2 SEND image intent-filters (share to
+          Campus Now) -> remove with receive_sharing_intent. Google sign-in Credential Manager workaround meta-data: KEEP.
+CI        .github/workflows/deploy.yml: push to main -> flutter build web -> Cloudflare Pages. v1-reset does not trigger it.
+SURPRISES 12 old fix*.ps1 + 2 csv in repo root; .env bundled as an asset (anon key only: OK); go_router + drift already deps.

@@ -1,0 +1,14 @@
+KAMPUSLINK CONTENT LOG (append-only)
+Template:
+[YYYY-MM-DD HH:MM] ITEM: <chapter_ref / module / lesson>
+SOURCE: ...   RIGHTS: unknown | permission_granted | public_domain | own_work (who/when)
+STATE: extracted | validated | reviewed | imported(draft) | published   REVIEWER: name, date
+OUTPUT: ...   ISSUES: ...
+
+[2026-10-17 22:00] ITEM: chapter_02 "L'oxygene et les oxydes" (Chimie minerale, Mining L2, module 'Chimie minerale' id 842)
+SOURCE: ChapitreII__les_oxydes.pdf (10 pages), course by Dr. M. Dali, Universite Badji Mokhtar-Annaba, 2021-2022
+RIGHTS: unknown (written permission needed before students see it; fixture for development only)
+STATE: extracted (schema 1.1.0, trilingual)   REVIEWER: none yet
+OUTPUT: fixtures/chapter_02_chimie_minerale.json  (23 sections, 113 blocks, 32 glossary entries, 30 formulas)
+ISSUES: 30 source_quality_issues unresolved (13 review_required, 3 uncertain); Arabic not yet reviewed by a person;
+        2 figures are description-only (no image); special glyph risk (see CONTENT_FORMAT section 2).
