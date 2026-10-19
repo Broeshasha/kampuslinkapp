@@ -55,3 +55,7 @@ NEXT: WP2.6 Firebase init + Crashlytics sink (touches android/ gradle: will warn
 DID: connectivityProvider (connectivity_plus, failures logged, optimistic) + isOnlineProvider; OfflineBanner (animated, reduce-motion aware, live region, AR/FR/EN); floating frosted-glass pill nav bar with brand glow, selected = accentText, haptic tick on tab change; rail styled; app_theme nav themes.
 TESTED: 28 tests (+ offline banner shown/hidden, 320x568 x1.5 offline with no overflow).
 NEXT: WP2.6b Firebase init + Crashlytics sink (needs founder OK: adds the Crashlytics gradle plugin in android/, no id/signing change).
+[2026-10-19 22:50] LANE: B1 | AI/Person: founder + Claude | WP: 2.6b crashlytics
+DID: firebase_crashlytics; initFirebase() (5 s timeout, never throws, skipped on web) plugs CrashlyticsSink into appLog; crashlytics gradle plugin 3.0.8; debug page "Send test report" button; main.dart rewritten.
+TESTED: analyze clean, 28 tests pass. Android build NOT run (too slow on this PC): first flutter run will confirm the gradle change.
+NEXT: WP3 data layer (Drift db + bundle download + outbox + sync).

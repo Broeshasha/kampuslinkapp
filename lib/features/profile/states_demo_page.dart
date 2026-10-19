@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/errors/app_failure.dart';
+import '../../core/logging/logger.dart';
 import '../../core/theme/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/states.dart';
@@ -15,6 +16,17 @@ class StatesDemoPage extends StatefulWidget {
 
 class _StatesDemoPageState extends State<StatesDemoPage> {
   bool _crash = false;
+
+  void _sendTestReport() {
+    appLog.error(
+      StateError('KampusLink test report (from the debug page)'),
+      StackTrace.current,
+      reason: 'manual test',
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Test report recorded (debug)')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +58,19 @@ class _StatesDemoPageState extends State<StatesDemoPage> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.all(KSpace.lg),
-            child: OutlinedButton(
-              onPressed: () => setState(() => _crash = !_crash),
-              child: const Text('Toggle a crash in build'),
+            child: Wrap(
+              spacing: KSpace.sm,
+              runSpacing: KSpace.sm,
+              children: [
+                OutlinedButton(
+                  onPressed: () => setState(() => _crash = !_crash),
+                  child: const Text('Toggle a crash in build'),
+                ),
+                OutlinedButton(
+                  onPressed: _sendTestReport,
+                  child: const Text('Send test report to Crashlytics'),
+                ),
+              ],
             ),
           ),
           if (_crash) const SizedBox(height: 160, child: _Crash()),

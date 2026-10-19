@@ -33,6 +33,7 @@ dependencies:
   intl: any
   flutter_localizations:
     sdk: flutter
+  firebase_crashlytics: ^5.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

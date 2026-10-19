@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'core/errors/error_handlers.dart';
+import 'core/firebase/firebase_bootstrap.dart';
 import 'core/l10n/locale_controller.dart';
 import 'core/logging/logger.dart';
 import 'core/theme/font_licenses.dart';
@@ -14,6 +15,7 @@ void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     installErrorHandlers();
+    await initFirebase();
     registerFontLicenses();
     final prefs = await SharedPreferences.getInstance();
     runApp(
