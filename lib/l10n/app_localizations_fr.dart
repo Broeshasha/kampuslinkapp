@@ -76,4 +76,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get loading => 'Chargement…';
+
+  @override
+  String get offlineBanner =>
+      'Hors ligne · tu vois ce qui est enregistré sur ton téléphone';
 }

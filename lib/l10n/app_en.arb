@@ -33,5 +33,6 @@
   "errorServer": "Our server had a problem. Try again in a moment.",
   "errorUnknown": "Something unexpected happened. Try again.",
   "retry": "Try again",
-  "loading": "Loading\u2026"
+  "loading": "Loading\u2026",
+  "offlineBanner": "You're offline \u00b7 showing what's saved on your phone"
 }

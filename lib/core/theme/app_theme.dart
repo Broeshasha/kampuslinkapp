@@ -127,6 +127,7 @@ abstract final class AppTheme {
           outlineVariant: c.border,
           error: c.danger,
         );
+    final indicator = c.accent.withValues(alpha: 0.18);
     return ThemeData(
       useMaterial3: true,
       fontFamily: KFonts.family,
@@ -153,7 +154,7 @@ abstract final class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: c.surface,
-        selectedColor: c.accent.withValues(alpha: 0.18),
+        selectedColor: indicator,
         side: BorderSide(color: c.border),
         labelStyle: TextStyle(color: c.textPrimary),
         shape: RoundedRectangleBorder(
@@ -162,11 +163,38 @@ abstract final class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: c.surface,
-        indicatorColor: c.accent.withValues(alpha: 0.18),
+        indicatorColor: indicator,
+        indicatorShape: const StadiumBorder(),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? c.accentText
+                : c.textSecondary,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 12,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w400,
+            color: states.contains(WidgetState.selected)
+                ? c.accentText
+                : c.textSecondary,
+          ),
+        ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: c.background,
-        indicatorColor: c.accent.withValues(alpha: 0.18),
+        indicatorColor: indicator,
+        indicatorShape: const StadiumBorder(),
+        selectedIconTheme: IconThemeData(color: c.accentText),
+        unselectedIconTheme: IconThemeData(color: c.textSecondary),
+        selectedLabelTextStyle: TextStyle(
+          color: c.accentText,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelTextStyle: TextStyle(color: c.textSecondary),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

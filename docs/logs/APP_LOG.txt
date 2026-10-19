@@ -51,3 +51,7 @@ NEXT: WP2.5 errors + logging (AppFailure, global handlers, friendly error page, 
 DID: sealed AppFailure (+OnboardingRequired) and ONE mapper (contract codes, 42501, PGRST301, timeouts, http ClientException); Result + guard() (every failure logged, offline as info); AppLogger (200-line ring, CrashSink slot); global handlers (FlutterError.onError, platformDispatcher.onError, runZonedGuarded); FriendlyBuildError replaces the red screen; LoadingView/EmptyView/ErrorView with Retry; debug-only UI states page (/profile/states); glyph line is now a real reaction with +.
 TESTED: 26 tests (errors_test: mapper x3, guard + sink, ErrorView retry, friendly build error) + all previous.
 NEXT: WP2.6 Firebase init + Crashlytics sink (touches android/ gradle: will warn first), connectivity + offline banner.
+[2026-10-19 20:00] LANE: B1 | AI/Person: founder + Claude | WP: 2.6a connectivity + nav look
+DID: connectivityProvider (connectivity_plus, failures logged, optimistic) + isOnlineProvider; OfflineBanner (animated, reduce-motion aware, live region, AR/FR/EN); floating frosted-glass pill nav bar with brand glow, selected = accentText, haptic tick on tab change; rail styled; app_theme nav themes.
+TESTED: 28 tests (+ offline banner shown/hidden, 320x568 x1.5 offline with no overflow).
+NEXT: WP2.6b Firebase init + Crashlytics sink (needs founder OK: adds the Crashlytics gradle plugin in android/, no id/signing change).

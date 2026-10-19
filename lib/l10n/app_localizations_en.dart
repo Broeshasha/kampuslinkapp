@@ -76,4 +76,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loading => 'Loading…';
+
+  @override
+  String get offlineBanner =>
+      'You\'re offline · showing what\'s saved on your phone';
 }

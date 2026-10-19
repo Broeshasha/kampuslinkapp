@@ -231,6 +231,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading…'**
   String get loading;
+
+  /// No description provided for @offlineBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline · showing what\'s saved on your phone'**
+  String get offlineBanner;
 }
 
 class _AppLocalizationsDelegate

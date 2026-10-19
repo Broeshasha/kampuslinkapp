@@ -74,4 +74,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get loading => 'جارٍ التحميل…';
+
+  @override
+  String get offlineBanner => 'غير متصل · تشاهد ما هو محفوظ على هاتفك';
 }
