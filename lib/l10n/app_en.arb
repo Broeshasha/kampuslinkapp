@@ -34,5 +34,19 @@
   "errorUnknown": "Something unexpected happened. Try again.",
   "retry": "Try again",
   "loading": "Loading\u2026",
-  "offlineBanner": "You're offline \u00b7 showing what's saved on your phone"
+  "offlineBanner": "You're offline \u00b7 showing what's saved on your phone",
+  "semesterLabel": "Semester {number}",
+  "@semesterLabel": { "placeholders": { "number": { "type": "int" } } },
+  "lessonsCount": "{count, plural, =0{No lessons yet} =1{1 lesson} other{{count} lessons}}",
+  "@lessonsCount": { "placeholders": { "count": { "type": "int" } } },
+  "signInToSeeModules": "Sign in to download your modules",
+  "continueWithGoogle": "Continue with Google",
+  "noModulesTitle": "No modules yet",
+  "noModulesOffline": "Connect to the internet once to download your modules.",
+  "noModulesOnline": "We couldn't find modules for your year yet.",
+  "syncing": "Syncing\u2026",
+  "synced": "Synced",
+  "signOut": "Sign out",
+  "signedInAs": "Signed in as {email}",
+  "@signedInAs": { "placeholders": { "email": { "type": "String" } } }
 }

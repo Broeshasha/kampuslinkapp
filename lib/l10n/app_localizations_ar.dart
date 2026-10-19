@@ -77,4 +77,53 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get offlineBanner => 'غير متصل · تشاهد ما هو محفوظ على هاتفك';
+
+  @override
+  String semesterLabel(int number) {
+    return 'السداسي $number';
+  }
+
+  @override
+  String lessonsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count درس',
+      many: '$count درسًا',
+      few: '$count دروس',
+      two: 'درسان',
+      one: 'درس واحد',
+      zero: 'لا دروس بعد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signInToSeeModules => 'سجّل الدخول لتحميل مقاييسك';
+
+  @override
+  String get continueWithGoogle => 'المتابعة باستخدام Google';
+
+  @override
+  String get noModulesTitle => 'لا توجد مقاييس بعد';
+
+  @override
+  String get noModulesOffline => 'اتصل بالإنترنت مرة واحدة لتحميل مقاييسك.';
+
+  @override
+  String get noModulesOnline => 'لم نجد مقاييس لسنتك بعد.';
+
+  @override
+  String get syncing => 'جارٍ المزامنة…';
+
+  @override
+  String get synced => 'تمت المزامنة';
+
+  @override
+  String get signOut => 'تسجيل الخروج';
+
+  @override
+  String signedInAs(String email) {
+    return 'مسجّل باسم $email';
+  }
 }

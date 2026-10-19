@@ -237,6 +237,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'re offline · showing what\'s saved on your phone'**
   String get offlineBanner;
+
+  /// No description provided for @semesterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Semester {number}'**
+  String semesterLabel(int number);
+
+  /// No description provided for @lessonsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No lessons yet} =1{1 lesson} other{{count} lessons}}'**
+  String lessonsCount(int count);
+
+  /// No description provided for @signInToSeeModules.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to download your modules'**
+  String get signInToSeeModules;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @noModulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No modules yet'**
+  String get noModulesTitle;
+
+  /// No description provided for @noModulesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet once to download your modules.'**
+  String get noModulesOffline;
+
+  /// No description provided for @noModulesOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find modules for your year yet.'**
+  String get noModulesOnline;
+
+  /// No description provided for @syncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncing;
+
+  /// No description provided for @synced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get synced;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {email}'**
+  String signedInAs(String email);
 }
 
 class _AppLocalizationsDelegate

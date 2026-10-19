@@ -22,5 +22,16 @@
   "errorUnknown": "Une erreur inattendue s'est produite. R\u00e9essaie.",
   "retry": "R\u00e9essayer",
   "loading": "Chargement\u2026",
-  "offlineBanner": "Hors ligne \u00b7 tu vois ce qui est enregistr\u00e9 sur ton t\u00e9l\u00e9phone"
+  "offlineBanner": "Hors ligne \u00b7 tu vois ce qui est enregistr\u00e9 sur ton t\u00e9l\u00e9phone",
+  "semesterLabel": "Semestre {number}",
+  "lessonsCount": "{count, plural, =0{Pas encore de le\u00e7ons} =1{1 le\u00e7on} other{{count} le\u00e7ons}}",
+  "signInToSeeModules": "Connecte-toi pour t\u00e9l\u00e9charger tes modules",
+  "continueWithGoogle": "Continuer avec Google",
+  "noModulesTitle": "Pas encore de modules",
+  "noModulesOffline": "Connecte-toi une fois \u00e0 Internet pour t\u00e9l\u00e9charger tes modules.",
+  "noModulesOnline": "Aucun module trouv\u00e9 pour ton ann\u00e9e pour l'instant.",
+  "syncing": "Synchronisation\u2026",
+  "synced": "\u00c0 jour",
+  "signOut": "Se d\u00e9connecter",
+  "signedInAs": "Connect\u00e9 : {email}"
 }

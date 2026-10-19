@@ -80,4 +80,52 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get offlineBanner =>
       'Hors ligne · tu vois ce qui est enregistré sur ton téléphone';
+
+  @override
+  String semesterLabel(int number) {
+    return 'Semestre $number';
+  }
+
+  @override
+  String lessonsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count leçons',
+      one: '1 leçon',
+      zero: 'Pas encore de leçons',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signInToSeeModules => 'Connecte-toi pour télécharger tes modules';
+
+  @override
+  String get continueWithGoogle => 'Continuer avec Google';
+
+  @override
+  String get noModulesTitle => 'Pas encore de modules';
+
+  @override
+  String get noModulesOffline =>
+      'Connecte-toi une fois à Internet pour télécharger tes modules.';
+
+  @override
+  String get noModulesOnline =>
+      'Aucun module trouvé pour ton année pour l\'instant.';
+
+  @override
+  String get syncing => 'Synchronisation…';
+
+  @override
+  String get synced => 'À jour';
+
+  @override
+  String get signOut => 'Se déconnecter';
+
+  @override
+  String signedInAs(String email) {
+    return 'Connecté : $email';
+  }
 }

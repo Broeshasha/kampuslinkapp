@@ -9,6 +9,7 @@ import 'core/errors/error_handlers.dart';
 import 'core/firebase/firebase_bootstrap.dart';
 import 'core/l10n/locale_controller.dart';
 import 'core/logging/logger.dart';
+import 'core/supabase/supabase_bootstrap.dart';
 import 'core/theme/font_licenses.dart';
 
 void main() {
@@ -18,9 +19,13 @@ void main() {
     await initFirebase();
     registerFontLicenses();
     final prefs = await SharedPreferences.getInstance();
+    final supabase = await initSupabase();
     runApp(
       ProviderScope(
-        overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          supabaseClientProvider.overrideWithValue(supabase),
+        ],
         child: const KampusLinkApp(),
       ),
     );
