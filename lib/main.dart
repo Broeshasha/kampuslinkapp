@@ -1,216 +1,34 @@
-﻿import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'core/theme/app_theme.dart';
-import 'core/widgets/responsive_shell.dart';
-import 'core/widgets/splash_screen.dart';
-import 'core/config/auth_service.dart';
-import 'core/config/connectivity_service.dart';
-import 'core/config/outbox_service.dart';
-import 'core/config/notification_service.dart';
-import 'features/onboarding/google_signin_screen.dart';
-import 'features/onboarding/profile_setup_screen.dart';
-import 'features/home/home_screen.dart';
-import 'features/profile/profile_screen.dart';
-import 'features/library/library_screen.dart';
-import 'features/marketplace/marketplace_screen.dart';
-import 'features/messages/messages_screen.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'features/community/share_chooser_screen.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    // Firebase misconfiguration must NEVER block app startup -- Analytics
-    // and push notifications simply won't work until it's fixed, but the
-    // app itself has to keep running regardless.
-    debugPrint('Firebase init failed, app continuing without it: $e');
-  }
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
-  await ConnectivityService.init();
-  OutboxService.startAutoSync();
-  runApp(const MyApp());
-
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    _setupShareListener();
-  });
+/// WP1 purge: empty shell. The real bootstrap (Firebase, Supabase, Drift,
+/// Riverpod, router, l10n) arrives in WP2.
+void main() {
+  runApp(const KampusLinkApp());
 }
 
-void _routeSharedImage(List<SharedMediaFile> files) {
-  final image = files.where((f) => f.type == SharedMediaType.image).firstOrNull;
-  if (image == null) return;
-
-  rootNavigatorKey.currentState?.push(
-    MaterialPageRoute(
-      builder: (_) => ShareChooserScreen(imagePath: image.path),
-    ),
-  );
-
-  ReceiveSharingIntent.instance.reset();
-}
-
-void _setupShareListener() {
-  // Cold start: app was launched fresh via a share action.
-  ReceiveSharingIntent.instance.getInitialMedia().then(_routeSharedImage);
-
-  // Warm start: app was already open/backgrounded when the share happened.
-  ReceiveSharingIntent.instance.getMediaStream().listen(_routeSharedImage);
-}
-
-final supabase = Supabase.instance.client;
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KampusLinkApp extends StatelessWidget {
+  const KampusLinkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'KampusLink',
       debugShowCheckedModeBanner: false,
-      navigatorKey: rootNavigatorKey,
       theme: AppTheme.dark,
-      home: const AuthGate(),
+      home: const Scaffold(
+        body: Center(
+          child: Text(
+            'KampusLink',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
-
-enum _RouteState { splash, needsAuth, needsProfile, ready }
-
-/// Routing decision, source of truth entirely server-side:
-/// - No session -> onboarding.
-/// - Session exists -> read profiles.onboarding_complete (a real column,
-///   guaranteed to exist the instant auth succeeds via a DB trigger).
-/// - Result cached locally, keyed per user ID, for instant offline routing
-///   on return visits.
-class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
-
-  @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  _RouteState _state = _RouteState.splash;
-  final _libraryKey = GlobalKey<LibraryScreenState>();
-  final _marketplaceKey = GlobalKey<MarketplaceScreenState>();
-  late final StreamSubscription<AuthState> _authSub;
-
-  @override
-  void initState() {
-    super.initState();
-
-    Future.delayed(const Duration(milliseconds: 600), _resolveRoute);
-
-    _authSub = AuthService.authStateChanges.listen((_) => _resolveRoute());
-  }
-
-  Future<void> _resolveRoute() async {
-    final session = supabase.auth.currentSession;
-
-    if (session == null) {
-      if (mounted) setState(() => _state = _RouteState.needsAuth);
-      return;
-    }
-
-    final userId = session.user.id;
-    final prefs = await SharedPreferences.getInstance();
-    final cacheKey = 'onboarding_complete_$userId';
-
-    if (prefs.getBool(cacheKey) == true) {
-      if (mounted) {
-        setState(() => _state = _RouteState.ready);
-        NotificationService.requestPermissionAndGetToken();
-      }
-      return;
-    }
-
-    try {
-      final profile = await supabase
-          .from('profiles')
-          .select('onboarding_complete')
-          .eq('id', userId)
-          .single()
-          .timeout(const Duration(seconds: 6));
-
-      final complete = profile['onboarding_complete'] as bool;
-
-      if (complete) {
-        await prefs.setBool(cacheKey, true);
-        if (mounted) {
-        setState(() => _state = _RouteState.ready);
-        NotificationService.requestPermissionAndGetToken();
-      }
-      } else {
-        if (mounted) setState(() => _state = _RouteState.needsProfile);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _state = _RouteState.needsProfile);
-    }
-  }
-
-  @override
-  void dispose() {
-    _authSub.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    switch (_state) {
-      case _RouteState.splash:
-        return const SplashScreen();
-
-      case _RouteState.needsAuth:
-        return const GoogleSignInScreen();
-
-      case _RouteState.needsProfile:
-        return ProfileSetupScreen(
-          onComplete: () async {
-            final prefs = await SharedPreferences.getInstance();
-            final userId = supabase.auth.currentUser!.id;
-            await prefs.setBool('onboarding_complete_$userId', true);
-            setState(() => _state = _RouteState.ready);
-            NotificationService.requestPermissionAndGetToken();
-          },
-        );
-
-      case _RouteState.ready:
-        return ResponsiveShell(
-          screens: [
-            const HomeScreen(),
-            LibraryScreen(key: _libraryKey),
-            const MessagesScreen(),
-            MarketplaceScreen(key: _marketplaceKey),
-          ],
-          libraryKey: _libraryKey,
-          marketplaceKey: _marketplaceKey,
-          onAvatarTap: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
-          },
-        );
-    }
-  }
-}
-
-Widget _placeholder(String label) => Center(
-      child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 20)),
-    );
-
-
-
-
-
-
-
-

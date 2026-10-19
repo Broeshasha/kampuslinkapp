@@ -25,3 +25,8 @@ NEXT: founder runs 09, then 10, and reports the result.
 DID: gh browser auth (Broeshasha); tag pre-v1-reset -> c7e858e pushed; branch v1-reset created and pushed; docs zip imported.
 TESTED: baseline on c7e858e: flutter pub get OK; flutter analyze 0 errors, 0 warnings, 39 infos.
 RISKS: repo was public (backend SQL + rights-unknown fixture). NEXT: Step 0.5 repo understanding, then PURGE_MAP.
+[2026-10-19 14:30] LANE: B1 | AI/Person: founder + Claude | WP: 1 PURGE
+DID: deleted 57 old lib files + 14 root scripts; removed 6 packages; removed share-image intent-filters; empty KampusLink splash; helpers fixed (empty replace, quieter Step-Check).
+FILES: lib/main.dart, test/widget_test.dart, pubspec.yaml, AndroidManifest.xml, docs/logs/PURGE_MAP.txt, docs/tools/ps-helpers.ps1
+TESTED: analyze clean, 1 test pass. Identity untouched (applicationId, signing, google-services, versionCode 5).
+NEXT: WP2 foundations (tokens light+dark, l10n en/fr/ar + Cairo, go_router 3-tab shell, errors, logger, connectivity).

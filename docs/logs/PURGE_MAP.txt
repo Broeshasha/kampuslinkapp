@@ -1,0 +1,10 @@
+KAMPUSLINK - PURGE MAP (WP1)  2026-10-19   base: pre-v1-reset (c7e858e)
+KEEP     lib/core/theme/app_theme.dart (AppColors + dark theme; tokens move to lib/core/theme in WP2)
+KEEP     android/ (id, signing, google-services, icons, Google sign-in meta-data), web/, .github/, assets/icon/*,
+         pubspec identity: name, version 1.0.2+5, launcher icons, native splash, .env asset
+REWRITE  lib/main.dart (empty splash now; real bootstrap in WP2), test/widget_test.dart (smoke test)
+DELETE   lib/** except app_theme.dart (57 files: home/news, community, marketplace + Kampus Store screens, messages/DMs,
+         library, notifications, onboarding, profile, admin, old services incl. old outbox, residences, dropdz, countries)
+DELETE   root scripts: 12 *.ps1 (fix*, add_campus_now*, wire_profile_tap*, create_profile_screen) + 2 *.csv
+DELETE   AndroidManifest: 2 SEND image intent-filters (share-to-Campus-Now)
+PACKAGES removed: receive_sharing_intent, workmanager, share_plus, photo_view, blurhash_dart, cupertino_icons

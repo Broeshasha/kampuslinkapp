@@ -34,7 +34,7 @@ function Replace-InFile {
   param(
     [Parameter(Mandatory = $true)][string]$Path,
     [Parameter(Mandatory = $true)][string]$Old,
-    [Parameter(Mandatory = $true)][string]$New
+    [Parameter(Mandatory = $true)][AllowEmptyString()][string]$New
   )
   $full = Resolve-KampusPath $Path
   if (-not (Test-Path -LiteralPath $full)) { throw "File not found: $Path" }
@@ -56,7 +56,7 @@ function Replace-InFile {
 function Step-Check {
   param([switch]$SkipTests)
   Write-Host '== flutter pub get ==' -ForegroundColor Cyan
-  flutter pub get | Out-Host
+  flutter pub get | Select-Object -Last 2 | Out-Host
   if ($LASTEXITCODE -ne 0) { throw 'flutter pub get failed' }
 
   Write-Host '== dart format ==' -ForegroundColor Cyan
@@ -65,7 +65,7 @@ function Step-Check {
   dart format $dirs | Out-Host
 
   Write-Host '== flutter analyze ==' -ForegroundColor Cyan
-  flutter analyze | Out-Host
+  flutter analyze --no-pub | Out-Host
   $analyzeExit = $LASTEXITCODE
 
   $testExit = 0
@@ -73,7 +73,7 @@ function Step-Check {
   if (-not $SkipTests) {
     if (Test-Path -LiteralPath 'test') {
       Write-Host '== flutter test ==' -ForegroundColor Cyan
-      flutter test | Out-Host
+      flutter test --no-pub | Out-Host
       $testExit = $LASTEXITCODE
       $testNote = if ($testExit -eq 0) { 'pass' } else { 'FAIL' }
     } else { $testNote = 'no test folder yet' }

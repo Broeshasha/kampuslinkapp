@@ -16,4 +16,4 @@ A CORE CHANGE REQUEST is an entry with: WHAT, WHY, AFFECTS (lanes, contracts, da
 [2026-10-17] D-010 (OPEN): Apply for Play production access now with the tested app (recommended).
 
 [2026-10-19] D-011 (APPROVED by founder): v1 ships light AND dark themes, following the phone setting (ThemeMode.system). Dark palette stays the brand; light is derived from the same tokens. Overrides MASTER_PLAN 9 "Light theme not in v1".
-[2026-10-19] D-012 (APPROVED by default): first-launch UI language = phone language if ar/fr/en, else fr. User can switch any time (instant, no restart). Western digits in Arabic UI.
+[2026-10-19] D-012 (APPROVED by default): first-launch UI language = phone language if ar/fr/en, else fr. User can switch any time (instant, no restart). Western digits in Arabic UI.[2026-10-19] D-013 (APPROVED by founder): course content with unknown rights (fixtures/*.json) stays local, never pushed to GitHub (repo is public).
