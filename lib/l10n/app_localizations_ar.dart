@@ -225,4 +225,95 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get readerTextSize => 'حجم النص';
+
+  @override
+  String get moduleLessons => 'الدروس';
+
+  @override
+  String get moduleLibrary => 'المكتبة';
+
+  @override
+  String chapterLabel(int number) {
+    return 'الفصل $number';
+  }
+
+  @override
+  String minutesShort(int minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String get moduleNotDownloaded => 'لم يتم تنزيل هذه الوحدة بعد';
+
+  @override
+  String get downloadModule => 'تنزيل';
+
+  @override
+  String get moduleNoLessons => 'لا توجد دروس لهذه الوحدة بعد. ستصل قريبًا.';
+
+  @override
+  String get moduleUpdateAvailable => 'محتوى جديد متوفر';
+
+  @override
+  String get updateAction => 'تحديث';
+
+  @override
+  String get needInternetToDownload => 'اتصل بالإنترنت لتنزيلها.';
+
+  @override
+  String get libraryEmpty => 'لا توجد ملفات بعد';
+
+  @override
+  String resourceType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'cours': 'محاضرات',
+      'td': 'أعمال موجهة',
+      'tp': 'أعمال تطبيقية',
+      'textbook': 'كتاب',
+      'exercices_corriges': 'تمارين محلولة',
+      'exam': 'امتحانات',
+      'notes': 'ملاحظات',
+      'memoire': 'مذكرات',
+      'other': 'ملفات أخرى',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String trustLabel(String label) {
+    String _temp0 = intl.Intl.selectLogic(label, {
+      'official': 'رسمي',
+      'verified': 'موثّق',
+      'other': 'طالب',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get backToWhereYouStopped => 'العودة إلى حيث توقفت';
+
+  @override
+  String get markAsDone => 'تحديد كمكتمل';
+
+  @override
+  String get lessonDone => 'مكتمل';
+
+  @override
+  String get nextLesson => 'الدرس التالي';
+
+  @override
+  String get backToModule => 'العودة إلى الوحدة';
+
+  @override
+  String get lessonLanguage => 'لغة الدرس';
+
+  @override
+  String get lessonNotFound => 'هذا الدرس لم يعد على هاتفك.';
+
+  @override
+  String get needInternetForFile =>
+      'تُفتح الملفات عبر الإنترنت حاليًا. اتصل بالإنترنت.';
+
+  @override
+  String get fileOpenFailed => 'تعذّر فتح هذا الملف.';
 }

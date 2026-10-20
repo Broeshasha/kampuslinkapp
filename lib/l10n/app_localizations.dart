@@ -483,6 +483,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Text size'**
   String get readerTextSize;
+
+  /// No description provided for @moduleLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons'**
+  String get moduleLessons;
+
+  /// No description provided for @moduleLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get moduleLibrary;
+
+  /// No description provided for @chapterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapter {number}'**
+  String chapterLabel(int number);
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String minutesShort(int minutes);
+
+  /// No description provided for @moduleNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'This module is not downloaded yet'**
+  String get moduleNotDownloaded;
+
+  /// No description provided for @downloadModule.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get downloadModule;
+
+  /// No description provided for @moduleNoLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'No lessons yet for this module. They are coming soon.'**
+  String get moduleNoLessons;
+
+  /// No description provided for @moduleUpdateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'New content available'**
+  String get moduleUpdateAvailable;
+
+  /// No description provided for @updateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateAction;
+
+  /// No description provided for @needInternetToDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to download it.'**
+  String get needInternetToDownload;
+
+  /// No description provided for @libraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No files yet'**
+  String get libraryEmpty;
+
+  /// No description provided for @resourceType.
+  ///
+  /// In en, this message translates to:
+  /// **'{type, select, cours{Course} td{Tutorials} tp{Labs} textbook{Textbook} exercices_corriges{Solved exercises} exam{Exams} notes{Notes} memoire{Thesis} other{Other files}}'**
+  String resourceType(String type);
+
+  /// No description provided for @trustLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{label, select, official{Official} verified{Verified} other{Student}}'**
+  String trustLabel(String label);
+
+  /// No description provided for @backToWhereYouStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to where you stopped'**
+  String get backToWhereYouStopped;
+
+  /// No description provided for @markAsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as done'**
+  String get markAsDone;
+
+  /// No description provided for @lessonDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get lessonDone;
+
+  /// No description provided for @nextLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Next lesson'**
+  String get nextLesson;
+
+  /// No description provided for @backToModule.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the module'**
+  String get backToModule;
+
+  /// No description provided for @lessonLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson language'**
+  String get lessonLanguage;
+
+  /// No description provided for @lessonNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This lesson is no longer on your phone.'**
+  String get lessonNotFound;
+
+  /// No description provided for @needInternetForFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Files open online for now. Connect to the internet.'**
+  String get needInternetForFile;
+
+  /// No description provided for @fileOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this file.'**
+  String get fileOpenFailed;
 }
 
 class _AppLocalizationsDelegate

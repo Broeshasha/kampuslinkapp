@@ -226,4 +226,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readerTextSize => 'Text size';
+
+  @override
+  String get moduleLessons => 'Lessons';
+
+  @override
+  String get moduleLibrary => 'Library';
+
+  @override
+  String chapterLabel(int number) {
+    return 'Chapter $number';
+  }
+
+  @override
+  String minutesShort(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get moduleNotDownloaded => 'This module is not downloaded yet';
+
+  @override
+  String get downloadModule => 'Download';
+
+  @override
+  String get moduleNoLessons =>
+      'No lessons yet for this module. They are coming soon.';
+
+  @override
+  String get moduleUpdateAvailable => 'New content available';
+
+  @override
+  String get updateAction => 'Update';
+
+  @override
+  String get needInternetToDownload =>
+      'Connect to the internet to download it.';
+
+  @override
+  String get libraryEmpty => 'No files yet';
+
+  @override
+  String resourceType(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'cours': 'Course',
+      'td': 'Tutorials',
+      'tp': 'Labs',
+      'textbook': 'Textbook',
+      'exercices_corriges': 'Solved exercises',
+      'exam': 'Exams',
+      'notes': 'Notes',
+      'memoire': 'Thesis',
+      'other': 'Other files',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String trustLabel(String label) {
+    String _temp0 = intl.Intl.selectLogic(label, {
+      'official': 'Official',
+      'verified': 'Verified',
+      'other': 'Student',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get backToWhereYouStopped => 'Back to where you stopped';
+
+  @override
+  String get markAsDone => 'Mark as done';
+
+  @override
+  String get lessonDone => 'Done';
+
+  @override
+  String get nextLesson => 'Next lesson';
+
+  @override
+  String get backToModule => 'Back to the module';
+
+  @override
+  String get lessonLanguage => 'Lesson language';
+
+  @override
+  String get lessonNotFound => 'This lesson is no longer on your phone.';
+
+  @override
+  String get needInternetForFile =>
+      'Files open online for now. Connect to the internet.';
+
+  @override
+  String get fileOpenFailed => 'Could not open this file.';
 }

@@ -1,8 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/home/home_page.dart';
+import '../features/lesson/lesson_reader_page.dart';
+import '../features/modules/module_page.dart';
 import '../features/modules/modules_page.dart';
 import '../features/onboarding/onboarding_page.dart';
 import '../features/onboarding/onboarding_status.dart';
@@ -12,15 +14,20 @@ import '../features/profile/states_demo_page.dart';
 import 'app_shell.dart';
 import 'splash_page.dart';
 
+int _id(GoRouterState state, String name) =>
+    int.tryParse(state.pathParameters[name] ?? '') ?? 0;
+
 /// 3 tab branches + onboarding gate. The gate only ever sends you INTO
 /// onboarding (or splash while checking); onboarding leaves by itself.
 final routerProvider = Provider<GoRouter>((ref) {
+  final rootKey = GlobalKey<NavigatorState>(debugLabel: 'root');
   final refresh = ValueNotifier<int>(0);
   ref.listen<OnboardingStatus>(
     onboardingStatusProvider,
     (previous, next) => refresh.value++,
   );
   final router = GoRouter(
+    navigatorKey: rootKey,
     initialLocation: '/home',
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -45,7 +52,31 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/modules', builder: (_, _) => const ModulesPage()),
+              GoRoute(
+                path: '/modules',
+                builder: (_, _) => const ModulesPage(),
+                routes: [
+                  GoRoute(
+                    path: ':moduleId',
+                    builder: (_, state) =>
+                        ModulePage(moduleId: _id(state, 'moduleId')),
+                    routes: [
+                      // Full screen (above the tab bar) for reading.
+                      GoRoute(
+                        path: 'lesson/:lessonId',
+                        parentNavigatorKey: rootKey,
+                        builder: (_, state) => LessonReaderPage(
+                          key: ValueKey<String>(
+                            state.pathParameters['lessonId'] ?? '',
+                          ),
+                          moduleId: _id(state, 'moduleId'),
+                          lessonId: _id(state, 'lessonId'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
           StatefulShellBranch(

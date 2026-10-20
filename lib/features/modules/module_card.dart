@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -6,7 +7,7 @@ import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 
 /// One module: its own accent colour (id mod 12) on the icon tile, the UE
-/// tag and the progress ring.
+/// tag and the progress ring. Tap = open the module page.
 class ModuleCard extends StatelessWidget {
   const ModuleCard({super.key, required this.module, this.downloading = false});
 
@@ -23,56 +24,67 @@ class ModuleCard extends StatelessWidget {
         ? 0.0
         : (module.lessonsDone / total).clamp(0.0, 1.0).toDouble();
     final ue = module.ueCategory;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: kc.surface,
+    return Material(
+      color: kc.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(KRadius.card),
-        border: Border.all(color: kc.border),
+        side: BorderSide(color: kc.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(KSpace.lg),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(KRadius.chip),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.go('/modules/${module.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(KSpace.lg),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(KRadius.chip),
+                ),
+                child: Icon(Icons.menu_book_rounded, color: accent),
               ),
-              child: Icon(Icons.menu_book_rounded, color: accent),
-            ),
-            const SizedBox(width: KSpace.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    module.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: KSpace.xs),
-                  Wrap(
-                    spacing: KSpace.sm,
-                    runSpacing: KSpace.xs,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (ue != null) _Tag(text: ue, color: accent),
-                      Text(
-                        l10n.lessonsCount(total),
-                        style: TextStyle(color: kc.textSecondary, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ],
+              const SizedBox(width: KSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      module.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: KSpace.xs),
+                    Wrap(
+                      spacing: KSpace.sm,
+                      runSpacing: KSpace.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (ue != null) _Tag(text: ue, color: accent),
+                        Text(
+                          l10n.lessonsCount(total),
+                          style: TextStyle(
+                            color: kc.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: KSpace.md),
-            _ProgressRing(progress: progress, color: accent, busy: downloading),
-          ],
+              const SizedBox(width: KSpace.md),
+              _ProgressRing(
+                progress: progress,
+                color: accent,
+                busy: downloading,
+              ),
+            ],
+          ),
         ),
       ),
     );
