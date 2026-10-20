@@ -109,3 +109,5 @@ LATER: reply-to UI, files in chat (behind the upload-worker flag), pending chat 
 DID: removed pdfx / file_picker / image_picker; "please update" gate (app_config.min_supported_build, read at start + after each sync, cached for offline; build from package_info; Play Store button on Android); chat messages typed offline are now also sent by the background sync; android/build/ untracked + ignored.
 TESTED: update rule; modules with unsent chat; chat screen at 320x568 and 412x915 with 1.5x text, offline, long Arabic + long unbroken text + a pending message: no overflow.
 WAITING: versionCode bump (lead ok), founder phone pass (M2/M3), Part B (backend file 11).
+[2026-10-20 21:30] LANE: D2 | WP: diagnostics
+DID: "Unexpected error" now shows the server code or error type in brackets (e.g. profile_missing, invalid_year) so field problems can be named; founder reported onboarding "Download my modules" -> unexpected error.

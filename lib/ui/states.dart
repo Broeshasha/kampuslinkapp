@@ -15,9 +15,10 @@ String failureMessage(AppLocalizations l10n, AppFailure failure) =>
       ForbiddenFailure() => l10n.errorForbidden,
       NotFoundFailure() => l10n.errorNotFound,
       RateLimitedFailure() => l10n.errorRateLimited,
-      ValidationFailure() => l10n.errorUnknown,
+      ValidationFailure(:final code) => '${l10n.errorUnknown} ($code)',
       ServerFailure() => l10n.errorServer,
-      UnknownFailure() => l10n.errorUnknown,
+      UnknownFailure(:final error) =>
+        '${l10n.errorUnknown} (${error.runtimeType})',
     };
 
 class LoadingView extends StatelessWidget {
