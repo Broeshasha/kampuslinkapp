@@ -199,4 +199,30 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get startLearning => 'ابدأ التعلم';
+
+  @override
+  String get blockDefinition => 'تعريف';
+
+  @override
+  String get blockExample => 'مثال';
+
+  @override
+  String get blockNote => 'ملاحظة';
+
+  @override
+  String get blockApplication => 'تطبيق';
+
+  @override
+  String get blockDiagram => 'مخطط';
+
+  @override
+  String get blockDescription => 'الوصف';
+
+  @override
+  String figureLabel(int number) {
+    return 'الشكل $number';
+  }
+
+  @override
+  String get readerTextSize => 'حجم النص';
 }

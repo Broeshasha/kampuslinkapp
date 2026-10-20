@@ -12,7 +12,7 @@ import '../../ui/coming_soon.dart';
 import '../auth/google_sign_in_button.dart';
 import 'language_picker.dart';
 
-/// Profile tab: account, language (full profile in WP7).
+/// Profile tab: account, language (full profile later).
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
@@ -51,18 +51,15 @@ class ProfilePage extends ConsumerWidget {
             Text(l10n.languageLabel, style: TextStyle(color: kc.textSecondary)),
             const SizedBox(height: KSpace.sm),
             const LanguagePicker(),
-            const SizedBox(height: KSpace.xl),
-            // Temporary glyph check (CONTENT_FORMAT 2): must show NO empty boxes.
-            Text(
-              '4Na + O\u2082 \u27F6 2Na\u2082\u1D35O   \u21CC   \u0394H',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: kc.accentText, fontSize: 18),
-            ),
             if (kDebugMode) ...[
               const SizedBox(height: KSpace.lg),
               TextButton(
                 onPressed: () => context.go('/profile/states'),
                 child: const Text('UI states (debug)'),
+              ),
+              TextButton(
+                onPressed: () => context.go('/profile/renderer'),
+                child: const Text('Renderer preview (debug)'),
               ),
             ],
           ],

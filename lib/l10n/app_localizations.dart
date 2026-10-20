@@ -435,6 +435,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start learning'**
   String get startLearning;
+
+  /// No description provided for @blockDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Definition'**
+  String get blockDefinition;
+
+  /// No description provided for @blockExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example'**
+  String get blockExample;
+
+  /// No description provided for @blockNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get blockNote;
+
+  /// No description provided for @blockApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Application'**
+  String get blockApplication;
+
+  /// No description provided for @blockDiagram.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagram'**
+  String get blockDiagram;
+
+  /// No description provided for @blockDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get blockDescription;
+
+  /// No description provided for @figureLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Figure {number}'**
+  String figureLabel(int number);
+
+  /// No description provided for @readerTextSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get readerTextSize;
 }
 
 class _AppLocalizationsDelegate

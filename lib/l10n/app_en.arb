@@ -73,5 +73,14 @@
   "downloadNoContent": "Lessons coming soon",
   "downloadReady": "Ready",
   "downloadSkip": "Continue in the background",
-  "startLearning": "Start learning"
+  "startLearning": "Start learning",
+  "blockDefinition": "Definition",
+  "blockExample": "Example",
+  "blockNote": "Note",
+  "blockApplication": "Application",
+  "blockDiagram": "Diagram",
+  "blockDescription": "Description",
+  "figureLabel": "Figure {number}",
+  "@figureLabel": { "placeholders": { "number": { "type": "int" } } },
+  "readerTextSize": "Text size"
 }

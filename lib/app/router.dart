@@ -7,6 +7,7 @@ import '../features/modules/modules_page.dart';
 import '../features/onboarding/onboarding_page.dart';
 import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
+import '../features/profile/renderer_preview_page.dart';
 import '../features/profile/states_demo_page.dart';
 import 'app_shell.dart';
 import 'splash_page.dart';
@@ -57,6 +58,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'states',
                     builder: (_, _) => const StatesDemoPage(),
+                  ),
+                  GoRoute(
+                    path: 'renderer',
+                    builder: (_, _) => const RendererPreviewPage(),
                   ),
                 ],
               ),

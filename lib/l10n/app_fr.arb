@@ -55,5 +55,13 @@
   "downloadNoContent": "Le\u00e7ons bient\u00f4t",
   "downloadReady": "Pr\u00eat",
   "downloadSkip": "Continuer en arri\u00e8re-plan",
-  "startLearning": "Commencer"
+  "startLearning": "Commencer",
+  "blockDefinition": "D\u00e9finition",
+  "blockExample": "Exemple",
+  "blockNote": "Remarque",
+  "blockApplication": "Application",
+  "blockDiagram": "Sch\u00e9ma",
+  "blockDescription": "Description",
+  "figureLabel": "Figure {number}",
+  "readerTextSize": "Taille du texte"
 }

@@ -200,4 +200,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get startLearning => 'Start learning';
+
+  @override
+  String get blockDefinition => 'Definition';
+
+  @override
+  String get blockExample => 'Example';
+
+  @override
+  String get blockNote => 'Note';
+
+  @override
+  String get blockApplication => 'Application';
+
+  @override
+  String get blockDiagram => 'Diagram';
+
+  @override
+  String get blockDescription => 'Description';
+
+  @override
+  String figureLabel(int number) {
+    return 'Figure $number';
+  }
+
+  @override
+  String get readerTextSize => 'Text size';
 }

@@ -201,4 +201,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get startLearning => 'Commencer';
+
+  @override
+  String get blockDefinition => 'Définition';
+
+  @override
+  String get blockExample => 'Exemple';
+
+  @override
+  String get blockNote => 'Remarque';
+
+  @override
+  String get blockApplication => 'Application';
+
+  @override
+  String get blockDiagram => 'Schéma';
+
+  @override
+  String get blockDescription => 'Description';
+
+  @override
+  String figureLabel(int number) {
+    return 'Figure $number';
+  }
+
+  @override
+  String get readerTextSize => 'Taille du texte';
 }
