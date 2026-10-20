@@ -59,6 +59,17 @@ class KampusApi {
         .timeout(_timeout);
   }
 
+  /// Store policy: reachable from Profile. Deletes the account server-side.
+  Future<void> deleteMyAccount() async {
+    await _client.rpc('delete_my_account').timeout(_timeout);
+  }
+
+  Future<void> unregisterPushToken(String token) async {
+    await _client
+        .rpc('unregister_push_token', params: {'p_token': token})
+        .timeout(_timeout);
+  }
+
   Future<List<Map<String, dynamic>>> getMyModules() async {
     final rows = await _client.rpc('get_my_modules').timeout(_timeout);
     return [for (final r in rows as List) (r as Map).cast<String, dynamic>()];

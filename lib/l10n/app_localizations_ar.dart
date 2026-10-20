@@ -423,4 +423,69 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noteRemember => 'تذكّر';
+
+  @override
+  String get settingsTitle => 'الإعدادات';
+
+  @override
+  String get themeLabel => 'المظهر';
+
+  @override
+  String get themeSystem => 'حسب النظام';
+
+  @override
+  String get themeLight => 'فاتح';
+
+  @override
+  String get themeDark => 'داكن';
+
+  @override
+  String get minutesStudied => 'دقائق الدراسة';
+
+  @override
+  String get lessonsDoneLabel => 'الدروس المكتملة';
+
+  @override
+  String get savedCards => 'البطاقات المحفوظة';
+
+  @override
+  String get savedCardsEmpty => 'المس علامة الحفظ على بطاقة لتحتفظ بها هنا.';
+
+  @override
+  String get allSynced => 'كل شيء متزامن';
+
+  @override
+  String pendingSync(int count) {
+    return '$count تغييرات بانتظار المزامنة';
+  }
+
+  @override
+  String get aboutTitle => 'حول التطبيق';
+
+  @override
+  String get sendFeedback => 'أرسل ملاحظاتك';
+
+  @override
+  String appVersion(String version) {
+    return 'الإصدار $version';
+  }
+
+  @override
+  String get deleteAccount => 'حذف حسابي';
+
+  @override
+  String get deleteAccountTitle => 'حذف حسابك؟';
+
+  @override
+  String get deleteAccountBody =>
+      'يُحذف ملفك وتقدّمك وسلسلتك ونقاطك ورسائلك من خوادمنا، ويُمسح هذا الهاتف. لا يمكن التراجع عن ذلك.';
+
+  @override
+  String get deleteAccountCheck => 'أفهم أنه لا يمكن التراجع';
+
+  @override
+  String get deleteAccountConfirm => 'احذف كل شيء';
+
+  @override
+  String get deleteAccountDone => 'تم حذف حسابك.';
 }

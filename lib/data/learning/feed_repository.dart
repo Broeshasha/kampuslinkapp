@@ -168,6 +168,41 @@ class FeedRepository {
         }, replaceKey: 'save:$cardId');
       });
 
+  /// Saved cards (Profile), newest module first.
+  Stream<List<FeedCard>> watchSaved() {
+    final query =
+        _db.select(_db.cardProgress).join([
+            innerJoin(
+              _db.cards,
+              _db.cards.id.equalsExp(_db.cardProgress.cardId),
+            ),
+            innerJoin(
+              _db.modules,
+              _db.modules.id.equalsExp(_db.cards.moduleId),
+            ),
+          ])
+          ..where(_db.cardProgress.saved.equals(true))
+          ..orderBy([
+            OrderingTerm.asc(_db.modules.id),
+            OrderingTerm.asc(_db.cards.position),
+          ]);
+    return query.watch().map(
+      (rows) => [
+        for (final r in rows)
+          FeedCard(
+            card: r.readTable(_db.cards),
+            module: r.readTable(_db.modules),
+            lessonPosition: 0,
+            progress: r.readTable(_db.cardProgress),
+          ),
+      ],
+    );
+  }
+
+  Stream<int> watchLessonsDone() => (_db.select(
+    _db.lessonProgress,
+  )..where((t) => t.completed.equals(true))).watch().map((rows) => rows.length);
+
   Stream<Map<String, int>> watchStudyDays() => _db
       .select(_db.studyDays)
       .watch()

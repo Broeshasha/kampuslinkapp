@@ -430,4 +430,70 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noteRemember => 'À retenir';
+
+  @override
+  String get settingsTitle => 'Paramètres';
+
+  @override
+  String get themeLabel => 'Thème';
+
+  @override
+  String get themeSystem => 'Système';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
+  String get minutesStudied => 'Minutes d\'étude';
+
+  @override
+  String get lessonsDoneLabel => 'Leçons terminées';
+
+  @override
+  String get savedCards => 'Cartes enregistrées';
+
+  @override
+  String get savedCardsEmpty =>
+      'Touche le signet d\'une carte pour la garder ici.';
+
+  @override
+  String get allSynced => 'Tout est synchronisé';
+
+  @override
+  String pendingSync(int count) {
+    return '$count changements en attente de synchronisation';
+  }
+
+  @override
+  String get aboutTitle => 'À propos';
+
+  @override
+  String get sendFeedback => 'Envoyer un avis';
+
+  @override
+  String appVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get deleteAccount => 'Supprimer mon compte';
+
+  @override
+  String get deleteAccountTitle => 'Supprimer ton compte ?';
+
+  @override
+  String get deleteAccountBody =>
+      'Ton profil, ta progression, ta série, tes XP et tes messages sont supprimés de nos serveurs, et ce téléphone est vidé. C\'est irréversible.';
+
+  @override
+  String get deleteAccountCheck => 'Je comprends que c\'est irréversible';
+
+  @override
+  String get deleteAccountConfirm => 'Tout supprimer';
+
+  @override
+  String get deleteAccountDone => 'Ton compte a été supprimé.';
 }

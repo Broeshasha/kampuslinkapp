@@ -427,4 +427,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteRemember => 'Remember';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get themeLabel => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get minutesStudied => 'Minutes studied';
+
+  @override
+  String get lessonsDoneLabel => 'Lessons done';
+
+  @override
+  String get savedCards => 'Saved cards';
+
+  @override
+  String get savedCardsEmpty =>
+      'Tap the bookmark on a flashcard to keep it here.';
+
+  @override
+  String get allSynced => 'Everything is synced';
+
+  @override
+  String pendingSync(int count) {
+    return '$count changes waiting to sync';
+  }
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get sendFeedback => 'Send feedback';
+
+  @override
+  String appVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get deleteAccount => 'Delete my account';
+
+  @override
+  String get deleteAccountTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountBody =>
+      'Your profile, progress, streak, XP and messages are deleted from our servers, and this phone is cleared. This cannot be undone.';
+
+  @override
+  String get deleteAccountCheck => 'I understand this cannot be undone';
+
+  @override
+  String get deleteAccountConfirm => 'Delete everything';
+
+  @override
+  String get deleteAccountDone => 'Your account was deleted.';
 }

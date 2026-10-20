@@ -11,6 +11,7 @@ import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
 import '../features/quiz/quiz_page.dart';
 import '../features/profile/renderer_preview_page.dart';
+import '../features/profile/saved_cards_page.dart';
 import '../features/profile/states_demo_page.dart';
 import 'app_shell.dart';
 import 'splash_page.dart';
@@ -97,6 +98,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const ProfilePage(),
                 routes: [
                   // Debug-only page (the button exists only in debug runs).
+                  GoRoute(
+                    path: 'saved',
+                    builder: (_, _) => const SavedCardsPage(),
+                  ),
                   GoRoute(
                     path: 'states',
                     builder: (_, _) => const StatesDemoPage(),

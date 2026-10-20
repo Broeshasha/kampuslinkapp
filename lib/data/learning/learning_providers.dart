@@ -100,9 +100,18 @@ final serverStatsProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
     final me = await api.getMe();
     if (me == null) return cached();
     final stats = <String, dynamic>{
-      'xp': me['xp'],
-      'current_streak': me['current_streak'],
-      'study_goal_minutes': me['study_goal_minutes'],
+      for (final key in const [
+        'xp',
+        'current_streak',
+        'longest_streak',
+        'study_goal_minutes',
+        'username',
+        'university_name',
+        'speciality_name',
+        'academic_year',
+        'reminders_enabled',
+      ])
+        key: me[key],
     };
     await prefs.setString(_statsKey, jsonEncode(stats));
     return stats;
@@ -110,4 +119,14 @@ final serverStatsProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
     appLog.info('stats offline: $error');
     return cached();
   }
+});
+
+final savedCardsProvider = StreamProvider<List<FeedCard>>((ref) {
+  if (!ref.watch(isSignedInProvider)) return Stream.value(const []);
+  return ref.watch(feedRepositoryProvider).watchSaved();
+});
+
+final lessonsDoneProvider = StreamProvider<int>((ref) {
+  if (!ref.watch(isSignedInProvider)) return Stream.value(0);
+  return ref.watch(feedRepositoryProvider).watchLessonsDone();
 });

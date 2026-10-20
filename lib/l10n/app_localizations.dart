@@ -813,6 +813,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remember'**
   String get noteRemember;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @themeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeLabel;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @minutesStudied.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes studied'**
+  String get minutesStudied;
+
+  /// No description provided for @lessonsDoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons done'**
+  String get lessonsDoneLabel;
+
+  /// No description provided for @savedCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved cards'**
+  String get savedCards;
+
+  /// No description provided for @savedCardsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the bookmark on a flashcard to keep it here.'**
+  String get savedCardsEmpty;
+
+  /// No description provided for @allSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is synced'**
+  String get allSynced;
+
+  /// No description provided for @pendingSync.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changes waiting to sync'**
+  String pendingSync(int count);
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutTitle;
+
+  /// No description provided for @sendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get sendFeedback;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String appVersion(String version);
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile, progress, streak, XP and messages are deleted from our servers, and this phone is cleared. This cannot be undone.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand this cannot be undone'**
+  String get deleteAccountCheck;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete everything'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account was deleted.'**
+  String get deleteAccountDone;
 }
 
 class _AppLocalizationsDelegate
