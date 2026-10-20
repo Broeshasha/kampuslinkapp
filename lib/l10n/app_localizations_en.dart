@@ -572,4 +572,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String blockDone(String name) {
     return '@$name is blocked.';
   }
+
+  @override
+  String get updateTitle => 'A new version is needed';
+
+  @override
+  String get updateBody =>
+      'This version of KampusLink is too old to keep your progress safe. Please update to continue.';
 }

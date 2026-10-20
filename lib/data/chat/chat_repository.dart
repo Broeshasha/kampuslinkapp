@@ -161,6 +161,17 @@ class ChatRepository {
     return true;
   }
 
+  /// Modules that have messages waiting (for the background sync).
+  Future<List<int>> modulesWithPending() async {
+    final rows = await (_db.select(
+      _db.keyValues,
+    )..where((t) => t.name.like('chat_pending:%'))).get();
+    return [
+      for (final r in rows)
+        if (r.value != '[]') ?int.tryParse(r.name.substring(13)),
+    ];
+  }
+
   /// Messages waiting to be sent, oldest first.
   Future<List<PendingMessage>> pending(int moduleId) async => [
     for (final j in _decodeList(await _get(_pendingKey(moduleId))))

@@ -59,3 +59,6 @@ fixtures/*.json
 
 # Kotlin compiler session files (Android build)
 android/.kotlin/
+
+# Android build output (one report file was committed by mistake)
+android/build/

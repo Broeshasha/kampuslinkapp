@@ -6,6 +6,7 @@ import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
+import '../chat/chat_providers.dart';
 import '../providers.dart';
 import 'module_sync.dart';
 import 'server_merge.dart';
@@ -57,6 +58,13 @@ class SyncController extends Notifier<SyncState> {
     if (outboxSync != null) {
       firstFailure = (await outboxSync.flush()).failure;
     }
+    // Chat messages typed offline go out with the sync too (MASTER_PLAN 7.8).
+    await guard(() async {
+      final chat = ref.read(chatRepositoryProvider);
+      for (final moduleId in await chat.modulesWithPending()) {
+        await chat.sendPending(moduleId);
+      }
+    });
     final langsKey = bundleLanguages.join(',');
     final allModules = prefs.getString(_bundleLangsKey) != langsKey;
     final service = ModuleSyncService(

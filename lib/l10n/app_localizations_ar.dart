@@ -566,4 +566,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String blockDone(String name) {
     return 'تم حظر @$name.';
   }
+
+  @override
+  String get updateTitle => 'يلزم إصدار جديد';
+
+  @override
+  String get updateBody =>
+      'هذا الإصدار من KampusLink قديم جدًا لحماية تقدّمك. حدّثه للمتابعة.';
 }

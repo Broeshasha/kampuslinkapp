@@ -194,5 +194,7 @@
   "@blockConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
   "blockConfirmBody": "You will no longer see each other's messages.",
   "blockDone": "@{name} is blocked.",
-  "@blockDone": { "placeholders": { "name": { "type": "String" } } }
+  "@blockDone": { "placeholders": { "name": { "type": "String" } } },
+  "updateTitle": "A new version is needed",
+  "updateBody": "This version of KampusLink is too old to keep your progress safe. Please update to continue."
 }

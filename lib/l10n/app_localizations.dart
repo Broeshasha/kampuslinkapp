@@ -1077,6 +1077,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'@{name} is blocked.'**
   String blockDone(String name);
+
+  /// No description provided for @updateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version is needed'**
+  String get updateTitle;
+
+  /// No description provided for @updateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of KampusLink is too old to keep your progress safe. Please update to continue.'**
+  String get updateBody;
 }
 
 class _AppLocalizationsDelegate
