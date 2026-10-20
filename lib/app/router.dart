@@ -9,6 +9,7 @@ import '../features/modules/modules_page.dart';
 import '../features/onboarding/onboarding_page.dart';
 import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
+import '../features/quiz/quiz_page.dart';
 import '../features/profile/renderer_preview_page.dart';
 import '../features/profile/states_demo_page.dart';
 import 'app_shell.dart';
@@ -72,6 +73,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                           moduleId: _id(state, 'moduleId'),
                           lessonId: _id(state, 'lessonId'),
                         ),
+                        routes: [
+                          GoRoute(
+                            path: 'quiz',
+                            parentNavigatorKey: rootKey,
+                            builder: (_, state) => QuizPage(
+                              moduleId: _id(state, 'moduleId'),
+                              lessonId: _id(state, 'lessonId'),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

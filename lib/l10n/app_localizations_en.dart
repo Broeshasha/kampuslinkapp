@@ -319,4 +319,100 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileOpenFailed => 'Could not open this file.';
+
+  @override
+  String get feedEmptyTitle => 'Nothing to review yet';
+
+  @override
+  String get feedEmptyBody =>
+      'Download a module and its flashcards appear here.';
+
+  @override
+  String get openModules => 'Open my modules';
+
+  @override
+  String get feedDoneTitle => 'All done for now';
+
+  @override
+  String feedDoneNext(String time) {
+    return 'Next cards at $time';
+  }
+
+  @override
+  String get feedDoneNoMore => 'Read a lesson to unlock new cards.';
+
+  @override
+  String get practiseAhead => 'Practise ahead';
+
+  @override
+  String get tapToFlip => 'Tap to see the answer';
+
+  @override
+  String get knewIt => 'I knew it';
+
+  @override
+  String get again => 'Again';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get streakLabel => 'Day streak';
+
+  @override
+  String get xpLabel => 'XP';
+
+  @override
+  String todayMinutes(int done, int goal) {
+    return '$done / $goal min today';
+  }
+
+  @override
+  String get likeLabel => 'Like';
+
+  @override
+  String get saveLabel => 'Save';
+
+  @override
+  String get quizTitle => 'Quiz';
+
+  @override
+  String get takeQuiz => 'Take the quiz';
+
+  @override
+  String questionOf(int n, int total) {
+    return 'Question $n of $total';
+  }
+
+  @override
+  String get quizCorrect => 'Correct!';
+
+  @override
+  String get quizWrong => 'Not quite';
+
+  @override
+  String get quizNext => 'Next';
+
+  @override
+  String get quizSeeResults => 'See results';
+
+  @override
+  String quizScore(int correct, int total) {
+    return '$correct / $total correct';
+  }
+
+  @override
+  String get quizCardsBack => 'The cards of this lesson are back in your feed.';
+
+  @override
+  String get quizFinish => 'Finish';
+
+  @override
+  String get quizNoQuestions => 'No questions for this lesson yet.';
+
+  @override
+  String get trueLabel => 'True';
+
+  @override
+  String get falseLabel => 'False';
 }

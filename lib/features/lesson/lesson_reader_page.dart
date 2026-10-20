@@ -8,7 +8,9 @@ import '../../core/errors/result.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/db/app_database.dart';
+import '../../data/learning/learning_providers.dart';
 import '../../data/learning/progress_repository.dart';
+import '../../data/learning/quiz_repository.dart';
 import '../../data/lessons/lesson_content.dart';
 import '../../data/lessons/lesson_providers.dart';
 import '../../data/lessons/lesson_repository.dart';
@@ -16,7 +18,9 @@ import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/lesson_view.dart';
 import '../../render/reader_settings.dart';
+import '../../ui/confetti.dart';
 import '../../ui/states.dart';
+import '../home/study_activity.dart';
 
 /// The lesson reader: header, blocks, resume (MASTER_PLAN 7.7), text size,
 /// lesson language, "Mark as done" -> next lesson. Works fully offline.
@@ -38,6 +42,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
   final _view = GlobalKey<LessonViewState>();
   late final LessonRepository _lessons;
   late final ProgressRepository _progress;
+  late final QuizRepository _quiz;
   late final AppLifecycleListener _life;
   Timer? _debounce;
 
@@ -49,12 +54,15 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
   String? _currentId;
   String? _pendingId;
   double _pendingProgress = 0;
+  int _questions = 0;
+  int _celebrations = 0;
 
   @override
   void initState() {
     super.initState();
     _lessons = ref.read(lessonRepositoryProvider);
     _progress = ref.read(progressRepositoryProvider);
+    _quiz = ref.read(quizRepositoryProvider);
     _life = AppLifecycleListener(onHide: _flush, onPause: _flush);
     _load();
   }
@@ -63,10 +71,12 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
     final row = await _lessons.lesson(widget.lessonId);
     final position = await _lessons.readingPosition(widget.lessonId);
     final next = row == null ? null : await _lessons.nextLesson(row);
+    final questions = await _quiz.questionCount(widget.lessonId);
     if (!mounted) return;
     setState(() {
       _row = row;
       _next = next;
+      _questions = questions;
       _resumeId = position?.blockId;
       _loading = false;
     });
@@ -99,6 +109,12 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
 
   Future<void> _markDone(LessonRow row) async {
     await guard(() => _progress.completeLesson(row.id));
+    if (mounted) setState(() => _celebrations++);
+  }
+
+  void _openQuiz() {
+    _flush();
+    context.go('/modules/${widget.moduleId}/lesson/${widget.lessonId}/quiz');
   }
 
   void _leave() {
@@ -192,22 +208,30 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
       ),
       body: Stack(
         children: [
-          LessonView(
-            key: _view,
-            blocks: blocks,
-            language: content.language,
-            scale: readerScale(step),
-            initialBlockId: _resumeId,
-            onPosition: _onPosition,
-            header: _LessonHeader(content: content, accent: accent),
-            footer: _LessonFooter(
-              done: done,
-              hasNext: _next != null,
-              accent: accent,
-              onDone: () => _markDone(row),
-              onNext: _leave,
+          StudyActivity(
+            child: LessonView(
+              key: _view,
+              blocks: blocks,
+              language: content.language,
+              scale: readerScale(step),
+              initialBlockId: _resumeId,
+              onPosition: _onPosition,
+              header: _LessonHeader(content: content, accent: accent),
+              footer: _LessonFooter(
+                done: done,
+                hasNext: _next != null,
+                hasQuiz: _questions > 0,
+                accent: accent,
+                onDone: () => _markDone(row),
+                onQuiz: _openQuiz,
+                onNext: _leave,
+              ),
             ),
           ),
+          if (_celebrations > 0)
+            Positioned.fill(
+              child: ConfettiBurst(key: ValueKey<int>(_celebrations)),
+            ),
           if (showResume)
             PositionedDirectional(
               start: 0,
@@ -292,15 +316,19 @@ class _LessonFooter extends StatelessWidget {
   const _LessonFooter({
     required this.done,
     required this.hasNext,
+    required this.hasQuiz,
     required this.accent,
     required this.onDone,
+    required this.onQuiz,
     required this.onNext,
   });
 
   final bool done;
   final bool hasNext;
+  final bool hasQuiz;
   final Color accent;
   final VoidCallback onDone;
+  final VoidCallback onQuiz;
   final VoidCallback onNext;
 
   @override
@@ -311,7 +339,23 @@ class _LessonFooter extends StatelessWidget {
       padding: const EdgeInsets.only(top: KSpace.xl),
       child: Column(
         children: [
-          if (!done)
+          if (!done && hasQuiz) ...[
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: KSpace.md),
+                ),
+                onPressed: onQuiz,
+                icon: const Icon(Icons.quiz_rounded),
+                label: Text(l10n.takeQuiz),
+              ),
+            ),
+            const SizedBox(height: KSpace.sm),
+            TextButton(onPressed: onDone, child: Text(l10n.markAsDone)),
+          ] else if (!done)
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(

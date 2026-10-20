@@ -615,6 +615,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not open this file.'**
   String get fileOpenFailed;
+
+  /// No description provided for @feedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to review yet'**
+  String get feedEmptyTitle;
+
+  /// No description provided for @feedEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Download a module and its flashcards appear here.'**
+  String get feedEmptyBody;
+
+  /// No description provided for @openModules.
+  ///
+  /// In en, this message translates to:
+  /// **'Open my modules'**
+  String get openModules;
+
+  /// No description provided for @feedDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All done for now'**
+  String get feedDoneTitle;
+
+  /// No description provided for @feedDoneNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next cards at {time}'**
+  String feedDoneNext(String time);
+
+  /// No description provided for @feedDoneNoMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read a lesson to unlock new cards.'**
+  String get feedDoneNoMore;
+
+  /// No description provided for @practiseAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'Practise ahead'**
+  String get practiseAhead;
+
+  /// No description provided for @tapToFlip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to see the answer'**
+  String get tapToFlip;
+
+  /// No description provided for @knewIt.
+  ///
+  /// In en, this message translates to:
+  /// **'I knew it'**
+  String get knewIt;
+
+  /// No description provided for @again.
+  ///
+  /// In en, this message translates to:
+  /// **'Again'**
+  String get again;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// No description provided for @streakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Day streak'**
+  String get streakLabel;
+
+  /// No description provided for @xpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'XP'**
+  String get xpLabel;
+
+  /// No description provided for @todayMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {goal} min today'**
+  String todayMinutes(int done, int goal);
+
+  /// No description provided for @likeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Like'**
+  String get likeLabel;
+
+  /// No description provided for @saveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveLabel;
+
+  /// No description provided for @quizTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz'**
+  String get quizTitle;
+
+  /// No description provided for @takeQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Take the quiz'**
+  String get takeQuiz;
+
+  /// No description provided for @questionOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Question {n} of {total}'**
+  String questionOf(int n, int total);
+
+  /// No description provided for @quizCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct!'**
+  String get quizCorrect;
+
+  /// No description provided for @quizWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Not quite'**
+  String get quizWrong;
+
+  /// No description provided for @quizNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get quizNext;
+
+  /// No description provided for @quizSeeResults.
+  ///
+  /// In en, this message translates to:
+  /// **'See results'**
+  String get quizSeeResults;
+
+  /// No description provided for @quizScore.
+  ///
+  /// In en, this message translates to:
+  /// **'{correct} / {total} correct'**
+  String quizScore(int correct, int total);
+
+  /// No description provided for @quizCardsBack.
+  ///
+  /// In en, this message translates to:
+  /// **'The cards of this lesson are back in your feed.'**
+  String get quizCardsBack;
+
+  /// No description provided for @quizFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get quizFinish;
+
+  /// No description provided for @quizNoQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No questions for this lesson yet.'**
+  String get quizNoQuestions;
+
+  /// No description provided for @trueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'True'**
+  String get trueLabel;
+
+  /// No description provided for @falseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'False'**
+  String get falseLabel;
 }
 
 class _AppLocalizationsDelegate

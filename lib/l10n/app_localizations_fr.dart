@@ -320,4 +320,102 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get fileOpenFailed => 'Impossible d\'ouvrir ce fichier.';
+
+  @override
+  String get feedEmptyTitle => 'Rien à réviser pour l\'instant';
+
+  @override
+  String get feedEmptyBody =>
+      'Télécharge un module et ses cartes apparaîtront ici.';
+
+  @override
+  String get openModules => 'Ouvrir mes modules';
+
+  @override
+  String get feedDoneTitle => 'C\'est tout pour l\'instant';
+
+  @override
+  String feedDoneNext(String time) {
+    return 'Prochaines cartes à $time';
+  }
+
+  @override
+  String get feedDoneNoMore =>
+      'Lis une leçon pour débloquer de nouvelles cartes.';
+
+  @override
+  String get practiseAhead => 'Réviser en avance';
+
+  @override
+  String get tapToFlip => 'Touche pour voir la réponse';
+
+  @override
+  String get knewIt => 'Je savais';
+
+  @override
+  String get again => 'Encore';
+
+  @override
+  String get continueLabel => 'Continuer';
+
+  @override
+  String get streakLabel => 'Jours d\'affilée';
+
+  @override
+  String get xpLabel => 'XP';
+
+  @override
+  String todayMinutes(int done, int goal) {
+    return '$done / $goal min aujourd\'hui';
+  }
+
+  @override
+  String get likeLabel => 'J\'aime';
+
+  @override
+  String get saveLabel => 'Enregistrer';
+
+  @override
+  String get quizTitle => 'Quiz';
+
+  @override
+  String get takeQuiz => 'Faire le quiz';
+
+  @override
+  String questionOf(int n, int total) {
+    return 'Question $n sur $total';
+  }
+
+  @override
+  String get quizCorrect => 'Correct !';
+
+  @override
+  String get quizWrong => 'Pas tout à fait';
+
+  @override
+  String get quizNext => 'Suivant';
+
+  @override
+  String get quizSeeResults => 'Voir les résultats';
+
+  @override
+  String quizScore(int correct, int total) {
+    return '$correct / $total bonnes réponses';
+  }
+
+  @override
+  String get quizCardsBack =>
+      'Les cartes de cette leçon reviennent dans ton fil.';
+
+  @override
+  String get quizFinish => 'Terminer';
+
+  @override
+  String get quizNoQuestions => 'Pas encore de questions pour cette leçon.';
+
+  @override
+  String get trueLabel => 'Vrai';
+
+  @override
+  String get falseLabel => 'Faux';
 }

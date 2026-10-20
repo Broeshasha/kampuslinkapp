@@ -316,4 +316,99 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fileOpenFailed => 'تعذّر فتح هذا الملف.';
+
+  @override
+  String get feedEmptyTitle => 'لا شيء للمراجعة بعد';
+
+  @override
+  String get feedEmptyBody => 'نزّل وحدة وستظهر بطاقاتها هنا.';
+
+  @override
+  String get openModules => 'افتح وحداتي';
+
+  @override
+  String get feedDoneTitle => 'انتهيت الآن';
+
+  @override
+  String feedDoneNext(String time) {
+    return 'البطاقات التالية في $time';
+  }
+
+  @override
+  String get feedDoneNoMore => 'اقرأ درسًا لفتح بطاقات جديدة.';
+
+  @override
+  String get practiseAhead => 'تدرّب مسبقًا';
+
+  @override
+  String get tapToFlip => 'المس لرؤية الإجابة';
+
+  @override
+  String get knewIt => 'عرفتها';
+
+  @override
+  String get again => 'مرة أخرى';
+
+  @override
+  String get continueLabel => 'تابع';
+
+  @override
+  String get streakLabel => 'أيام متتالية';
+
+  @override
+  String get xpLabel => 'نقاط';
+
+  @override
+  String todayMinutes(int done, int goal) {
+    return '$done / $goal د اليوم';
+  }
+
+  @override
+  String get likeLabel => 'إعجاب';
+
+  @override
+  String get saveLabel => 'حفظ';
+
+  @override
+  String get quizTitle => 'اختبار';
+
+  @override
+  String get takeQuiz => 'ابدأ الاختبار';
+
+  @override
+  String questionOf(int n, int total) {
+    return 'السؤال $n من $total';
+  }
+
+  @override
+  String get quizCorrect => 'صحيح!';
+
+  @override
+  String get quizWrong => 'ليس تمامًا';
+
+  @override
+  String get quizNext => 'التالي';
+
+  @override
+  String get quizSeeResults => 'عرض النتائج';
+
+  @override
+  String quizScore(int correct, int total) {
+    return '$correct / $total إجابات صحيحة';
+  }
+
+  @override
+  String get quizCardsBack => 'عادت بطاقات هذا الدرس إلى قائمتك.';
+
+  @override
+  String get quizFinish => 'إنهاء';
+
+  @override
+  String get quizNoQuestions => 'لا توجد أسئلة لهذا الدرس بعد.';
+
+  @override
+  String get trueLabel => 'صح';
+
+  @override
+  String get falseLabel => 'خطأ';
 }
