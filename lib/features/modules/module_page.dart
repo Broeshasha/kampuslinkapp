@@ -43,6 +43,10 @@ class ModulePage extends ConsumerWidget {
   }
 }
 
+/// D-023 (founder): no PDF library for now; lessons are JSON (fast, offline,
+/// themed). Flip to true to bring the Library tab back.
+const showLibrary = false;
+
 class _ModuleScaffold extends StatelessWidget {
   const _ModuleScaffold({required this.module});
 
@@ -52,15 +56,36 @@ class _ModuleScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accent = moduleAccent(module.id);
+    final title = Text(
+      module.name,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final chat = IconButton(
+      tooltip: l10n.chatTitle,
+      icon: const Icon(Icons.forum_outlined),
+      onPressed: () => context.go('/modules/${module.id}/chat'),
+    );
+    if (!showLibrary) {
+      return Scaffold(
+        appBar: AppBar(title: title, actions: [chat]),
+        body: _LessonsTab(module: module),
+        floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'chat-${module.id}',
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          onPressed: () => context.go('/modules/${module.id}/chat'),
+          icon: const Icon(Icons.forum_rounded),
+          label: Text(l10n.chatTitle),
+        ),
+      );
+    }
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            module.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          title: title,
+          actions: [chat],
           bottom: TabBar(
             indicatorColor: accent,
             labelColor: accent,

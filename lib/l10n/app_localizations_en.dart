@@ -493,4 +493,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountDone => 'Your account was deleted.';
+
+  @override
+  String get chatTitle => 'Chat';
+
+  @override
+  String get chatEmpty => 'No messages yet. Say hello to your classmates!';
+
+  @override
+  String get chatHint => 'Write a message';
+
+  @override
+  String get chatSend => 'Send';
+
+  @override
+  String get chatSending => 'Sending...';
+
+  @override
+  String get chatFailed => 'Not sent. Tap to retry.';
+
+  @override
+  String get chatTranslated => 'Translated';
+
+  @override
+  String get chatShowOriginal => 'Show original';
+
+  @override
+  String get chatShowTranslation => 'Show translation';
+
+  @override
+  String get chatTranslating => 'translating...';
+
+  @override
+  String get chatReport => 'Report';
+
+  @override
+  String chatBlock(String name) {
+    return 'Block @$name';
+  }
+
+  @override
+  String get chatDelete => 'Delete';
+
+  @override
+  String get reportTitle => 'Report this message';
+
+  @override
+  String get reportSpam => 'Spam';
+
+  @override
+  String get reportHarassment => 'Harassment or insults';
+
+  @override
+  String get reportWrong => 'Wrong information';
+
+  @override
+  String get reportOther => 'Something else';
+
+  @override
+  String get reportDetails => 'Details (optional)';
+
+  @override
+  String get reportSend => 'Send report';
+
+  @override
+  String get reportThanks => 'Thanks. We will look at it.';
+
+  @override
+  String blockConfirmTitle(String name) {
+    return 'Block @$name?';
+  }
+
+  @override
+  String get blockConfirmBody =>
+      'You will no longer see each other\'s messages.';
+
+  @override
+  String blockDone(String name) {
+    return '@$name is blocked.';
+  }
 }

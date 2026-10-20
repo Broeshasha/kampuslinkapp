@@ -933,6 +933,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your account was deleted.'**
   String get deleteAccountDone;
+
+  /// No description provided for @chatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get chatTitle;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. Say hello to your classmates!'**
+  String get chatEmpty;
+
+  /// No description provided for @chatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message'**
+  String get chatHint;
+
+  /// No description provided for @chatSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get chatSend;
+
+  /// No description provided for @chatSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending...'**
+  String get chatSending;
+
+  /// No description provided for @chatFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent. Tap to retry.'**
+  String get chatFailed;
+
+  /// No description provided for @chatTranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'Translated'**
+  String get chatTranslated;
+
+  /// No description provided for @chatShowOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show original'**
+  String get chatShowOriginal;
+
+  /// No description provided for @chatShowTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Show translation'**
+  String get chatShowTranslation;
+
+  /// No description provided for @chatTranslating.
+  ///
+  /// In en, this message translates to:
+  /// **'translating...'**
+  String get chatTranslating;
+
+  /// No description provided for @chatReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get chatReport;
+
+  /// No description provided for @chatBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block @{name}'**
+  String chatBlock(String name);
+
+  /// No description provided for @chatDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get chatDelete;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this message'**
+  String get reportTitle;
+
+  /// No description provided for @reportSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam'**
+  String get reportSpam;
+
+  /// No description provided for @reportHarassment.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or insults'**
+  String get reportHarassment;
+
+  /// No description provided for @reportWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong information'**
+  String get reportWrong;
+
+  /// No description provided for @reportOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get reportOther;
+
+  /// No description provided for @reportDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details (optional)'**
+  String get reportDetails;
+
+  /// No description provided for @reportSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send report'**
+  String get reportSend;
+
+  /// No description provided for @reportThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks. We will look at it.'**
+  String get reportThanks;
+
+  /// No description provided for @blockConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Block @{name}?'**
+  String blockConfirmTitle(String name);
+
+  /// No description provided for @blockConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You will no longer see each other\'s messages.'**
+  String get blockConfirmBody;
+
+  /// No description provided for @blockDone.
+  ///
+  /// In en, this message translates to:
+  /// **'@{name} is blocked.'**
+  String blockDone(String name);
 }
 
 class _AppLocalizationsDelegate

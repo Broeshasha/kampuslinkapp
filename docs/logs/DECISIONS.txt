@@ -32,3 +32,6 @@ D-021 (lead) Streak: the server value (get_me, refreshed after each sync, cached
   shown before the first successful fetch.
 D-022 (lead) One deploy system: the GitHub Action to Cloudflare Pages (now passes the keys with --dart-define from
   secrets). The Workers Builds project must be disconnected by the founder. .gitattributes keeps LF.
+D-023 (2026-10-20, founder) No PDF Library for now: lessons are shown from JSON only (speed, offline, theming).
+  The Library tab is hidden (showLibrary = false in module_page.dart); the pdfx viewer of lead issue #12 is NOT built.
+  To tell the lead: this reverses his decision on #12.

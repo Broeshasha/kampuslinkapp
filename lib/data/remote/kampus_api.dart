@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/errors/app_failure.dart';
 import '../sync/server_merge.dart';
 
 /// The backend calls used so far (BACKEND_CONTRACT A, B, C). Each has a
@@ -67,6 +68,88 @@ class KampusApi {
   Future<void> unregisterPushToken(String token) async {
     await _client
         .rpc('unregister_push_token', params: {'p_token': token})
+        .timeout(_timeout);
+  }
+
+  /// BACKEND_CONTRACT D: newest first, blocked users already filtered out.
+  Future<List<Map<String, dynamic>>> getChatMessages(
+    int moduleId,
+    DateTime? before, {
+    int limit = 50,
+  }) async {
+    final rows = await _client
+        .rpc(
+          'get_chat_messages',
+          params: {
+            'p_module': moduleId,
+            'p_before': before?.toUtc().toIso8601String(),
+            'p_limit': limit,
+          },
+        )
+        .timeout(_timeout);
+    return [for (final r in rows as List) (r as Map).cast<String, dynamic>()];
+  }
+
+  /// Always with the phone's client_id: a retry never posts twice.
+  Future<Map<String, dynamic>> postChatMessage(
+    int moduleId,
+    String body,
+    String lang,
+    String clientId,
+  ) async => _map(
+    await _client
+        .rpc(
+          'post_chat_message',
+          params: {
+            'p_module': moduleId,
+            'p_body': body,
+            'p_lang': lang,
+            'p_client_id': clientId,
+          },
+        )
+        .timeout(_timeout),
+  );
+
+  Future<void> deleteChatMessage(String id) async {
+    await _client
+        .rpc('delete_chat_message', params: {'p_id': id})
+        .timeout(_timeout);
+  }
+
+  /// Chat translations arrive in this language (profiles.preferred_language).
+  Future<void> setLanguage(String lang) async {
+    await _client
+        .rpc('set_language', params: {'p_lang': lang})
+        .timeout(_timeout);
+  }
+
+  /// target_type: user | module_message | flashcard_comment | resource.
+  Future<void> report({
+    required String targetType,
+    required String targetId,
+    required String reason,
+    String? details,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw const UnauthenticatedFailure();
+    await _client
+        .from('reports')
+        .insert({
+          'reporter_id': uid,
+          'target_type': targetType,
+          'target_id': targetId,
+          'reason': reason,
+          if (details != null && details.isNotEmpty) 'details': details,
+        })
+        .timeout(_timeout);
+  }
+
+  Future<void> blockUser(String userId) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw const UnauthenticatedFailure();
+    await _client
+        .from('blocked_users')
+        .insert({'blocker_id': uid, 'blocked_id': userId})
         .timeout(_timeout);
   }
 

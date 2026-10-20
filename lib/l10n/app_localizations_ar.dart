@@ -488,4 +488,82 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deleteAccountDone => 'تم حذف حسابك.';
+
+  @override
+  String get chatTitle => 'الدردشة';
+
+  @override
+  String get chatEmpty => 'لا توجد رسائل بعد. سلّم على زملائك!';
+
+  @override
+  String get chatHint => 'اكتب رسالة';
+
+  @override
+  String get chatSend => 'إرسال';
+
+  @override
+  String get chatSending => 'جارٍ الإرسال...';
+
+  @override
+  String get chatFailed => 'لم تُرسل. المس لإعادة المحاولة.';
+
+  @override
+  String get chatTranslated => 'مترجمة';
+
+  @override
+  String get chatShowOriginal => 'عرض الأصل';
+
+  @override
+  String get chatShowTranslation => 'عرض الترجمة';
+
+  @override
+  String get chatTranslating => 'جارٍ الترجمة...';
+
+  @override
+  String get chatReport => 'إبلاغ';
+
+  @override
+  String chatBlock(String name) {
+    return 'حظر @$name';
+  }
+
+  @override
+  String get chatDelete => 'حذف';
+
+  @override
+  String get reportTitle => 'الإبلاغ عن هذه الرسالة';
+
+  @override
+  String get reportSpam => 'رسائل مزعجة';
+
+  @override
+  String get reportHarassment => 'تحرش أو شتائم';
+
+  @override
+  String get reportWrong => 'معلومة خاطئة';
+
+  @override
+  String get reportOther => 'شيء آخر';
+
+  @override
+  String get reportDetails => 'تفاصيل (اختياري)';
+
+  @override
+  String get reportSend => 'إرسال البلاغ';
+
+  @override
+  String get reportThanks => 'شكرًا. سنراجع ذلك.';
+
+  @override
+  String blockConfirmTitle(String name) {
+    return 'حظر @$name؟';
+  }
+
+  @override
+  String get blockConfirmBody => 'لن يرى أحدكما رسائل الآخر بعد الآن.';
+
+  @override
+  String blockDone(String name) {
+    return 'تم حظر @$name.';
+  }
 }

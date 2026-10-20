@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/chat/chat_page.dart';
 import '../features/home/home_page.dart';
 import '../features/lesson/lesson_reader_page.dart';
 import '../features/modules/module_page.dart';
@@ -63,6 +64,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) =>
                         ModulePage(moduleId: _id(state, 'moduleId')),
                     routes: [
+                      GoRoute(
+                        path: 'chat',
+                        parentNavigatorKey: rootKey,
+                        builder: (_, state) =>
+                            ChatPage(moduleId: _id(state, 'moduleId')),
+                      ),
                       // Full screen (above the tab bar) for reading.
                       GoRoute(
                         path: 'lesson/:lessonId',
