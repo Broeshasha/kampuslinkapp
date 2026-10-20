@@ -23,3 +23,12 @@ D-017 (2026-10-20) The live web site serves the v1 rebuild early (founder: nobod
   Rollback: tag pre-v1-reset (c7e858e).
 D-018 (2026-10-20) Library files open online for now (url_launcher: browser / phone viewer).
   In-app pdfx viewer with offline cache + upvotes come in a later block.
+D-019 (2026-10-20, lead) Server merge after every successful sync (MASTER_PLAN 7.6): card progress newest last_reviewed_at wins,
+  lesson progress = union (done stays done, best score), reading position newest updated_at wins, likes/saves = server;
+  a row with an unsent outbox op for the same key is never overwritten.
+D-020 (lead) Bundles are downloaded in all three languages (ar, fr, en) for the pilot; LessonContent falls back
+  chosen -> fr -> any language that has blocks (never an empty lesson). Existing modules re-download once.
+D-021 (lead) Streak: the server value (get_me, refreshed after each sync, cached) is the truth; the local count is only
+  shown before the first successful fetch.
+D-022 (lead) One deploy system: the GitHub Action to Cloudflare Pages (now passes the keys with --dart-define from
+  secrets). The Workers Builds project must be disconnected by the founder. .gitattributes keeps LF.

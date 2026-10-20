@@ -22,7 +22,8 @@ class ModuleSyncReport {
 }
 
 /// MASTER_PLAN 7.3: module list -> compare versions -> download only what is
-/// newer. One failing module never blocks the others; it is retried next sync.
+/// newer ([all]: everything, when the language set changed). One failing
+/// module never blocks the others; it is retried next sync.
 class ModuleSyncService {
   ModuleSyncService({
     required this.modules,
@@ -39,6 +40,7 @@ class ModuleSyncService {
   Future<ModuleSyncReport> sync(
     List<String> langs, {
     void Function(int moduleId, bool busy)? onProgress,
+    bool all = false,
   }) async {
     final list = await guard(fetchModules);
     switch (list) {
@@ -47,7 +49,7 @@ class ModuleSyncService {
       case Ok(:final value):
         await modules.saveServerList(value);
     }
-    final todo = await modules.needingDownload();
+    final todo = await modules.needingDownload(all: all);
     var downloaded = 0;
     final failed = <int>[];
     AppFailure? firstFailure;

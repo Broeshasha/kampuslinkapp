@@ -1,0 +1,9 @@
+# Keep line endings LF in the repo (lead decision on issue #13).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ttf binary
+*.otf binary
+*.wasm binary
+*.jks binary
+*.keystore binary

@@ -29,6 +29,7 @@ String pickLanguage(
 }
 
 /// One stored lesson, decoded for the screen in one language.
+/// [languages] = the languages that really have content.
 class LessonContent {
   LessonContent._(
     this.row,
@@ -38,9 +39,18 @@ class LessonContent {
     this._unit,
   );
 
+  /// Language order: [wanted] -> French -> source -> any other; a language
+  /// whose blocks are empty is skipped, so a lesson is never shown empty.
   factory LessonContent.of(LessonRow row, String wanted) {
     final i18n = _decode(row.i18nJson);
-    final languages = i18n.keys.toList();
+    bool readable(String lang) {
+      final blocks = _map(i18n[lang])['blocks'];
+      return blocks is List && blocks.isNotEmpty;
+    }
+
+    final all = i18n.keys.toList();
+    final withBlocks = all.where(readable).toList();
+    final languages = withBlocks.isEmpty ? all : withBlocks;
     final language = pickLanguage(languages, wanted, source: row.sourceLang);
     return LessonContent._(
       row,

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../sync/server_merge.dart';
+
 /// The backend calls used so far (BACKEND_CONTRACT A, B, C). Each has a
 /// timeout so a dead network becomes an OfflineFailure instead of hanging.
 class KampusApi {
@@ -80,5 +82,55 @@ class KampusApi {
         .rpc('sync_progress', params: {'p_ops': ops})
         .timeout(_timeout);
     return results as List<dynamic>;
+  }
+
+  /// Every own row of [table] (row security), 1000 per page.
+  Future<List<Map<String, dynamic>>> _all(
+    String table,
+    String columns,
+    String orderBy,
+  ) async {
+    const page = 1000;
+    final out = <Map<String, dynamic>>[];
+    for (var from = 0; ; from += page) {
+      final rows = await _client
+          .from(table)
+          .select(columns)
+          .order(orderBy)
+          .range(from, from + page - 1)
+          .timeout(_timeout);
+      out.addAll([for (final r in rows) Map<String, dynamic>.from(r)]);
+      if (rows.length < page) break;
+    }
+    return out;
+  }
+
+  /// MASTER_PLAN 7.6: the student's own progress rows, for ServerMerge.
+  Future<ServerProgress> fetchMyProgress() async {
+    final cards = await _all(
+      'learn_card_progress',
+      'card_id, box, due_at, last_reviewed_at',
+      'card_id',
+    );
+    final lessons = await _all(
+      'learn_lesson_progress',
+      'lesson_id, score',
+      'lesson_id',
+    );
+    final positions = await _all(
+      'learn_reading_position',
+      'lesson_id, block_id, progress, updated_at',
+      'lesson_id',
+    );
+    final likes = await _all('learn_card_likes', 'card_id', 'card_id');
+    final saves = await _all('learn_card_saves', 'card_id', 'card_id');
+    int id(Map<String, dynamic> r) => (r['card_id'] as num).toInt();
+    return ServerProgress(
+      cards: cards,
+      lessons: lessons,
+      positions: positions,
+      likes: likes.map(id).toSet(),
+      saves: saves.map(id).toSet(),
+    );
   }
 }

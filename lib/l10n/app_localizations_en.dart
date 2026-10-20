@@ -415,4 +415,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get falseLabel => 'False';
+
+  @override
+  String get noteIntuition => 'In plain words';
+
+  @override
+  String get noteMistake => 'Common mistake';
+
+  @override
+  String get noteExamTip => 'Exam tip';
+
+  @override
+  String get noteRemember => 'Remember';
 }

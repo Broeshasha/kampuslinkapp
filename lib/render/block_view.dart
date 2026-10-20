@@ -15,7 +15,8 @@ List<Object?> _list(Object? v) => v is List ? v : const <Object?>[];
 Map<String, dynamic> _map(Object? v) =>
     v is Map ? v.cast<String, dynamic>() : const <String, dynamic>{};
 
-/// Registry: block type -> widget (CONTENT_FORMAT 4 + 5). Never throws:
+/// Registry: block type -> widget (CONTENT_FORMAT 4 + 5). Unknown fields
+/// (origin, ...) are ignored; note_kind picks the note's look. Never throws:
 /// an unknown type shows its text (if any) and is logged once.
 class BlockView extends StatelessWidget {
   const BlockView({super.key, required this.block, required this.style});
@@ -55,13 +56,43 @@ class BlockView extends StatelessWidget {
         style: style,
         child: rich(),
       ),
-      'note' => _Callout(
-        label: style.labels.blockNote,
-        icon: Icons.info_outline,
-        color: kc.warning,
-        style: style,
-        child: rich(),
-      ),
+      'note' => switch (_str(block['note_kind'])) {
+        'intuition' => _Callout(
+          label: style.labels.noteIntuition,
+          icon: Icons.emoji_objects_outlined,
+          color: kc.accentAlt,
+          style: style,
+          child: rich(),
+        ),
+        'mistake' => _Callout(
+          label: style.labels.noteMistake,
+          icon: Icons.error_outline,
+          color: kc.danger,
+          style: style,
+          child: rich(),
+        ),
+        'exam_tip' => _Callout(
+          label: style.labels.noteExamTip,
+          icon: Icons.school_outlined,
+          color: kc.xp,
+          style: style,
+          child: rich(),
+        ),
+        'remember' => _Callout(
+          label: style.labels.noteRemember,
+          icon: Icons.push_pin_outlined,
+          color: kc.accentText,
+          style: style,
+          child: rich(),
+        ),
+        _ => _Callout(
+          label: style.labels.blockNote,
+          icon: Icons.info_outline,
+          color: kc.warning,
+          style: style,
+          child: rich(),
+        ),
+      },
       'application' => _Callout(
         label: style.labels.blockApplication,
         icon: Icons.construction_outlined,

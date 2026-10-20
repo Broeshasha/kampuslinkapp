@@ -789,6 +789,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'False'**
   String get falseLabel;
+
+  /// No description provided for @noteIntuition.
+  ///
+  /// In en, this message translates to:
+  /// **'In plain words'**
+  String get noteIntuition;
+
+  /// No description provided for @noteMistake.
+  ///
+  /// In en, this message translates to:
+  /// **'Common mistake'**
+  String get noteMistake;
+
+  /// No description provided for @noteExamTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Exam tip'**
+  String get noteExamTip;
+
+  /// No description provided for @noteRemember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember'**
+  String get noteRemember;
 }
 
 class _AppLocalizationsDelegate

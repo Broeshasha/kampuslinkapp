@@ -141,5 +141,9 @@
   "quizFinish": "Finish",
   "quizNoQuestions": "No questions for this lesson yet.",
   "trueLabel": "True",
-  "falseLabel": "False"
+  "falseLabel": "False",
+  "noteIntuition": "In plain words",
+  "noteMistake": "Common mistake",
+  "noteExamTip": "Exam tip",
+  "noteRemember": "Remember"
 }

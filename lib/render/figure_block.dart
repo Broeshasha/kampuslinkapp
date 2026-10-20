@@ -26,14 +26,114 @@ bool isSafeSvg(String svg) {
       !RegExp(r'href\s*=\s*["\x27](https?:|//)').hasMatch(lower);
 }
 
-/// Replaces the theme placeholders so drawings follow light/dark.
-String themeSvg(String svg, KampusColors kc) => svg
-    .replaceAll('{{fg}}', _hex(kc.textPrimary))
-    .replaceAll('{{muted}}', _hex(kc.textSecondary))
-    .replaceAll('{{accent}}', _hex(kc.accent))
-    .replaceAll('{{bg}}', _hex(kc.surfaceRaised))
-    .replaceAll('{{ok}}', _hex(kc.success))
-    .replaceAll('{{warn}}', _hex(kc.warning));
+/// {{c1}}..{{c6}}: categorical palette (blue, violet, teal, amber, rose,
+/// green), each >= 3:1 on the figure background of its theme.
+const svgPaletteLight = [
+  Color(0xFF2563EB),
+  Color(0xFF7C3AED),
+  Color(0xFF0F766E),
+  Color(0xFFB45309),
+  Color(0xFFBE185D),
+  Color(0xFF15803D),
+];
+const svgPaletteDark = [
+  Color(0xFF60A5FA),
+  Color(0xFFA78BFA),
+  Color(0xFF2DD4BF),
+  Color(0xFFFBBF24),
+  Color(0xFFF472B6),
+  Color(0xFF4ADE80),
+];
+
+bool _isDark(KampusColors kc) => kc.background.computeLuminance() < 0.5;
+
+List<Color> svgPalette(KampusColors kc) =>
+    _isDark(kc) ? svgPaletteDark : svgPaletteLight;
+
+final _placeholder = RegExp(r'\{\{([A-Za-z0-9_]+)\}\}');
+final _loggedPlaceholders = <String>{};
+
+/// Replaces the theme placeholders so drawings follow light/dark. An
+/// unknown placeholder is drawn as {{fg}} and logged once.
+String themeSvg(String svg, KampusColors kc) {
+  final palette = svgPalette(kc);
+  final colours = <String, Color>{
+    'fg': kc.textPrimary,
+    'muted': kc.textSecondary,
+    'accent': kc.accent,
+    'bg': kc.surfaceRaised,
+    'ok': kc.success,
+    'warn': kc.warning,
+    for (var i = 0; i < palette.length; i++) 'c${i + 1}': palette[i],
+  };
+  return svg.replaceAllMapped(_placeholder, (m) {
+    final name = m.group(1) ?? '';
+    final colour = colours[name];
+    if (colour != null) return _hex(colour);
+    if (_loggedPlaceholders.add(name)) {
+      appLog.warn('svg: unknown placeholder {{$name}} drawn as {{fg}}');
+    }
+    return _hex(kc.textPrimary);
+  });
+}
+
+/// Full-screen figure: pinch to zoom, double-tap to zoom in / back out.
+class FigureZoomPage extends StatefulWidget {
+  const FigureZoomPage({super.key, required this.child, this.title = ''});
+
+  final Widget child;
+  final String title;
+
+  @override
+  State<FigureZoomPage> createState() => _FigureZoomPageState();
+}
+
+class _FigureZoomPageState extends State<FigureZoomPage> {
+  final _transform = TransformationController();
+  Offset _tap = Offset.zero;
+
+  @override
+  void dispose() {
+    _transform.dispose();
+    super.dispose();
+  }
+
+  void _doubleTap() {
+    if (_transform.value.getMaxScaleOnAxis() > 1.01) {
+      _transform.value = Matrix4.identity();
+      return;
+    }
+    const zoom = 2.5;
+    _transform.value = Matrix4.diagonal3Values(zoom, zoom, 1)
+      ..setTranslationRaw(-_tap.dx * (zoom - 1), -_tap.dy * (zoom - 1), 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
+      body: SafeArea(
+        child: GestureDetector(
+          onDoubleTapDown: (d) => _tap = d.localPosition,
+          onDoubleTap: _doubleTap,
+          child: InteractiveViewer(
+            transformationController: _transform,
+            minScale: 1,
+            maxScale: 6,
+            child: SizedBox.expand(
+              child: Padding(
+                padding: const EdgeInsets.all(KSpace.lg),
+                child: widget.child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// A figure: themed SVG / image when present (tap to zoom), otherwise a
 /// "Diagram" card with caption, labels and an expandable description.
@@ -44,18 +144,13 @@ class FigureBlock extends StatelessWidget {
   final Map<String, dynamic> block;
   final BlockStyle style;
 
-  void _zoom(BuildContext context, String svg, String alt) => showDialog<void>(
-    context: context,
-    builder: (context) => Dialog(
-      child: InteractiveViewer(
-        maxScale: 5,
-        child: Padding(
-          padding: const EdgeInsets.all(KSpace.lg),
-          child: SvgPicture.string(svg, semanticsLabel: alt),
+  void _zoom(BuildContext context, Widget child, String title) =>
+      Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) => FigureZoomPage(title: title, child: child),
         ),
-      ),
-    ),
-  );
+      );
 
   Widget? _visual(BuildContext context, String caption) {
     final kc = style.kc;
@@ -72,7 +167,11 @@ class FigureBlock extends StatelessWidget {
           ? _text(asset['alt'])
           : caption;
       return GestureDetector(
-        onTap: () => _zoom(context, svg, alt),
+        onTap: () => _zoom(
+          context,
+          SvgPicture.string(svg, fit: BoxFit.contain, semanticsLabel: alt),
+          caption,
+        ),
         child: SvgPicture.string(
           svg,
           height: 180 * style.scale,
@@ -83,12 +182,19 @@ class FigureBlock extends StatelessWidget {
     if (type == 'image') {
       final url = _text(asset['url'] ?? asset['path']);
       if (url.startsWith('http')) {
-        return Image.network(
-          url,
-          height: 200 * style.scale,
-          fit: BoxFit.contain,
-          semanticLabel: caption,
-          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+        return GestureDetector(
+          onTap: () => _zoom(
+            context,
+            Image.network(url, fit: BoxFit.contain, semanticLabel: caption),
+            caption,
+          ),
+          child: Image.network(
+            url,
+            height: 200 * style.scale,
+            fit: BoxFit.contain,
+            semanticLabel: caption,
+            errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+          ),
         );
       }
     }

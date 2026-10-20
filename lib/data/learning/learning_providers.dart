@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_repository.dart';
+import '../../core/l10n/locale_controller.dart';
+import '../../core/logging/logger.dart';
 import '../lessons/lesson_repository.dart';
 import '../providers.dart';
+import '../sync/sync_controller.dart';
 import 'feed_repository.dart';
 import 'quiz_repository.dart';
 
@@ -67,4 +72,42 @@ final studyDaysProvider = StreamProvider<Map<String, int>>((ref) {
 final continueProvider = StreamProvider<List<ContinueItem>>((ref) {
   if (!ref.watch(isSignedInProvider)) return Stream.value(const []);
   return ref.watch(feedRepositoryProvider).watchContinue();
+});
+
+const _statsKey = 'server_stats';
+
+/// Server stats (get_me: xp, current_streak, study_goal_minutes), refreshed
+/// after every successful sync and cached for offline starts. null = never
+/// fetched: the Home header then falls back to the local streak.
+final serverStatsProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  if (!ref.watch(isSignedInProvider)) return null;
+  ref.watch(syncControllerProvider.select((s) => s.lastSyncedAt));
+  final prefs = ref.read(sharedPrefsProvider);
+  Map<String, dynamic>? cached() {
+    final raw = prefs.getString(_statsKey);
+    if (raw == null) return null;
+    try {
+      final v = jsonDecode(raw);
+      return v is Map ? v.cast<String, dynamic>() : null;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  final api = ref.watch(kampusApiProvider);
+  if (api == null) return cached();
+  try {
+    final me = await api.getMe();
+    if (me == null) return cached();
+    final stats = <String, dynamic>{
+      'xp': me['xp'],
+      'current_streak': me['current_streak'],
+      'study_goal_minutes': me['study_goal_minutes'],
+    };
+    await prefs.setString(_statsKey, jsonEncode(stats));
+    return stats;
+  } catch (error) {
+    appLog.info('stats offline: $error');
+    return cached();
+  }
 });

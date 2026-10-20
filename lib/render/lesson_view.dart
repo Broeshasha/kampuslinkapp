@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/l10n/locale_controller.dart';
+import '../core/logging/logger.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import '../l10n/app_localizations.dart';
@@ -52,6 +53,14 @@ class LessonViewState extends State<LessonView> {
   @override
   void initState() {
     super.initState();
+    // Open-time measure for cheap phones (lead decision on issue #8).
+    final watch = Stopwatch()..start();
+    final count = widget.blocks.length;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => appLog.info(
+        'lesson view: $count blocks, first frame ${watch.elapsedMilliseconds} ms',
+      ),
+    );
     final id = widget.initialBlockId;
     if (id != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => jumpToBlock(id));

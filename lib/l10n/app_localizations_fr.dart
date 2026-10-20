@@ -418,4 +418,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get falseLabel => 'Faux';
+
+  @override
+  String get noteIntuition => 'En termes simples';
+
+  @override
+  String get noteMistake => 'Erreur fréquente';
+
+  @override
+  String get noteExamTip => 'Astuce d\'examen';
+
+  @override
+  String get noteRemember => 'À retenir';
 }

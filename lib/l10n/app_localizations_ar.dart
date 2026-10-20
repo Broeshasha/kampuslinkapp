@@ -411,4 +411,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get falseLabel => 'خطأ';
+
+  @override
+  String get noteIntuition => 'ببساطة';
+
+  @override
+  String get noteMistake => 'خطأ شائع';
+
+  @override
+  String get noteExamTip => 'نصيحة للامتحان';
+
+  @override
+  String get noteRemember => 'تذكّر';
 }

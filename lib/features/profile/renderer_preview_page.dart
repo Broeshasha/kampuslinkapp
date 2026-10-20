@@ -6,6 +6,7 @@ import '../../render/demo_lesson.dart';
 import '../../render/lesson_view.dart';
 import '../../render/reader_settings.dart';
 import '../../render/source_adapter.dart';
+import 'svg_palette_page.dart';
 
 /// DEBUG ONLY: the demo lesson in FR / AR / EN at the 3 reader sizes.
 class RendererPreviewPage extends ConsumerStatefulWidget {
@@ -24,7 +25,18 @@ class _RendererPreviewPageState extends ConsumerState<RendererPreviewPage> {
     final step = ref.watch(readerScaleStepProvider);
     final blocks = blocksFromSourceChapter(demoChapter, _lang);
     return Scaffold(
-      appBar: AppBar(title: const Text('Renderer preview (debug)')),
+      appBar: AppBar(
+        title: const Text('Renderer preview (debug)'),
+        actions: [
+          IconButton(
+            tooltip: 'SVG palette',
+            icon: const Icon(Icons.palette_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const SvgPalettePage()),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(

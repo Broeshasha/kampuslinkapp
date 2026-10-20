@@ -52,11 +52,13 @@ class ModuleRepository {
   }
 
   /// Modules whose server content is newer than what is on the phone.
-  Future<List<ModuleRow>> needingDownload() =>
+  /// [all] = every module with content (e.g. after the language set changed).
+  Future<List<ModuleRow>> needingDownload({bool all = false}) =>
       (_db.select(_db.modules)..where(
-            (t) =>
-                t.serverVersion.isBiggerThan(t.localVersion) &
-                t.serverVersion.isBiggerThanValue(0),
+            (t) => all
+                ? t.serverVersion.isBiggerThanValue(0)
+                : t.serverVersion.isBiggerThan(t.localVersion) &
+                      t.serverVersion.isBiggerThanValue(0),
           ))
           .get();
 

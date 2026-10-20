@@ -16,7 +16,6 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/coming_soon.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
-import '../onboarding/onboarding_status.dart';
 import 'flash_card.dart';
 import 'study_activity.dart';
 
@@ -61,7 +60,7 @@ class _HomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    final me = switch (ref.watch(meProvider)) {
+    final me = switch (ref.watch(serverStatsProvider)) {
       AsyncData(:final value) => value,
       _ => null,
     };
@@ -70,9 +69,12 @@ class _HomeHeader extends ConsumerWidget {
       _ => const <String, int>{},
     };
     final now = DateTime.now();
-    final streakLocal = localStreak(days, now);
-    final streakServer = _int(me?['current_streak'], 0);
-    final streak = streakServer > streakLocal ? streakServer : streakLocal;
+    // Lead rule: the server streak is the truth once known; the local
+    // count is only a fallback before the first successful fetch.
+    final serverStreak = me?['current_streak'];
+    final streak = serverStreak == null
+        ? localStreak(days, now)
+        : _int(serverStreak, 0);
     final xp = _int(me?['xp'], 0);
     final goal = _int(me?['study_goal_minutes'], 20).clamp(1, 600);
     final todayMinutes = (days[dayKey(now)] ?? 0) ~/ 60;

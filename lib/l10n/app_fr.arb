@@ -114,5 +114,9 @@
   "quizFinish": "Terminer",
   "quizNoQuestions": "Pas encore de questions pour cette le\u00e7on.",
   "trueLabel": "Vrai",
-  "falseLabel": "Faux"
+  "falseLabel": "Faux",
+  "noteIntuition": "En termes simples",
+  "noteMistake": "Erreur fr\u00e9quente",
+  "noteExamTip": "Astuce d'examen",
+  "noteRemember": "\u00c0 retenir"
 }
