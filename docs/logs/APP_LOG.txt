@@ -68,3 +68,7 @@ DID: Supabase init from .env (publishableKey = the public anon key; never throws
 TESTED: 45 tests pass (+ module sync x4, signed-out Modules prompt). Backend file 09 confirmed applied (get_module_bundle(p_module, p_langs), sync_progress, save_reading_position).
 NEEDS: web sign-in needs the preview URL in Supabase Auth redirect URLs.
 NEXT: WP4 lesson renderer (blocks, LaTeX, tables, highlights) with the chapter 02 fixture.
+[2026-10-20 09:10] LANE: B2 | AI/Person: founder + Claude | WP: 7 onboarding
+DID: 4-step onboarding (welcome + live language, Google, studies locked to Mining L2 with coming-soon + notify-me, university/username prefilled from get_me, study goal slider, reminders + time, real module download step skippable). Gate: signed out -> onboarding; signed in -> remembered flag (offline) or get_me onboarding_version >= 1; old accounts (version 0) see it once; splash while checking. API: get_me, get_onboarding_options, complete_onboarding, profiles.study_goal_minutes, set_reminders. Router redirect + refreshListenable.
+TESTED: 48 tests pass (+ onboarding: welcome, RTL switch, Google step + back, 320x568 x1.5).
+NEXT: WP4 lesson renderer (blocks, LaTeX, tables, highlights) with the chapter 02 fixture.

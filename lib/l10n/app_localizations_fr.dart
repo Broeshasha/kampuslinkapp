@@ -128,4 +128,77 @@ class AppLocalizationsFr extends AppLocalizations {
   String signedInAs(String email) {
     return 'Connecté : $email';
   }
+
+  @override
+  String get onboardingNext => 'Suivant';
+
+  @override
+  String get onboardingSignInTitle => 'Sauvegarde ta progression';
+
+  @override
+  String get onboardingSignInBody =>
+      'Connecte-toi avec Google pour garder ta série, tes cartes et tes notes sur tous tes téléphones.';
+
+  @override
+  String get onboardingStudiesTitle => 'Tes études';
+
+  @override
+  String get studiesPilot => 'Génie minier · L2';
+
+  @override
+  String get studiesComingSoon => 'D\'autres spécialités arrivent bientôt';
+
+  @override
+  String get studiesNotifyMe => 'Préviens-moi';
+
+  @override
+  String get universityLabel => 'Université';
+
+  @override
+  String get chooseUniversity => 'Choisis ton université';
+
+  @override
+  String get usernameLabel => 'Nom d\'utilisateur';
+
+  @override
+  String get usernameHelp => '3 à 20 caractères : a–z, 0–9, _ ou .';
+
+  @override
+  String get usernameTaken => 'Ce nom est déjà pris';
+
+  @override
+  String studyGoalLabel(int minutes) {
+    return 'Objectif quotidien : $minutes min';
+  }
+
+  @override
+  String get remindersLabel => 'Me rappeler de réviser';
+
+  @override
+  String reminderTime(String time) {
+    return 'À $time';
+  }
+
+  @override
+  String get onboardingFinishStudies => 'Télécharger mes modules';
+
+  @override
+  String get downloadTitle => 'Téléchargement de tes modules';
+
+  @override
+  String downloadProgress(int done, int total) {
+    return '$done sur $total prêts';
+  }
+
+  @override
+  String get downloadNoContent => 'Leçons bientôt';
+
+  @override
+  String get downloadReady => 'Prêt';
+
+  @override
+  String get downloadSkip => 'Continuer en arrière-plan';
+
+  @override
+  String get startLearning => 'Commencer';
 }

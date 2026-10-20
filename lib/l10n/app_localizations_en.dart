@@ -127,4 +127,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String signedInAs(String email) {
     return 'Signed in as $email';
   }
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingSignInTitle => 'Save your progress';
+
+  @override
+  String get onboardingSignInBody =>
+      'Sign in with Google to keep your streak, cards and notes on every phone.';
+
+  @override
+  String get onboardingStudiesTitle => 'Your studies';
+
+  @override
+  String get studiesPilot => 'Mining Engineering · L2';
+
+  @override
+  String get studiesComingSoon => 'More specialities coming soon';
+
+  @override
+  String get studiesNotifyMe => 'Notify me';
+
+  @override
+  String get universityLabel => 'University';
+
+  @override
+  String get chooseUniversity => 'Choose your university';
+
+  @override
+  String get usernameLabel => 'Username';
+
+  @override
+  String get usernameHelp => '3–20 characters: a–z, 0–9, _ or .';
+
+  @override
+  String get usernameTaken => 'This username is taken';
+
+  @override
+  String studyGoalLabel(int minutes) {
+    return 'Daily study goal: $minutes min';
+  }
+
+  @override
+  String get remindersLabel => 'Remind me to study';
+
+  @override
+  String reminderTime(String time) {
+    return 'At $time';
+  }
+
+  @override
+  String get onboardingFinishStudies => 'Download my modules';
+
+  @override
+  String get downloadTitle => 'Downloading your modules';
+
+  @override
+  String downloadProgress(int done, int total) {
+    return '$done of $total ready';
+  }
+
+  @override
+  String get downloadNoContent => 'Lessons coming soon';
+
+  @override
+  String get downloadReady => 'Ready';
+
+  @override
+  String get downloadSkip => 'Continue in the background';
+
+  @override
+  String get startLearning => 'Start learning';
 }

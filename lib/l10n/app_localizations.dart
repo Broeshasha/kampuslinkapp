@@ -303,6 +303,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signed in as {email}'**
   String signedInAs(String email);
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your progress'**
+  String get onboardingSignInTitle;
+
+  /// No description provided for @onboardingSignInBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google to keep your streak, cards and notes on every phone.'**
+  String get onboardingSignInBody;
+
+  /// No description provided for @onboardingStudiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your studies'**
+  String get onboardingStudiesTitle;
+
+  /// No description provided for @studiesPilot.
+  ///
+  /// In en, this message translates to:
+  /// **'Mining Engineering · L2'**
+  String get studiesPilot;
+
+  /// No description provided for @studiesComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'More specialities coming soon'**
+  String get studiesComingSoon;
+
+  /// No description provided for @studiesNotifyMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify me'**
+  String get studiesNotifyMe;
+
+  /// No description provided for @universityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'University'**
+  String get universityLabel;
+
+  /// No description provided for @chooseUniversity.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your university'**
+  String get chooseUniversity;
+
+  /// No description provided for @usernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get usernameLabel;
+
+  /// No description provided for @usernameHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'3–20 characters: a–z, 0–9, _ or .'**
+  String get usernameHelp;
+
+  /// No description provided for @usernameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'This username is taken'**
+  String get usernameTaken;
+
+  /// No description provided for @studyGoalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily study goal: {minutes} min'**
+  String studyGoalLabel(int minutes);
+
+  /// No description provided for @remindersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me to study'**
+  String get remindersLabel;
+
+  /// No description provided for @reminderTime.
+  ///
+  /// In en, this message translates to:
+  /// **'At {time}'**
+  String reminderTime(String time);
+
+  /// No description provided for @onboardingFinishStudies.
+  ///
+  /// In en, this message translates to:
+  /// **'Download my modules'**
+  String get onboardingFinishStudies;
+
+  /// No description provided for @downloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading your modules'**
+  String get downloadTitle;
+
+  /// No description provided for @downloadProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} ready'**
+  String downloadProgress(int done, int total);
+
+  /// No description provided for @downloadNoContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Lessons coming soon'**
+  String get downloadNoContent;
+
+  /// No description provided for @downloadReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get downloadReady;
+
+  /// No description provided for @downloadSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in the background'**
+  String get downloadSkip;
+
+  /// No description provided for @startLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'Start learning'**
+  String get startLearning;
 }
 
 class _AppLocalizationsDelegate

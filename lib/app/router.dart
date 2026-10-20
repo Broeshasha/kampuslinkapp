@@ -1,17 +1,39 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/home/home_page.dart';
 import '../features/modules/modules_page.dart';
+import '../features/onboarding/onboarding_page.dart';
+import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
 import '../features/profile/states_demo_page.dart';
 import 'app_shell.dart';
+import 'splash_page.dart';
 
-/// Exactly 3 branches (home, modules, profile); each keeps its own stack.
+/// 3 tab branches + onboarding gate. The gate only ever sends you INTO
+/// onboarding (or splash while checking); onboarding leaves by itself.
 final routerProvider = Provider<GoRouter>((ref) {
+  final refresh = ValueNotifier<int>(0);
+  ref.listen<OnboardingStatus>(
+    onboardingStatusProvider,
+    (previous, next) => refresh.value++,
+  );
   final router = GoRouter(
     initialLocation: '/home',
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      final location = state.matchedLocation;
+      if (location == '/onboarding') return null;
+      return switch (ref.read(onboardingStatusProvider)) {
+        OnboardingStatus.loading => location == '/splash' ? null : '/splash',
+        OnboardingStatus.needed => '/onboarding',
+        OnboardingStatus.done => location == '/splash' ? '/home' : null,
+      };
+    },
     routes: [
+      GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
+      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingPage()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -44,6 +66,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-  ref.onDispose(router.dispose);
+  ref.onDispose(() {
+    router.dispose();
+    refresh.dispose();
+  });
   return router;
 });
