@@ -29,7 +29,7 @@ class AuthRepository {
     if (kIsWeb) {
       await client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: Uri.base.origin,
+        redirectTo: '${Uri.base.origin}/',
       );
       return;
     }

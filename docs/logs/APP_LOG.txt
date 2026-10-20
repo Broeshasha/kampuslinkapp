@@ -78,3 +78,7 @@ FIX: figure card was a coloured Container around an ExpansionTile (ListTile ink 
 TESTED: segments x2, demo lesson fr/ar/en, broken formula fallback, unknown block; on this PC also all 30 chapter-2 formulas + every chapter-2 block in fr/ar/en (skipped where the fixture is absent).
 LATER: sticky first table column; tap a term -> glossary card; report visible block id (WP5 resume).
 NEXT: WP5 module page -> lessons -> lesson reader with resume, library files.
+[2026-10-20 10:30] LANE: D2 | WP: web auth fix
+DID: Supabase config read from --dart-define first (web: Cloudflare build variables), .env as fallback (phone/PC); web OAuth redirectTo ends with "/" to match the Supabase Redirect URLs exactly.
+WHY: on the Workers preview /assets/.env did not show the keys -> app started without Supabase -> Google button dead.
+CLOUDFLARE: build command now passes --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... (values only in Cloudflare build variables, never in git).
