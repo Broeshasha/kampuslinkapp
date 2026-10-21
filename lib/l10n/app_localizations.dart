@@ -106,6 +106,72 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @dlOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet. What already arrived stays on your phone; we continue when you are back online.'**
+  String get dlOffline;
+
+  /// No description provided for @dlTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The server took too long. Tap Retry: we continue from where it stopped.'**
+  String get dlTimeout;
+
+  /// No description provided for @dlServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server had a problem sending this module. Tap Retry in a moment.'**
+  String get dlServer;
+
+  /// No description provided for @dlStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone or browser has no space left (or blocks storage). Free some space, then Retry.'**
+  String get dlStorage;
+
+  /// No description provided for @dlDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving on this device failed. Tap Retry; if it keeps failing, send us the details.'**
+  String get dlDatabase;
+
+  /// No description provided for @dlUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The download stopped. Tap Retry; if it keeps failing, send us the details.'**
+  String get dlUnknown;
+
+  /// No description provided for @dlDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get dlDetails;
+
+  /// No description provided for @dlCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get dlCopy;
+
+  /// No description provided for @dlCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get dlCopied;
+
+  /// No description provided for @dlDownloadingLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {done} / {total} lessons'**
+  String dlDownloadingLessons(int done, int total);
+
+  /// No description provided for @langDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading this language for the lesson…'**
+  String get langDownloading;
+
   /// One-line promise under the logo
   ///
   /// In en, this message translates to:
@@ -1089,6 +1155,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This version of KampusLink is too old to keep your progress safe. Please update to continue.'**
   String get updateBody;
+
+  /// No description provided for @caseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Case'**
+  String get caseLabel;
+
+  /// No description provided for @demoBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'DEMO'**
+  String get demoBadge;
+
+  /// No description provided for @continueCase.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue the case'**
+  String get continueCase;
+
+  /// No description provided for @roleHook.
+  ///
+  /// In en, this message translates to:
+  /// **'The case'**
+  String get roleHook;
+
+  /// No description provided for @roleClue.
+  ///
+  /// In en, this message translates to:
+  /// **'Clue'**
+  String get roleClue;
+
+  /// No description provided for @roleStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step'**
+  String get roleStep;
+
+  /// No description provided for @roleCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guess'**
+  String get roleCommit;
+
+  /// No description provided for @roleReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'The answer'**
+  String get roleReveal;
+
+  /// No description provided for @roleQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick check'**
+  String get roleQuiz;
+
+  /// No description provided for @roleTakeaway.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember this'**
+  String get roleTakeaway;
+
+  /// No description provided for @lockGuess.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock my guess'**
+  String get lockGuess;
+
+  /// No description provided for @lockGuessFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock a guess before you see the answer'**
+  String get lockGuessFirst;
+
+  /// No description provided for @guessRight.
+  ///
+  /// In en, this message translates to:
+  /// **'You guessed right!'**
+  String get guessRight;
+
+  /// No description provided for @guessWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Not this time. Here is why:'**
+  String get guessWrong;
+
+  /// No description provided for @swipeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to see the answer'**
+  String get swipeHint;
+
+  /// No description provided for @caseDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Case solved'**
+  String get caseDone;
 }
 
 class _AppLocalizationsDelegate

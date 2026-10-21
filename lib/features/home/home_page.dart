@@ -7,6 +7,7 @@ import '../../core/errors/failure_mapper.dart';
 import '../../core/errors/result.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/cases/case_repository.dart';
 import '../../data/learning/feed_repository.dart';
 import '../../data/learning/learning_providers.dart';
 import '../../data/lessons/lesson_content.dart';
@@ -16,8 +17,36 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/coming_soon.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../cases/case_models.dart';
+import '../cases/case_set_view.dart';
+import '../cases/demo_cases.dart';
 import 'flash_card.dart';
 import 'study_activity.dart';
+
+/// Feed = flashcards with the carousel sets (cases) mixed in: one after the
+/// first card, then one every 5 cards. Finished sets are left out. Built
+/// once per feed load so the order never changes under the finger.
+final feedEntriesProvider = FutureProvider<List<Object>>((ref) async {
+  final cards = await ref.watch(feedProvider.future);
+  if (!kShowDemoCases || !ref.watch(isSignedInProvider)) return cards;
+  final progress = await ref.read(caseRepositoryProvider).all();
+  final sets = [
+    for (final s in demoCases)
+      if (!(progress['${s['id']}']?.finished ?? false)) s,
+  ];
+  final out = <Object>[];
+  var next = 0;
+  for (var i = 0; i < cards.length; i++) {
+    if (next < sets.length && (i == 1 || (i > 1 && (i - 1) % 5 == 0))) {
+      out.add(sets[next++]);
+    }
+    out.add(cards[i]);
+  }
+  while (next < sets.length) {
+    out.add(sets[next++]);
+  }
+  return out;
+});
 
 int _int(Object? v, int fallback) =>
     v is num ? v.toInt() : int.tryParse('$v') ?? fallback;
@@ -44,6 +73,7 @@ class HomePage extends ConsumerWidget {
             children: [
               _HomeHeader(),
               _ContinueCard(),
+              _ContinueCaseCard(),
               Expanded(child: _Feed()),
             ],
           ),
@@ -295,10 +325,14 @@ class _FeedState extends ConsumerState<_Feed> {
     final l10n = AppLocalizations.of(context);
     final lang = Localizations.localeOf(context).languageCode;
     final feed = ref.watch(feedRepositoryProvider);
-    ref.listen<AsyncValue<List<FeedCard>>>(feedProvider, (previous, next) {
+    ref.listen<AsyncValue<List<Object>>>(feedEntriesProvider, (previous, next) {
       if (_pages.hasClients) _pages.jumpToPage(0);
     });
-    return switch (ref.watch(feedProvider)) {
+    final caseProgress = switch (ref.watch(caseProgressProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <String, CaseProgress>{},
+    };
+    return switch (ref.watch(feedEntriesProvider)) {
       AsyncData(:final value) when value.isEmpty =>
         ref.watch(downloadedKeyProvider).isEmpty
             ? EmptyView(
@@ -315,7 +349,21 @@ class _FeedState extends ConsumerState<_Feed> {
         itemCount: value.length + 1,
         itemBuilder: (context, i) {
           if (i == value.length) return const _FeedDone();
-          final card = value[i];
+          final entry = value[i];
+          if (entry is Map<String, Object?>) {
+            final set = CaseSet.fromSource(entry, lang);
+            return MaxWidth(
+              child: CaseSetView(
+                key: ValueKey<String>('case-${set.id}'),
+                set: set,
+                demo: true,
+                progress: caseProgress[set.id] ?? CaseProgress(setId: set.id),
+                onProgress: (p) =>
+                    guard(() => ref.read(caseRepositoryProvider).save(p)),
+              ),
+            );
+          }
+          final card = entry as FeedCard;
           final text = card.text(lang);
           return MaxWidth(
             child: FlashCardView(
@@ -336,7 +384,7 @@ class _FeedState extends ConsumerState<_Feed> {
       ),
       AsyncError(:final error) => ErrorView(
         failure: mapError(error),
-        onRetry: () => ref.invalidate(feedProvider),
+        onRetry: () => ref.invalidate(feedEntriesProvider),
       ),
       _ => const LoadingView(),
     };
@@ -377,6 +425,78 @@ class _FeedDone extends ConsumerWidget {
               ref.read(feedAheadProvider.notifier).set(ahead: true);
               ref.invalidate(feedProvider);
             },
+    );
+  }
+}
+
+class _ContinueCaseCard extends ConsumerWidget {
+  const _ContinueCaseCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!kShowDemoCases) return const SizedBox.shrink();
+    final progress = switch (ref.watch(caseProgressProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <String, CaseProgress>{},
+    };
+    final lang = Localizations.localeOf(context).languageCode;
+    CaseSet? open;
+    for (final source in demoCases) {
+      final p = progress['${source['id']}'];
+      if (p != null && p.started && !p.finished) {
+        open = CaseSet.fromSource(source, lang);
+        break;
+      }
+    }
+    final set = open;
+    if (set == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final kc = context.kc;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(KSpace.lg, 0, KSpace.lg, KSpace.sm),
+      child: MaxWidth(
+        child: Material(
+          color: kc.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(KRadius.chip),
+            side: BorderSide(color: kc.accentAlt.withValues(alpha: 0.5)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => context.push('/case/${set.id}'),
+            child: Padding(
+              padding: const EdgeInsets.all(KSpace.md),
+              child: Row(
+                children: [
+                  Icon(Icons.search_rounded, color: kc.accentAlt, size: 28),
+                  const SizedBox(width: KSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.continueCase,
+                          style: TextStyle(
+                            color: kc.accentAlt,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          set.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

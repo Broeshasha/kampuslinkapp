@@ -7,10 +7,12 @@ import '../../data/db/app_database.dart';
 import '../../data/providers.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/download_issue.dart';
 import 'step_layout.dart';
 
-/// Step 4: really downloads the module bundles, per-module state, skippable
-/// (the sync keeps going in the background and resumes after a restart).
+/// Step 4: downloads the modules lesson by lesson (lead brief 2, B7):
+/// "7 / 19 lessons" per module, a Retry and Details per failed module,
+/// skippable (the download resumes in the background from where it was).
 class DownloadStep extends ConsumerStatefulWidget {
   const DownloadStep({super.key, required this.onFinish});
 
@@ -71,8 +73,23 @@ class _DownloadStepState extends ConsumerState<DownloadStep> {
           style: TextStyle(color: kc.textSecondary),
         ),
         const SizedBox(height: KSpace.lg),
-        for (final m in modules)
-          _ModuleLine(module: m, downloading: sync.downloading.contains(m.id)),
+        for (final m in modules) ...[
+          _ModuleLine(
+            module: m,
+            downloading: sync.downloading.contains(m.id),
+            count: sync.progress[m.id],
+            failed: sync.failures.containsKey(m.id),
+          ),
+          if (sync.failures[m.id] case final failure?)
+            Padding(
+              padding: const EdgeInsets.only(bottom: KSpace.sm),
+              child: DownloadIssueCard(
+                failure: failure,
+                onRetry: () =>
+                    ref.read(syncControllerProvider.notifier).retryModule(m.id),
+              ),
+            ),
+        ],
       ],
       action: finished
           ? FilledButton(
@@ -88,10 +105,17 @@ class _DownloadStepState extends ConsumerState<DownloadStep> {
 }
 
 class _ModuleLine extends StatelessWidget {
-  const _ModuleLine({required this.module, required this.downloading});
+  const _ModuleLine({
+    required this.module,
+    required this.downloading,
+    this.count,
+    this.failed = false,
+  });
 
   final ModuleRow module;
   final bool downloading;
+  final LessonCount? count;
+  final bool failed;
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +129,25 @@ class _ModuleLine extends StatelessWidget {
         style: TextStyle(color: kc.textSecondary, fontSize: 12),
       );
     } else if (downloading) {
-      status = const SizedBox(
-        width: 18,
-        height: 18,
-        child: CircularProgressIndicator(strokeWidth: 2),
+      final c = count;
+      status = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (c != null && c.total > 0)
+            Text(
+              '${c.done} / ${c.total}',
+              style: TextStyle(color: kc.textSecondary, fontSize: 12),
+            ),
+          const SizedBox(width: KSpace.sm),
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ],
       );
+    } else if (failed) {
+      status = Icon(Icons.error_outline, color: kc.warning);
     } else if (module.localVersion >= module.serverVersion) {
       status = Icon(
         Icons.check_circle,

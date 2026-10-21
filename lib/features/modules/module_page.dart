@@ -14,6 +14,7 @@ import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import 'download_status.dart';
 import 'library_tab.dart';
 
 /// One module: LESSONS (episodes grouped by unit) and LIBRARY (files).
@@ -113,58 +114,71 @@ class _LessonsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final online = ref.watch(isOnlineProvider);
     final busy = ref.watch(
       syncControllerProvider.select((s) => s.downloading.contains(module.id)),
     );
     void download() => ref.read(syncControllerProvider.notifier).syncNow();
 
-    if (module.localVersion == 0) {
-      if (busy) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: KSpace.lg),
-              Text(l10n.syncing),
-            ],
-          ),
-        );
-      }
-      if (module.serverVersion == 0) {
-        return EmptyView(
-          icon: Icons.hourglass_empty_rounded,
-          title: l10n.moduleNoLessons,
-        );
-      }
-      return EmptyView(
-        icon: Icons.cloud_download_outlined,
-        title: l10n.moduleNotDownloaded,
-        message: online ? null : l10n.needInternetToDownload,
-        actionLabel: online ? l10n.downloadModule : null,
-        onAction: online ? download : null,
-      );
-    }
-
+    // A module with some lessons stored is usable (lead brief 2, B4).
     return switch (ref.watch(lessonsProvider(module.id))) {
-      AsyncData(:final value) =>
-        value.isEmpty
-            ? EmptyView(
-                icon: Icons.hourglass_empty_rounded,
-                title: l10n.moduleNoLessons,
-              )
-            : _LessonList(
-                module: module,
-                items: value,
-                busy: busy,
-                online: online,
-                onUpdate: download,
-              ),
+      AsyncData(:final value) when value.isNotEmpty => _LessonList(
+        module: module,
+        items: value,
+        busy: busy,
+        online: online,
+        onUpdate: download,
+      ),
+      AsyncData() => _NothingStored(
+        module: module,
+        busy: busy,
+        online: online,
+        onDownload: download,
+      ),
       AsyncError(:final error) => ErrorView(failure: mapError(error)),
       _ => const LoadingView(),
     };
+  }
+}
+
+class _NothingStored extends ConsumerWidget {
+  const _NothingStored({
+    required this.module,
+    required this.busy,
+    required this.online,
+    required this.onDownload,
+  });
+
+  final ModuleRow module;
+  final bool busy;
+  final bool online;
+  final VoidCallback onDownload;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final failure = ref.watch(
+      syncControllerProvider.select((s) => s.failures[module.id]),
+    );
+    if (module.serverVersion == 0) {
+      return EmptyView(
+        icon: Icons.hourglass_empty_rounded,
+        title: l10n.moduleNoLessons,
+      );
+    }
+    if (busy || failure != null) {
+      return ListView(
+        padding: const EdgeInsets.all(KSpace.lg),
+        children: [MaxWidth(child: ModuleDownloadStatus(module: module))],
+      );
+    }
+    return EmptyView(
+      icon: Icons.cloud_download_outlined,
+      title: l10n.moduleNotDownloaded,
+      message: online ? null : l10n.needInternetToDownload,
+      actionLabel: online ? l10n.downloadModule : null,
+      onAction: online ? onDownload : null,
+    );
   }
 }
 
@@ -197,8 +211,12 @@ class _LessonList extends StatelessWidget {
         total: items.length,
         accent: accent,
       ),
-      if (module.serverVersion > module.localVersion)
-        _UpdateBanner(busy: busy, online: online, onUpdate: onUpdate),
+      ModuleDownloadStatus(
+        module: module,
+        fallback: module.serverVersion > module.localVersion
+            ? _UpdateBanner(busy: busy, online: online, onUpdate: onUpdate)
+            : null,
+      ),
     ];
     String? currentUnit;
     var number = 0;

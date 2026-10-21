@@ -4,8 +4,9 @@ import 'package:drift/drift.dart';
 
 import '../db/app_database.dart';
 
-/// The bundle format this app understands (BACKEND_CONTRACT B).
-const supportedBundleSchema = 2;
+/// The bundle format this app understands (BACKEND_CONTRACT B; 3 = file 13:
+/// tags and sets added, read when present).
+const supportedBundleSchema = 3;
 
 class UnsupportedBundleSchema implements Exception {
   const UnsupportedBundleSchema(this.version);
@@ -140,6 +141,7 @@ class BundleImporter {
         }
       });
 
+      await _saveSets(moduleId, bundle['sets']);
       await _db
           .into(_db.modules)
           .insertOnConflictUpdate(
@@ -159,4 +161,195 @@ class BundleImporter {
           );
     });
   }
+
+  Map<String, dynamic> _decodeMap(String? json) {
+    if (json == null || json.isEmpty) return {};
+    try {
+      final v = jsonDecode(json);
+      return v is Map ? v.cast<String, dynamic>() : {};
+    } on FormatException {
+      return {};
+    }
+  }
+
+  /// Carousel sets (file 13) wait in key_values until the feed reads them.
+  Future<void> _saveSets(int moduleId, Object? sets) async {
+    if (sets is! List) return;
+    await _db
+        .into(_db.keyValues)
+        .insertOnConflictUpdate(
+          KeyValuesCompanion(
+            name: Value('sets:$moduleId'),
+            value: Value(jsonEncode(sets)),
+          ),
+        );
+  }
+
+  /// One lesson from get_lesson_bundle, in its OWN transaction.
+  /// [merge] = add the languages in [lesson] to what is stored (top-up);
+  /// otherwise the lesson's cards and questions are replaced.
+  Future<void> importLesson(
+    int moduleId,
+    Map<String, dynamic> lesson, {
+    bool merge = false,
+  }) => _db.transaction(() async {
+    final lessonId = _int(lesson['id']);
+    final existing = await (_db.select(
+      _db.lessons,
+    )..where((t) => t.id.equals(lessonId))).getSingleOrNull();
+    final i18n = {
+      if (merge && existing != null) ..._decodeMap(existing.i18nJson),
+      ..._map(lesson['i18n']),
+    };
+    if (!merge) {
+      await (_db.delete(
+        _db.cards,
+      )..where((t) => t.lessonId.equals(lessonId))).go();
+      await (_db.delete(
+        _db.questions,
+      )..where((t) => t.lessonId.equals(lessonId))).go();
+    }
+    await _db
+        .into(_db.lessons)
+        .insertOnConflictUpdate(
+          LessonsCompanion(
+            id: Value(lessonId),
+            moduleId: Value(moduleId),
+            position: Value(
+              merge && existing != null && lesson['position'] == null
+                  ? existing.position
+                  : _int(lesson['position']),
+            ),
+            sourceLang: Value(
+              _str(lesson['source_lang']) ?? existing?.sourceLang,
+            ),
+            unitJson: Value(
+              lesson['unit'] == null
+                  ? existing?.unitJson
+                  : jsonEncode(lesson['unit']),
+            ),
+            estimatedMinutes: Value(
+              _intOrNull(lesson['estimated_minutes']) ??
+                  existing?.estimatedMinutes,
+            ),
+            i18nJson: Value(jsonEncode(i18n)),
+            resourceLinksJson: Value(
+              lesson['resources'] == null
+                  ? (existing?.resourceLinksJson ?? '[]')
+                  : jsonEncode(lesson['resources']),
+            ),
+          ),
+        );
+    for (final c in _list(lesson['cards']).map(_map)) {
+      final id = _int(c['id']);
+      final old = merge
+          ? await (_db.select(
+              _db.cards,
+            )..where((t) => t.id.equals(id))).getSingleOrNull()
+          : null;
+      await _db
+          .into(_db.cards)
+          .insertOnConflictUpdate(
+            CardsCompanion(
+              id: Value(id),
+              lessonId: Value(lessonId),
+              moduleId: Value(moduleId),
+              position: Value(_int(c['position'] ?? old?.position)),
+              i18nJson: Value(
+                jsonEncode({
+                  if (old != null) ..._decodeMap(old.i18nJson),
+                  ..._map(c['i18n']),
+                }),
+              ),
+            ),
+          );
+    }
+    for (final q in _list(lesson['questions']).map(_map)) {
+      final id = _int(q['id']);
+      final old = merge
+          ? await (_db.select(
+              _db.questions,
+            )..where((t) => t.id.equals(id))).getSingleOrNull()
+          : null;
+      await _db
+          .into(_db.questions)
+          .insertOnConflictUpdate(
+            QuestionsCompanion(
+              id: Value(id),
+              lessonId: Value(lessonId),
+              moduleId: Value(moduleId),
+              kind: Value(_str(q['kind']) ?? old?.kind ?? 'mcq'),
+              correctIndex: Value(
+                _int(q['correct_index'] ?? old?.correctIndex),
+              ),
+              position: Value(_int(q['position'] ?? old?.position)),
+              i18nJson: Value(
+                jsonEncode({
+                  if (old != null) ..._decodeMap(old.i18nJson),
+                  ..._map(q['i18n']),
+                }),
+              ),
+            ),
+          );
+    }
+  });
+
+  /// get_module_extras: glossary and resources replaced, sets kept for the feed.
+  Future<void> importExtras(int moduleId, Map<String, dynamic> extras) =>
+      _db.transaction(() async {
+        await (_db.delete(
+          _db.glossaryEntries,
+        )..where((t) => t.moduleId.equals(moduleId))).go();
+        await (_db.delete(
+          _db.resources,
+        )..where((t) => t.moduleId.equals(moduleId))).go();
+        for (final g in _list(extras['glossary']).map(_map)) {
+          await _db
+              .into(_db.glossaryEntries)
+              .insertOnConflictUpdate(
+                GlossaryEntriesCompanion(
+                  id: Value(_int(g['id'])),
+                  moduleId: Value(moduleId),
+                  fr: Value(_str(g['fr'])),
+                  ar: Value(_str(g['ar'])),
+                  en: Value(_str(g['en'])),
+                  definitionJson: Value(
+                    jsonEncode(g['definition'] ?? const {}),
+                  ),
+                  note: Value(_str(g['note'])),
+                ),
+              );
+        }
+        for (final r in _list(extras['resources']).map(_map)) {
+          await _db
+              .into(_db.resources)
+              .insertOnConflictUpdate(
+                ResourcesCompanion(
+                  id: Value(_int(r['id'])),
+                  moduleId: Value(moduleId),
+                  type: Value(_str(r['type']) ?? 'other'),
+                  format: Value(_str(r['format'])),
+                  title: Value(_str(r['title']) ?? ''),
+                  fileUrlsJson: Value(jsonEncode(r['file_urls'] ?? const [])),
+                  trustLabel: Value(_str(r['trust_label'])),
+                  sizeBytes: Value(_intOrNull(r['size_bytes'])),
+                  origin: Value(_str(r['origin'])),
+                  createdAt: Value(DateTime.tryParse('${r['created_at']}')),
+                ),
+              );
+        }
+        await _saveSets(moduleId, extras['sets']);
+      });
+
+  /// Lessons that left the manifest disappear with their cards and questions.
+  Future<void> deleteLessons(Iterable<int> lessonIds) =>
+      _db.transaction(() async {
+        final ids = lessonIds.toList();
+        if (ids.isEmpty) return;
+        await (_db.delete(_db.cards)..where((t) => t.lessonId.isIn(ids))).go();
+        await (_db.delete(
+          _db.questions,
+        )..where((t) => t.lessonId.isIn(ids))).go();
+        await (_db.delete(_db.lessons)..where((t) => t.id.isIn(ids))).go();
+      });
 }

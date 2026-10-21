@@ -158,6 +158,40 @@ class KampusApi {
     return [for (final r in rows as List) (r as Map).cast<String, dynamic>()];
   }
 
+  /// File 13: tiny list of the module's lessons with a rev per lesson.
+  Future<Map<String, dynamic>> getModuleManifest(
+    int moduleId,
+    List<String> langs,
+  ) async => _map(
+    await _client.rpc(
+      'get_module_manifest',
+      params: {'p_module': moduleId, 'p_langs': langs},
+    ),
+  );
+
+  /// File 13: ONE lesson (same shape as one element of bundle.lessons).
+  Future<Map<String, dynamic>> getLessonBundle(
+    int lessonId,
+    List<String> langs,
+  ) async => _map(
+    await _client.rpc(
+      'get_lesson_bundle',
+      params: {'p_lesson': lessonId, 'p_langs': langs},
+    ),
+  );
+
+  /// File 13: glossary, carousel sets and resources of a module.
+  Future<Map<String, dynamic>> getModuleExtras(
+    int moduleId,
+    List<String> langs,
+  ) async => _map(
+    await _client.rpc(
+      'get_module_extras',
+      params: {'p_module': moduleId, 'p_langs': langs},
+    ),
+  );
+
+  /// Fallback only (servers without file 13): the whole module at once.
   Future<Map<String, dynamic>> getModuleBundle(
     int moduleId,
     List<String> langs,

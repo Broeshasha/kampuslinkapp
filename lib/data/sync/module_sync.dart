@@ -1,46 +1,43 @@
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
-import '../bundle/bundle_importer.dart';
 import '../modules/module_repository.dart';
+import 'download_failure.dart';
+import 'module_downloader.dart';
 
 typedef FetchModules = Future<List<Map<String, dynamic>>> Function();
-typedef FetchBundle = Future<Map<String, dynamic>> Function(
-  int moduleId,
-  List<String> langs,
-);
 
 class ModuleSyncReport {
   const ModuleSyncReport({
     this.downloaded = 0,
     this.failed = const [],
     this.failure,
+    this.failures = const {},
   });
 
   final int downloaded;
   final List<int> failed;
   final AppFailure? failure;
+  final Map<int, DownloadFailure> failures;
 }
 
-/// MASTER_PLAN 7.3: module list -> compare versions -> download only what is
-/// newer ([all]: everything, when the language set changed). One failing
-/// module never blocks the others; it is retried next sync.
+/// MASTER_PLAN 7.3 with lead brief 2: module list -> for every module that
+/// is not complete in [langs], a manifest-diff download (ModuleDownloader).
+/// One failing module never blocks the others; it is resumed next sync.
 class ModuleSyncService {
   ModuleSyncService({
     required this.modules,
-    required this.importer,
+    required this.downloader,
     required this.fetchModules,
-    required this.fetchBundle,
   });
 
   final ModuleRepository modules;
-  final BundleImporter importer;
+  final ModuleDownloader downloader;
   final FetchModules fetchModules;
-  final FetchBundle fetchBundle;
 
   Future<ModuleSyncReport> sync(
     List<String> langs, {
-    void Function(int moduleId, bool busy)? onProgress,
-    bool all = false,
+    void Function(int moduleId, bool busy)? onBusy,
+    void Function(int moduleId, int done, int total)? onProgress,
   }) async {
     final list = await guard(fetchModules);
     switch (list) {
@@ -49,29 +46,29 @@ class ModuleSyncService {
       case Ok(:final value):
         await modules.saveServerList(value);
     }
-    final todo = await modules.needingDownload(all: all);
+    final todo = await modules.needingDownload(langs: langs);
     var downloaded = 0;
-    final failed = <int>[];
-    AppFailure? firstFailure;
+    final failures = <int, DownloadFailure>{};
     for (final m in todo) {
-      onProgress?.call(m.id, true);
-      final result = await guard<void>(() async {
-        final bundle = await fetchBundle(m.id, langs);
-        await importer.importBundle(bundle);
-      });
-      onProgress?.call(m.id, false);
-      switch (result) {
-        case Ok():
-          downloaded++;
-        case Err(:final failure):
-          failed.add(m.id);
-          firstFailure ??= failure;
+      onBusy?.call(m.id, true);
+      final result = await downloader.download(
+        m.id,
+        langs,
+        onProgress: (done, total) => onProgress?.call(m.id, done, total),
+      );
+      onBusy?.call(m.id, false);
+      final failure = result.failure;
+      if (failure == null) {
+        downloaded++;
+      } else {
+        failures[m.id] = failure;
       }
     }
     return ModuleSyncReport(
       downloaded: downloaded,
-      failed: failed,
-      failure: firstFailure,
+      failed: failures.keys.toList(),
+      failures: failures,
+      failure: failures.isEmpty ? null : const ServerFailure('download'),
     );
   }
 }

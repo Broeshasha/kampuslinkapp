@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/cases/case_page.dart';
 import '../features/chat/chat_page.dart';
 import '../features/home/home_page.dart';
 import '../features/lesson/lesson_reader_page.dart';
@@ -45,6 +46,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingPage()),
+      GoRoute(
+        path: '/case/:setId',
+        builder: (_, state) =>
+            CasePage(setId: state.pathParameters['setId'] ?? ''),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [

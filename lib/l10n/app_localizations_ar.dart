@@ -13,6 +13,47 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get dlOffline =>
+      'لا يوجد إنترنت. ما وصل يبقى على هاتفك، ونكمل عند عودة الاتصال.';
+
+  @override
+  String get dlTimeout =>
+      'تأخر الخادم كثيرًا. اضغط إعادة المحاولة: نكمل من حيث توقف.';
+
+  @override
+  String get dlServer =>
+      'حدثت مشكلة في الخادم أثناء إرسال هذا المقياس. أعد المحاولة بعد لحظة.';
+
+  @override
+  String get dlStorage =>
+      'لا توجد مساحة كافية في الهاتف أو المتصفح (أو التخزين محظور). حرر مساحة ثم أعد المحاولة.';
+
+  @override
+  String get dlDatabase =>
+      'فشل الحفظ على هذا الجهاز. أعد المحاولة، وإذا تكرر أرسل لنا التفاصيل.';
+
+  @override
+  String get dlUnknown =>
+      'توقف التنزيل. أعد المحاولة، وإذا تكرر أرسل لنا التفاصيل.';
+
+  @override
+  String get dlDetails => 'التفاصيل';
+
+  @override
+  String get dlCopy => 'نسخ';
+
+  @override
+  String get dlCopied => 'تم النسخ';
+
+  @override
+  String dlDownloadingLessons(int done, int total) {
+    return 'جارٍ تنزيل $done / $total دروس';
+  }
+
+  @override
+  String get langDownloading => 'جارٍ تنزيل هذه اللغة للدرس…';
+
+  @override
   String get splashTagline => 'ادرس بذكاء، حتى دون إنترنت.';
 
   @override
@@ -573,4 +614,52 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get updateBody =>
       'هذا الإصدار من KampusLink قديم جدًا لحماية تقدّمك. حدّثه للمتابعة.';
+
+  @override
+  String get caseLabel => 'قضية';
+
+  @override
+  String get demoBadge => 'تجريبي';
+
+  @override
+  String get continueCase => 'تابع القضية';
+
+  @override
+  String get roleHook => 'القضية';
+
+  @override
+  String get roleClue => 'دليل';
+
+  @override
+  String get roleStep => 'خطوة';
+
+  @override
+  String get roleCommit => 'تخمينك';
+
+  @override
+  String get roleReveal => 'الإجابة';
+
+  @override
+  String get roleQuiz => 'تحقّق سريع';
+
+  @override
+  String get roleTakeaway => 'تذكّر هذا';
+
+  @override
+  String get lockGuess => 'أثبّت اختياري';
+
+  @override
+  String get lockGuessFirst => 'ثبّت تخمينًا قبل رؤية الإجابة';
+
+  @override
+  String get guessRight => 'تخمين صحيح!';
+
+  @override
+  String get guessWrong => 'ليس هذه المرة. إليك السبب:';
+
+  @override
+  String get swipeHint => 'اسحب لرؤية الإجابة';
+
+  @override
+  String get caseDone => 'تم حل القضية';
 }

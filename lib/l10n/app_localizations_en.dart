@@ -13,6 +13,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get dlOffline =>
+      'No internet. What already arrived stays on your phone; we continue when you are back online.';
+
+  @override
+  String get dlTimeout =>
+      'The server took too long. Tap Retry: we continue from where it stopped.';
+
+  @override
+  String get dlServer =>
+      'The server had a problem sending this module. Tap Retry in a moment.';
+
+  @override
+  String get dlStorage =>
+      'Your phone or browser has no space left (or blocks storage). Free some space, then Retry.';
+
+  @override
+  String get dlDatabase =>
+      'Saving on this device failed. Tap Retry; if it keeps failing, send us the details.';
+
+  @override
+  String get dlUnknown =>
+      'The download stopped. Tap Retry; if it keeps failing, send us the details.';
+
+  @override
+  String get dlDetails => 'Details';
+
+  @override
+  String get dlCopy => 'Copy';
+
+  @override
+  String get dlCopied => 'Copied';
+
+  @override
+  String dlDownloadingLessons(int done, int total) {
+    return 'Downloading $done / $total lessons';
+  }
+
+  @override
+  String get langDownloading => 'Downloading this language for the lesson…';
+
+  @override
   String get splashTagline => 'Study smarter. Even offline.';
 
   @override
@@ -579,4 +620,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateBody =>
       'This version of KampusLink is too old to keep your progress safe. Please update to continue.';
+
+  @override
+  String get caseLabel => 'Case';
+
+  @override
+  String get demoBadge => 'DEMO';
+
+  @override
+  String get continueCase => 'Continue the case';
+
+  @override
+  String get roleHook => 'The case';
+
+  @override
+  String get roleClue => 'Clue';
+
+  @override
+  String get roleStep => 'Step';
+
+  @override
+  String get roleCommit => 'Your guess';
+
+  @override
+  String get roleReveal => 'The answer';
+
+  @override
+  String get roleQuiz => 'Quick check';
+
+  @override
+  String get roleTakeaway => 'Remember this';
+
+  @override
+  String get lockGuess => 'Lock my guess';
+
+  @override
+  String get lockGuessFirst => 'Lock a guess before you see the answer';
+
+  @override
+  String get guessRight => 'You guessed right!';
+
+  @override
+  String get guessWrong => 'Not this time. Here is why:';
+
+  @override
+  String get swipeHint => 'Swipe to see the answer';
+
+  @override
+  String get caseDone => 'Case solved';
 }

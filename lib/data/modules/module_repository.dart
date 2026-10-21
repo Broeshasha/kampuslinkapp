@@ -51,16 +51,24 @@ class ModuleRepository {
     });
   }
 
-  /// Modules whose server content is newer than what is on the phone.
-  /// [all] = every module with content (e.g. after the language set changed).
-  Future<List<ModuleRow>> needingDownload({bool all = false}) =>
-      (_db.select(_db.modules)..where(
-            (t) => all
-                ? t.serverVersion.isBiggerThanValue(0)
-                : t.serverVersion.isBiggerThan(t.localVersion) &
-                      t.serverVersion.isBiggerThanValue(0),
-          ))
-          .get();
+  /// Modules with content that are not complete on the phone: newer on
+  /// the server, interrupted (resumable), or missing one of [langs].
+  Future<List<ModuleRow>> needingDownload({
+    List<String> langs = const [],
+  }) async {
+    final rows = await (_db.select(
+      _db.modules,
+    )..where((t) => t.serverVersion.isBiggerThanValue(0))).get();
+    return [
+      for (final m in rows)
+        if (m.serverVersion > m.localVersion || !_covers(m.languages, langs)) m,
+    ];
+  }
+
+  bool _covers(String stored, List<String> langs) {
+    final have = stored.split(',').where((s) => s.isNotEmpty).toSet();
+    return langs.every(have.contains);
+  }
 
   Future<void> _deleteModule(int id) async {
     await (_db.delete(_db.cards)..where((t) => t.moduleId.equals(id))).go();

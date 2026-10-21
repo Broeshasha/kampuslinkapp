@@ -13,6 +13,47 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get dlOffline =>
+      'Pas d\'internet. Ce qui est déjà arrivé reste sur ton téléphone ; on continue dès que tu es en ligne.';
+
+  @override
+  String get dlTimeout =>
+      'Le serveur a mis trop de temps. Touche Réessayer : on reprend là où ça s\'est arrêté.';
+
+  @override
+  String get dlServer =>
+      'Le serveur a eu un problème pour envoyer ce module. Réessaie dans un instant.';
+
+  @override
+  String get dlStorage =>
+      'Plus de place sur ton téléphone ou ton navigateur (ou stockage bloqué). Libère de l\'espace puis réessaie.';
+
+  @override
+  String get dlDatabase =>
+      'L\'enregistrement sur cet appareil a échoué. Réessaie ; si ça continue, envoie-nous les détails.';
+
+  @override
+  String get dlUnknown =>
+      'Le téléchargement s\'est arrêté. Réessaie ; si ça continue, envoie-nous les détails.';
+
+  @override
+  String get dlDetails => 'Détails';
+
+  @override
+  String get dlCopy => 'Copier';
+
+  @override
+  String get dlCopied => 'Copié';
+
+  @override
+  String dlDownloadingLessons(int done, int total) {
+    return 'Téléchargement $done / $total leçons';
+  }
+
+  @override
+  String get langDownloading => 'Téléchargement de cette langue pour la leçon…';
+
+  @override
   String get splashTagline => 'Révise mieux. Même hors ligne.';
 
   @override
@@ -582,4 +623,52 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get updateBody =>
       'Cette version de KampusLink est trop ancienne pour protéger ta progression. Mets-la à jour pour continuer.';
+
+  @override
+  String get caseLabel => 'Enquête';
+
+  @override
+  String get demoBadge => 'DÉMO';
+
+  @override
+  String get continueCase => 'Reprendre l\'enquête';
+
+  @override
+  String get roleHook => 'L\'enquête';
+
+  @override
+  String get roleClue => 'Indice';
+
+  @override
+  String get roleStep => 'Étape';
+
+  @override
+  String get roleCommit => 'Ton hypothèse';
+
+  @override
+  String get roleReveal => 'La réponse';
+
+  @override
+  String get roleQuiz => 'Vérification rapide';
+
+  @override
+  String get roleTakeaway => 'À retenir';
+
+  @override
+  String get lockGuess => 'Je valide mon choix';
+
+  @override
+  String get lockGuessFirst => 'Valide une réponse avant de voir la solution';
+
+  @override
+  String get guessRight => 'Bien vu !';
+
+  @override
+  String get guessWrong => 'Pas cette fois. Voici pourquoi :';
+
+  @override
+  String get swipeHint => 'Glisse pour voir la réponse';
+
+  @override
+  String get caseDone => 'Enquête résolue';
 }

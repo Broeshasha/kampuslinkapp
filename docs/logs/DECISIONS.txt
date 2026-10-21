@@ -37,3 +37,12 @@ D-023 (2026-10-20, founder) No PDF Library for now: lessons are shown from JSON 
   To tell the lead: this reverses his decision on #12.
 D-024 (2026-10-20, founder ok) Removed unused packages pdfx, file_picker, image_picker (smaller app). Re-add
   file_picker / image_picker when uploads (avatars, chat files) are built.
+D-025 (2026-10-20, founder) Carousel sets (lead brief B3) built EARLY as a local prototype so the founder can test the
+  experience: 2 DEMO cases bundled in the app (lib/features/cases/demo_cases.dart, kShowDemoCases = true), progress
+  kept on the phone only (key_values 'case:<id>'), nothing sent to the server. When backend file 11 arrives: load sets
+  from the bundle, add the outbox op for progress, and set kShowDemoCases = false before any Play Store release.
+D-026 (2026-10-21, lead brief 2 B) Download = manifest diff + one lesson per request (get_module_manifest /
+get_lesson_bundle / get_module_extras), 2 at a time, 20 s timeout, 3 retries (1/4/10 s), each lesson in its own
+transaction with its rev (key_values lesson_rev:<id> = "rev\nlangs"). Resumable; partial modules are usable.
+Languages: {UI, fr} first, the rest on Wi-Fi, a missing language fetched per lesson from the reader.
+get_module_bundle only as fallback when the new functions are missing (PGRST202 / 42883).

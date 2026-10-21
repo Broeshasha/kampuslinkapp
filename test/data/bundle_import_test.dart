@@ -135,7 +135,7 @@ void main() {
       final importer = BundleImporter(db);
       await importer.importBundle(bundle());
       await expectLater(
-        importer.importBundle(bundle(version: 3, schema: 3)),
+        importer.importBundle(bundle(version: 3, schema: 4)),
         throwsA(isA<UnsupportedBundleSchema>()),
       );
       expect(await db.select(db.lessons).get(), hasLength(2));

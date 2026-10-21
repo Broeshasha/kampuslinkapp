@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/errors/result.dart';
+import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/db/app_database.dart';
@@ -15,10 +16,12 @@ import '../../data/lessons/lesson_content.dart';
 import '../../data/lessons/lesson_providers.dart';
 import '../../data/lessons/lesson_repository.dart';
 import '../../data/providers.dart';
+import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/lesson_view.dart';
 import '../../render/reader_settings.dart';
 import '../../ui/confetti.dart';
+import '../../ui/download_issue.dart';
 import '../../ui/states.dart';
 import '../home/study_activity.dart';
 
@@ -117,6 +120,33 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
     context.go('/modules/${widget.moduleId}/lesson/${widget.lessonId}/quiz');
   }
 
+  /// A language not stored yet is fetched for this lesson only (B6).
+  Future<void> _pickLanguage(String code, List<String> available) async {
+    if (available.contains(code)) {
+      setState(() => _contentLang = code);
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    messenger.showSnackBar(SnackBar(content: Text(l10n.langDownloading)));
+    final failure = await ref
+        .read(syncControllerProvider.notifier)
+        .topUpLesson(widget.lessonId, code);
+    if (!mounted) return;
+    if (failure != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(downloadMessage(l10n, failure))),
+      );
+      return;
+    }
+    final row = await _lessons.lesson(widget.lessonId);
+    if (!mounted) return;
+    setState(() {
+      _row = row;
+      _contentLang = code;
+    });
+  }
+
   void _leave() {
     final next = _next;
     if (next != null) {
@@ -178,20 +208,23 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (content.languages.length > 1)
-            PopupMenuButton<String>(
-              tooltip: l10n.lessonLanguage,
-              icon: const Icon(Icons.translate_rounded),
-              initialValue: content.language,
-              onSelected: (code) => setState(() => _contentLang = code),
-              itemBuilder: (_) => [
-                for (final code in content.languages)
-                  PopupMenuItem(
-                    value: code,
-                    child: Text(_languageName(l10n, code)),
+          PopupMenuButton<String>(
+            tooltip: l10n.lessonLanguage,
+            icon: const Icon(Icons.translate_rounded),
+            initialValue: content.language,
+            onSelected: (code) => _pickLanguage(code, content.languages),
+            itemBuilder: (_) => [
+              for (final code in supportedLanguageCodes)
+                PopupMenuItem(
+                  value: code,
+                  child: Text(
+                    content.languages.contains(code)
+                        ? _languageName(l10n, code)
+                        : '${_languageName(l10n, code)}  \u2193',
                   ),
-              ],
-            ),
+                ),
+            ],
+          ),
           PopupMenuButton<int>(
             tooltip: l10n.readerTextSize,
             icon: const Icon(Icons.format_size_rounded),
