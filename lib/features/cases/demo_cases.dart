@@ -1,7 +1,7 @@
 /// DEMO carousel cases (lead brief B3) until the real content arrives with
 /// backend file 11. Source format: every text is {en, fr, ar}.
 /// Switch kShowDemoCases off before a Play Store release.
-const kShowDemoCases = true;
+const kShowDemoCases = false;
 
 const List<Map<String, Object?>> demoCases = [
   {

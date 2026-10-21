@@ -46,3 +46,10 @@ get_lesson_bundle / get_module_extras), 2 at a time, 20 s timeout, 3 retries (1/
 transaction with its rev (key_values lesson_rev:<id> = "rev\nlangs"). Resumable; partial modules are usable.
 Languages: {UI, fr} first, the rest on Wi-Fi, a missing language fetched per lesson from the reader.
 get_module_bundle only as fallback when the new functions are missing (PGRST202 / 42883).
+D-027 (2026-10-21, lead brief 2 C+D) Home feed = seeded queue builder (buildFeedQueue) over 5 buckets K/D/N/S/Q with
+warm-up, spread and set-every-6-to-8 rules. feed_seen and feed_last_first live in key_values (JSON), and the file-13 card /
+question fields (concept, difficulty, card_kind) in key_values 'meta:<lesson>', so no schema migration was needed.
+A carousel set may follow 2 posts of its own lesson (different format). Carousel progress goes to the outbox as
+'case_progress' {set_id, reached, guess, correct, completed, at}; learn_set_progress is merged when the server has it.
+Demo cases are OFF (kShowDemoCases = false); sets come from get_module_extras / the bundle. Reports on a slide use
+target_type 'learn_set', target_id '<set_id>#<slide_id>', reason 'wrong_information' (lead: confirm or rename).

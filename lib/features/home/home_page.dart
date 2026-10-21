@@ -8,6 +8,9 @@ import '../../core/errors/result.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
+import '../../data/learning/feed_pool.dart';
+import '../../data/learning/feed_queue.dart';
+import '../../data/learning/feed_queue_provider.dart';
 import '../../data/learning/feed_repository.dart';
 import '../../data/learning/learning_providers.dart';
 import '../../data/lessons/lesson_content.dart';
@@ -20,39 +23,17 @@ import '../../ui/states.dart';
 import '../cases/case_models.dart';
 import '../cases/case_set_view.dart';
 import '../cases/demo_cases.dart';
+import '../cases/report_sheet.dart';
 import 'flash_card.dart';
+import 'quick_question_card.dart';
 import 'study_activity.dart';
-
-/// Feed = flashcards with the carousel sets (cases) mixed in: one after the
-/// first card, then one every 5 cards. Finished sets are left out. Built
-/// once per feed load so the order never changes under the finger.
-final feedEntriesProvider = FutureProvider<List<Object>>((ref) async {
-  final cards = await ref.watch(feedProvider.future);
-  if (!kShowDemoCases || !ref.watch(isSignedInProvider)) return cards;
-  final progress = await ref.read(caseRepositoryProvider).all();
-  final sets = [
-    for (final s in demoCases)
-      if (!(progress['${s['id']}']?.finished ?? false)) s,
-  ];
-  final out = <Object>[];
-  var next = 0;
-  for (var i = 0; i < cards.length; i++) {
-    if (next < sets.length && (i == 1 || (i > 1 && (i - 1) % 5 == 0))) {
-      out.add(sets[next++]);
-    }
-    out.add(cards[i]);
-  }
-  while (next < sets.length) {
-    out.add(sets[next++]);
-  }
-  return out;
-});
 
 int _int(Object? v, int fallback) =>
     v is num ? v.toInt() : int.tryParse('$v') ?? fallback;
 
 /// Home tab: streak / XP / today's goal, the Continue card and the
-/// reels-style flashcard feed. Signed out: the welcome screen.
+/// social-media style feed (known cards, due cards, new cards in chapter
+/// order, carousel sets, quick questions). Signed out: the welcome screen.
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
@@ -126,6 +107,12 @@ class _HomeHeader extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
+            ),
+            IconButton(
+              tooltip: l10n.shuffleFeed,
+              visualDensity: VisualDensity.compact,
+              onPressed: () => ref.read(feedQueueProvider.notifier).shuffle(),
+              icon: Icon(Icons.shuffle_rounded, color: kc.textSecondary),
             ),
             _StatChip(
               icon: Icons.local_fire_department_rounded,
@@ -310,29 +297,118 @@ class _FeedState extends ConsumerState<_Feed> {
     super.dispose();
   }
 
-  Future<void> _answer(FeedCard card, bool knewIt) async {
+  Future<void> _next() async {
+    if (!mounted || !_pages.hasClients) return;
+    await _pages.nextPage(duration: KMotion.slow, curve: KMotion.curve);
+  }
+
+  Future<void> _answer(FeedItem item, FeedCard card, bool knewIt) async {
     await guard(
       () => ref
           .read(progressRepositoryProvider)
           .reviewCard(card.card.id, correct: knewIt),
     );
-    if (!mounted || !_pages.hasClients) return;
-    await _pages.nextPage(duration: KMotion.slow, curve: KMotion.curve);
+    ref
+        .read(feedQueueProvider.notifier)
+        .outcome(item.key, knewIt ? 'right' : 'wrong');
+    await _next();
+  }
+
+  Widget _post(
+    BuildContext context,
+    FeedItem item,
+    String lang,
+    Map<String, CaseProgress> caseProgress,
+    bool hintSeen,
+  ) {
+    final feed = ref.read(feedRepositoryProvider);
+    final payload = item.payload;
+    if (payload is CaseSource) {
+      final set = CaseSet.fromSource(payload.source, lang);
+      return MaxWidth(
+        child: CaseSetView(
+          key: ValueKey<String>(item.key),
+          set: set,
+          demo: kShowDemoCases && payload.moduleId == null,
+          accent: payload.moduleId == null
+              ? null
+              : moduleAccent(payload.moduleId!),
+          progress: caseProgress[set.id] ?? CaseProgress(setId: set.id),
+          showSwipeHint: !hintSeen,
+          onHintSeen: () {
+            guard(() => ref.read(caseRepositoryProvider).markHintSeen());
+            ref.invalidate(caseHintSeenProvider);
+          },
+          onProgress: (p) =>
+              guard(() => ref.read(caseRepositoryProvider).save(p)),
+          onNext: _next,
+          onReport: (slideId) => showReportMistake(
+            context,
+            ref,
+            targetType: 'learn_set',
+            targetId: '${set.id}#$slideId',
+          ),
+        ),
+      );
+    }
+    if (payload is FeedQuestion) {
+      final text = payload.text(lang);
+      return MaxWidth(
+        child: QuickQuestionCard(
+          key: ValueKey<String>(item.key),
+          prompt: text.prompt,
+          options: text.options,
+          correctIndex: payload.question.correctIndex,
+          explanation: text.explanation,
+          language: text.language,
+          moduleName: payload.module.name,
+          accent: moduleAccent(payload.module.id),
+          onAnswered: (right) => ref
+              .read(feedQueueProvider.notifier)
+              .outcome(item.key, right ? 'right' : 'wrong'),
+        ),
+      );
+    }
+    final card = payload as FeedCard;
+    final text = card.text(lang);
+    return MaxWidth(
+      child: FlashCardView(
+        key: ValueKey<String>(item.key),
+        front: text.front,
+        back: text.back,
+        language: text.language,
+        moduleName: card.module.name,
+        accent: moduleAccent(card.module.id),
+        liked: card.liked,
+        saved: card.saved,
+        onAnswer: (knewIt) => _answer(item, card, knewIt),
+        onLike: (on) => guard(() => feed.setLiked(card.card.id, on: on)),
+        onSave: (on) => guard(() => feed.setSaved(card.card.id, on: on)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final lang = Localizations.localeOf(context).languageCode;
-    final feed = ref.watch(feedRepositoryProvider);
-    ref.listen<AsyncValue<List<Object>>>(feedEntriesProvider, (previous, next) {
-      if (_pages.hasClients) _pages.jumpToPage(0);
+    ref.listen<AsyncValue<List<FeedItem>>>(feedQueueProvider, (prev, next) {
+      final a = prev?.value;
+      final b = next.value;
+      if (b == null || !_pages.hasClients) return;
+      if (a == null || a.isEmpty || b.isEmpty || a.first.key != b.first.key) {
+        _pages.jumpToPage(0);
+      }
     });
     final caseProgress = switch (ref.watch(caseProgressProvider)) {
       AsyncData(:final value) => value,
       _ => const <String, CaseProgress>{},
     };
-    return switch (ref.watch(feedEntriesProvider)) {
+    final hintSeen = switch (ref.watch(caseHintSeenProvider)) {
+      AsyncData(:final value) => value,
+      _ => true,
+    };
+    return switch (ref.watch(feedQueueProvider)) {
       AsyncData(:final value) when value.isEmpty =>
         ref.watch(downloadedKeyProvider).isEmpty
             ? EmptyView(
@@ -347,44 +423,14 @@ class _FeedState extends ConsumerState<_Feed> {
         controller: _pages,
         scrollDirection: Axis.vertical,
         itemCount: value.length + 1,
-        itemBuilder: (context, i) {
-          if (i == value.length) return const _FeedDone();
-          final entry = value[i];
-          if (entry is Map<String, Object?>) {
-            final set = CaseSet.fromSource(entry, lang);
-            return MaxWidth(
-              child: CaseSetView(
-                key: ValueKey<String>('case-${set.id}'),
-                set: set,
-                demo: true,
-                progress: caseProgress[set.id] ?? CaseProgress(setId: set.id),
-                onProgress: (p) =>
-                    guard(() => ref.read(caseRepositoryProvider).save(p)),
-              ),
-            );
-          }
-          final card = entry as FeedCard;
-          final text = card.text(lang);
-          return MaxWidth(
-            child: FlashCardView(
-              key: ValueKey<int>(card.card.id),
-              front: text.front,
-              back: text.back,
-              language: text.language,
-              moduleName: card.module.name,
-              accent: moduleAccent(card.module.id),
-              liked: card.liked,
-              saved: card.saved,
-              onAnswer: (knewIt) => _answer(card, knewIt),
-              onLike: (on) => guard(() => feed.setLiked(card.card.id, on: on)),
-              onSave: (on) => guard(() => feed.setSaved(card.card.id, on: on)),
-            ),
-          );
-        },
+        onPageChanged: (i) => ref.read(feedQueueProvider.notifier).shown(i),
+        itemBuilder: (context, i) => i == value.length
+            ? const _FeedDone()
+            : _post(context, value[i], lang, caseProgress, hintSeen),
       ),
       AsyncError(:final error) => ErrorView(
         failure: mapError(error),
-        onRetry: () => ref.invalidate(feedEntriesProvider),
+        onRetry: () => ref.invalidate(feedQueueProvider),
       ),
       _ => const LoadingView(),
     };
@@ -424,6 +470,7 @@ class _FeedDone extends ConsumerWidget {
           : () {
               ref.read(feedAheadProvider.notifier).set(ahead: true);
               ref.invalidate(feedProvider);
+              ref.invalidate(feedQueueProvider);
             },
     );
   }
@@ -434,17 +481,20 @@ class _ContinueCaseCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!kShowDemoCases) return const SizedBox.shrink();
     final progress = switch (ref.watch(caseProgressProvider)) {
       AsyncData(:final value) => value,
       _ => const <String, CaseProgress>{},
     };
+    final sources = switch (ref.watch(caseSourcesProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <CaseSource>[],
+    };
     final lang = Localizations.localeOf(context).languageCode;
     CaseSet? open;
-    for (final source in demoCases) {
-      final p = progress['${source['id']}'];
+    for (final source in sources) {
+      final p = progress[source.id];
       if (p != null && p.started && !p.finished) {
-        open = CaseSet.fromSource(source, lang);
+        open = CaseSet.fromSource(source.source, lang);
         break;
       }
     }

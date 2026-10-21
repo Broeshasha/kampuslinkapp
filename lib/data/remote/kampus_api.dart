@@ -253,7 +253,19 @@ class KampusApi {
     final likes = await _all('learn_card_likes', 'card_id', 'card_id');
     final saves = await _all('learn_card_saves', 'card_id', 'card_id');
     int id(Map<String, dynamic> r) => (r['card_id'] as num).toInt();
+    // Contract 11 table; older servers do not have it yet.
+    var sets = const <Map<String, dynamic>>[];
+    try {
+      sets = await _all(
+        'learn_set_progress',
+        'set_id, reached, guess, correct, completed',
+        'set_id',
+      );
+    } on PostgrestException {
+      sets = const [];
+    }
     return ServerProgress(
+      sets: sets,
       cards: cards,
       lessons: lessons,
       positions: positions,

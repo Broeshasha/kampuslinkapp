@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../features/cases/case_models.dart';
 import '../db/app_database.dart';
 
 int _int(Object? v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
@@ -19,6 +20,7 @@ class ServerProgress {
     this.positions = const [],
     this.likes = const {},
     this.saves = const {},
+    this.sets = const [],
   });
 
   /// learn_card_progress: card_id, box, due_at, last_reviewed_at
@@ -33,6 +35,10 @@ class ServerProgress {
   /// learn_card_likes / learn_card_saves: card ids
   final Set<int> likes;
   final Set<int> saves;
+
+  /// learn_set_progress: set_id, reached, guess, correct, completed
+  /// (empty when the server does not have the table yet).
+  final List<Map<String, dynamic>> sets;
 }
 
 class MergeReport {
@@ -57,6 +63,7 @@ class _Pending {
   final positions = <int>{};
   final likes = <int>{};
   final saves = <int>{};
+  final sets = <String>{};
 }
 
 /// MASTER_PLAN 7.6: after a successful sync, bring the server's own rows
@@ -94,6 +101,8 @@ class ServerMerge {
           p.saves.add(_int(payload['card_id']));
         case 'answer':
           answeredQuestions.add(_int(payload['question_id']));
+        case 'case_progress':
+          p.sets.add('${payload['set_id']}');
       }
     }
     if (answeredQuestions.isNotEmpty) {
@@ -232,6 +241,52 @@ class ServerMerge {
           .into(_db.cardProgress)
           .insertOnConflictUpdate(
             CardProgressCompanion(cardId: Value(id), saved: Value(on)),
+          );
+      flags++;
+    }
+
+    // Carousel sets: furthest slide wins, completed stays completed, the
+    // phone's own guess is kept. A set with an unsent op is left alone.
+    for (final r in server.sets) {
+      final id = '${r['set_id'] ?? ''}';
+      if (id.isEmpty) continue;
+      if (pending.sets.contains(id)) {
+        kept++;
+        continue;
+      }
+      final key = 'case:$id';
+      final row = await (_db.select(
+        _db.keyValues,
+      )..where((t) => t.name.equals(key))).getSingleOrNull();
+      var local = CaseProgress(setId: id);
+      if (row != null) {
+        try {
+          final v = jsonDecode(row.value);
+          if (v is Map) {
+            local = CaseProgress.fromJson(v.cast<String, dynamic>());
+          }
+        } on FormatException {
+          // keep the empty one
+        }
+      }
+      final merged = local.copyWith(
+        reached: _int(r['reached']) > local.reached
+            ? _int(r['reached'])
+            : local.reached,
+        guess: local.guess ?? _intOrNull(r['guess']),
+        correct:
+            local.correct ??
+            (r['correct'] is bool ? r['correct'] as bool : null),
+        finished: local.finished || r['completed'] == true,
+      );
+      if (jsonEncode(merged.toJson()) == jsonEncode(local.toJson())) continue;
+      await _db
+          .into(_db.keyValues)
+          .insertOnConflictUpdate(
+            KeyValuesCompanion(
+              name: Value(key),
+              value: Value(jsonEncode(merged.toJson())),
+            ),
           );
       flags++;
     }

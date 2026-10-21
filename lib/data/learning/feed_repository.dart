@@ -77,7 +77,8 @@ class FeedRepository {
   final OutboxRepository _outbox;
   final DateTime Function() _now;
 
-  Future<List<FeedCard>> _all() async {
+  /// Every stored card with its module, lesson position and progress.
+  Future<List<FeedCard>> allCards() async {
     final rows = await _db.select(_db.cards).join([
       innerJoin(_db.modules, _db.modules.id.equalsExp(_db.cards.moduleId)),
       leftOuterJoin(_db.lessons, _db.lessons.id.equalsExp(_db.cards.lessonId)),
@@ -101,7 +102,7 @@ class FeedRepository {
   /// card order). [ahead] = only cards not due yet, soonest first.
   Future<List<FeedCard>> feed({bool ahead = false, int limit = 40}) async {
     final now = _now();
-    final all = await _all();
+    final all = await allCards();
     final due = <FeedCard>[];
     final fresh = <FeedCard>[];
     final later = <FeedCard>[];

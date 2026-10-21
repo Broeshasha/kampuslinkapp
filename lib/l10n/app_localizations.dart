@@ -106,6 +106,84 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @kindMystery.
+  ///
+  /// In en, this message translates to:
+  /// **'Mystery'**
+  String get kindMystery;
+
+  /// No description provided for @kindExplainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Explainer'**
+  String get kindExplainer;
+
+  /// No description provided for @kindQuizChain.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz chain'**
+  String get kindQuizChain;
+
+  /// No description provided for @clueCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Clue {n}/{total}'**
+  String clueCount(int n, int total);
+
+  /// No description provided for @stepCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {n}/{total}'**
+  String stepCount(int n, int total);
+
+  /// No description provided for @whyExam.
+  ///
+  /// In en, this message translates to:
+  /// **'Why it matters for the exam'**
+  String get whyExam;
+
+  /// No description provided for @nextCase.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextCase;
+
+  /// No description provided for @reportMistake.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a mistake'**
+  String get reportMistake;
+
+  /// No description provided for @caseSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get caseSaved;
+
+  /// No description provided for @shuffleFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Shuffle the feed'**
+  String get shuffleFeed;
+
+  /// No description provided for @swipeForMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to see more'**
+  String get swipeForMore;
+
+  /// No description provided for @quickRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right!'**
+  String get quickRight;
+
+  /// No description provided for @quickWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Not quite. The right answer is in green.'**
+  String get quickWrong;
+
   /// No description provided for @dlRunCheck.
   ///
   /// In en, this message translates to:

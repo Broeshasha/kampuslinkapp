@@ -142,6 +142,9 @@ class BundleImporter {
       });
 
       await _saveSets(moduleId, bundle['sets']);
+      for (final l in lessons) {
+        await _saveMeta(l);
+      }
       await _db
           .into(_db.modules)
           .insertOnConflictUpdate(
@@ -181,6 +184,53 @@ class BundleImporter {
           KeyValuesCompanion(
             name: Value('sets:$moduleId'),
             value: Value(jsonEncode(sets)),
+          ),
+        );
+  }
+
+  /// File 13 fields the feed uses (cards: concept, difficulty, card_kind;
+  /// questions: concept, difficulty), kept in key_values `meta:<lesson>`
+  /// so no schema change is needed. Null fields are simply left out.
+  Future<void> _saveMeta(
+    Map<String, dynamic> lesson, {
+    bool merge = false,
+  }) async {
+    final key = 'meta:${_int(lesson['id'])}';
+    Map<String, dynamic> fields(Map<String, dynamic> m, List<String> keys) => {
+      for (final k in keys)
+        if (m[k] != null) k: m[k],
+    };
+    final cards = <String, dynamic>{
+      for (final c in _list(lesson['cards']).map(_map))
+        '${_int(c['id'])}': fields(c, const [
+          'concept',
+          'difficulty',
+          'card_kind',
+        ]),
+    }..removeWhere((_, v) => (v as Map).isEmpty);
+    final questions = <String, dynamic>{
+      for (final q in _list(lesson['questions']).map(_map))
+        '${_int(q['id'])}': fields(q, const ['concept', 'difficulty']),
+    }..removeWhere((_, v) => (v as Map).isEmpty);
+    if (merge) {
+      if (cards.isEmpty && questions.isEmpty) return;
+      final row = await (_db.select(
+        _db.keyValues,
+      )..where((t) => t.name.equals(key))).getSingleOrNull();
+      final old = _decodeMap(row?.value);
+      cards.addAll({..._map(old['c']), ...cards});
+      questions.addAll({..._map(old['q']), ...questions});
+    }
+    if (cards.isEmpty && questions.isEmpty) {
+      await (_db.delete(_db.keyValues)..where((t) => t.name.equals(key))).go();
+      return;
+    }
+    await _db
+        .into(_db.keyValues)
+        .insertOnConflictUpdate(
+          KeyValuesCompanion(
+            name: Value(key),
+            value: Value(jsonEncode({'c': cards, 'q': questions})),
           ),
         );
   }
@@ -292,6 +342,7 @@ class BundleImporter {
             ),
           );
     }
+    await _saveMeta(lesson, merge: merge);
   });
 
   /// get_module_extras: glossary and resources replaced, sets kept for the feed.
@@ -351,5 +402,8 @@ class BundleImporter {
           _db.questions,
         )..where((t) => t.lessonId.isIn(ids))).go();
         await (_db.delete(_db.lessons)..where((t) => t.id.isIn(ids))).go();
+        await (_db.delete(
+          _db.keyValues,
+        )..where((t) => t.name.isIn([for (final id in ids) 'meta:$id']))).go();
       });
 }

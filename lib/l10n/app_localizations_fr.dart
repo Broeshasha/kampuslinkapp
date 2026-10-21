@@ -13,6 +13,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get kindMystery => 'Mystère';
+
+  @override
+  String get kindExplainer => 'Explication';
+
+  @override
+  String get kindQuizChain => 'Quiz en chaîne';
+
+  @override
+  String clueCount(int n, int total) {
+    return 'Indice $n/$total';
+  }
+
+  @override
+  String stepCount(int n, int total) {
+    return 'Étape $n/$total';
+  }
+
+  @override
+  String get whyExam => 'Pourquoi c’est important pour l’examen';
+
+  @override
+  String get nextCase => 'Suivant';
+
+  @override
+  String get reportMistake => 'Signaler une erreur';
+
+  @override
+  String get caseSaved => 'Enregistré';
+
+  @override
+  String get shuffleFeed => 'Mélanger le fil';
+
+  @override
+  String get swipeForMore => 'Glisse pour voir la suite';
+
+  @override
+  String get quickRight => 'Bonne réponse !';
+
+  @override
+  String get quickWrong => 'Pas tout à fait. La bonne réponse est en vert.';
+
+  @override
   String get dlRunCheck => 'Vérifier le téléchargement';
 
   @override
