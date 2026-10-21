@@ -12,6 +12,7 @@ import '../features/onboarding/onboarding_page.dart';
 import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
 import '../features/quiz/quiz_page.dart';
+import '../features/profile/download_doctor_page.dart';
 import '../features/profile/renderer_preview_page.dart';
 import '../features/profile/saved_cards_page.dart';
 import '../features/profile/states_demo_page.dart';
@@ -36,7 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final location = state.matchedLocation;
-      if (location == '/onboarding') return null;
+      if (location == '/onboarding' || location == '/doctor') return null;
       return switch (ref.read(onboardingStatusProvider)) {
         OnboardingStatus.loading => location == '/splash' ? null : '/splash',
         OnboardingStatus.needed => '/onboarding',
@@ -46,6 +47,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingPage()),
+      GoRoute(path: '/doctor', builder: (_, _) => const DownloadDoctorPage()),
       GoRoute(
         path: '/case/:setId',
         builder: (_, state) =>

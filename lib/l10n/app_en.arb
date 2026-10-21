@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
   "appTitle": "KampusLink",
+  "dlRunCheck": "Download check",
   "dlOffline": "No internet. What already arrived stays on your phone; we continue when you are back online.",
   "dlTimeout": "The server took too long. Tap Retry: we continue from where it stopped.",
   "dlServer": "The server had a problem sending this module. Tap Retry in a moment.",

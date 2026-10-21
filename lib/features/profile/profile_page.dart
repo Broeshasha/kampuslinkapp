@@ -388,6 +388,11 @@ class _SavedCardsRow extends ConsumerWidget {
           ),
           onTap: () => context.go('/profile/saved'),
         ),
+        ListTile(
+          leading: Icon(Icons.troubleshoot_rounded, color: kc.textSecondary),
+          title: Text(l10n.dlRunCheck),
+          onTap: () => context.push('/doctor'),
+        ),
       ],
     );
   }

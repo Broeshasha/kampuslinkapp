@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -90,6 +91,12 @@ class _DownloadStepState extends ConsumerState<DownloadStep> {
               ),
             ),
         ],
+        if (sync.failures.isNotEmpty)
+          TextButton.icon(
+            onPressed: () => context.push('/doctor'),
+            icon: const Icon(Icons.troubleshoot_rounded),
+            label: Text(l10n.dlRunCheck),
+          ),
       ],
       action: finished
           ? FilledButton(

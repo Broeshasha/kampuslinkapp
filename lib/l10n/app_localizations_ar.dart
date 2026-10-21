@@ -13,6 +13,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get dlRunCheck => 'فحص التنزيل';
+
+  @override
   String get dlOffline =>
       'لا يوجد إنترنت. ما وصل يبقى على هاتفك، ونكمل عند عودة الاتصال.';
 

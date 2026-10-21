@@ -1,6 +1,7 @@
 {
   "@@locale": "fr",
   "appTitle": "KampusLink",
+  "dlRunCheck": "V\u00e9rifier le t\u00e9l\u00e9chargement",
   "dlOffline": "Pas d'internet. Ce qui est d\u00e9j\u00e0 arriv\u00e9 reste sur ton t\u00e9l\u00e9phone ; on continue d\u00e8s que tu es en ligne.",
   "dlTimeout": "Le serveur a mis trop de temps. Touche R\u00e9essayer : on reprend l\u00e0 o\u00f9 \u00e7a s'est arr\u00eat\u00e9.",
   "dlServer": "Le serveur a eu un probl\u00e8me pour envoyer ce module. R\u00e9essaie dans un instant.",

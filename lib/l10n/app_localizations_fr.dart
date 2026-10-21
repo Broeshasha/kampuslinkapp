@@ -13,6 +13,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get dlRunCheck => 'Vérifier le téléchargement';
+
+  @override
   String get dlOffline =>
       'Pas d\'internet. Ce qui est déjà arrivé reste sur ton téléphone ; on continue dès que tu es en ligne.';
 

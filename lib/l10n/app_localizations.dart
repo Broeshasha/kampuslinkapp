@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @dlRunCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Download check'**
+  String get dlRunCheck;
+
   /// No description provided for @dlOffline.
   ///
   /// In en, this message translates to:
