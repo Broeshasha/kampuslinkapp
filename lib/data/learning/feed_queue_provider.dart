@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/errors/result.dart';
 import '../cases/case_repository.dart';
+import '../profile/study_level.dart';
 import '../providers.dart';
 import 'feed_pool.dart';
 import 'feed_queue.dart';
@@ -37,6 +38,8 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
   Future<List<FeedItem>> build() async {
     if (!ref.watch(isSignedInProvider)) return const [];
     final ahead = ref.watch(feedAheadProvider);
+    // A new semester rebuilds the whole queue at once (WP17-A).
+    ref.watch(currentSemesterProvider);
     ref.listen<String>(downloadedKeyProvider, (previous, next) {
       if (previous != next && (state.value?.isEmpty ?? false)) {
         ref.invalidateSelf();
@@ -63,6 +66,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
             for (final e in progress.entries)
               if (e.value.started && !e.value.finished) e.key,
           },
+          semester: ref.read(currentSemesterProvider),
         );
     _random = math.Random(now.microsecondsSinceEpoch);
     final list = buildFeedQueue(

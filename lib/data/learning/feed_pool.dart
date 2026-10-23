@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../cases/case_repository.dart';
 import '../db/app_database.dart';
 import '../lessons/lesson_content.dart';
+import '../profile/study_level.dart';
 import 'feed_queue.dart';
 import 'feed_repository.dart';
 
@@ -51,7 +52,8 @@ String? _str(Object? v) => v is String && v.isNotEmpty ? v : null;
 int? _intOrNull(Object? v) => v is num ? v.toInt() : int.tryParse('${v ?? ''}');
 
 /// Reads the local database and sorts every possible post into its bucket
-/// (lead brief 2, C). Everything is local and works offline.
+/// (lead brief 2, C), current semester only (WP17-A). Everything is local
+/// and works offline.
 class FeedPoolLoader {
   FeedPoolLoader(this._db, this._feed, this._cases);
 
@@ -142,10 +144,18 @@ class FeedPoolLoader {
     bool ahead = false,
     Map<String, bool> finishedSets = const {},
     Set<String> startedSets = const {},
+    int? semester,
   }) async {
     final meta = await _meta();
     final open = await _openLessons();
-    final cards = await _feed.allCards();
+    // WP17-A, A3: every bucket uses ONLY current-semester modules.
+    final modules = {
+      for (final m in await _db.select(_db.modules).get()) m.id: m,
+    };
+    final cards = [
+      for (final c in await _feed.allCards())
+        if (inSemester(modules[c.module.id] ?? c.module, semester)) c,
+    ];
     final known = <FeedItem>[];
     final due = <FeedItem>[];
     final fresh = <FeedCard>[];
@@ -216,14 +226,11 @@ class FeedPoolLoader {
       for (final p in await _db.select(_db.lessonProgress).get())
         if (p.completed) p.lessonId,
     };
-    final modules = {
-      for (final m in await _db.select(_db.modules).get()) m.id: m,
-    };
     final quick = <FeedItem>[];
     for (final q in await _db.select(_db.questions).get()) {
       if (q.kind != 'mcq') continue;
       final module = modules[q.moduleId];
-      if (module == null) continue;
+      if (module == null || !inSemester(module, semester)) continue;
       final m = meta['q:${q.id}'] ?? const <String, dynamic>{};
       final concept = _str(m['concept']);
       final eligible =
@@ -250,6 +257,7 @@ class FeedPoolLoader {
     for (var i = 0; i < sources.length; i++) {
       final s = sources[i];
       if (finishedSets[s.id] ?? false) continue;
+      if (!inSemester(modules[s.moduleId], semester)) continue;
       sets.add(
         FeedItem(
           key: 's:${s.id}',

@@ -106,6 +106,54 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @studyLevelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My year & semester'**
+  String get studyLevelTitle;
+
+  /// No description provided for @studyLevelValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{year} · Semester {number}'**
+  String studyLevelValue(String year, int number);
+
+  /// No description provided for @studyLevelChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get studyLevelChange;
+
+  /// No description provided for @studyLevelYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get studyLevelYear;
+
+  /// No description provided for @studyLevelSemester.
+  ///
+  /// In en, this message translates to:
+  /// **'Semester'**
+  String get studyLevelSemester;
+
+  /// No description provided for @studyLevelSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Your modules are being updated.'**
+  String get studyLevelSaved;
+
+  /// No description provided for @studyLevelPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this phone, sent when you are online.'**
+  String get studyLevelPending;
+
+  /// No description provided for @semesterBannerText.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished your semester? Change it here'**
+  String get semesterBannerText;
+
   /// No description provided for @codeCopy.
   ///
   /// In en, this message translates to:

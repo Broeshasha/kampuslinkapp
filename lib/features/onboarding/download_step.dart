@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/db/app_database.dart';
-import '../../data/providers.dart';
+import '../../data/profile/study_level.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/download_issue.dart';
@@ -40,7 +40,7 @@ class _DownloadStepState extends ConsumerState<DownloadStep> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    final modules = switch (ref.watch(modulesStreamProvider)) {
+    final modules = switch (ref.watch(visibleModulesProvider)) {
       AsyncData(:final value) => value,
       _ => const <ModuleRow>[],
     };

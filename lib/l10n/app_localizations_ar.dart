@@ -13,6 +13,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get studyLevelTitle => 'سنتي وسداسيي';
+
+  @override
+  String studyLevelValue(String year, int number) {
+    return '$year · السداسي $number';
+  }
+
+  @override
+  String get studyLevelChange => 'تغيير';
+
+  @override
+  String get studyLevelYear => 'السنة';
+
+  @override
+  String get studyLevelSemester => 'السداسي';
+
+  @override
+  String get studyLevelSaved => 'تم الحفظ. يجري تحديث مقاييسك.';
+
+  @override
+  String get studyLevelPending =>
+      'تم الحفظ على هذا الهاتف، وسيُرسل عند الاتصال.';
+
+  @override
+  String get semesterBannerText => 'أنهيت السداسي؟ غيّره من هنا';
+
+  @override
   String get codeCopy => 'نسخ';
 
   @override

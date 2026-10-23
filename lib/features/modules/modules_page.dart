@@ -7,8 +7,7 @@ import '../../core/errors/failure_mapper.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/db/app_database.dart';
-import '../../data/learning/learning_providers.dart';
-import '../../data/profile/me_values.dart';
+import '../../data/profile/study_level.dart';
 import '../../data/providers.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -18,7 +17,6 @@ import '../../ui/sync_chip.dart';
 import '../auth/google_sign_in_button.dart';
 import '../profile/semester_sheet.dart';
 import 'module_card.dart';
-import 'module_sections.dart';
 
 /// Modules tab: reads ONLY the local database; pull down = sync.
 class ModulesPage extends ConsumerWidget {
@@ -73,7 +71,7 @@ class _ModulesBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final modules = ref.watch(modulesStreamProvider);
+    final modules = ref.watch(visibleModulesProvider);
     final sync = ref.watch(syncControllerProvider);
     final online = ref.watch(isOnlineProvider);
     Future<void> refresh() =>
@@ -130,47 +128,38 @@ class _ModuleList extends ConsumerWidget {
       color: context.kc.textSecondary,
       fontWeight: FontWeight.w700,
     );
-    final me = ref.watch(serverStatsProvider).value;
-    final sections = moduleSections(
-      modules,
-      current: currentSemesterOf(me),
-      pinned: pinnedSemestersOf(me),
-    );
-    final children = <Widget>[const SemesterBanner()];
-    for (final section in sections) {
-      final s = section.semester;
-      final title = switch (section.kind) {
-        SectionKind.current => l10n.semesterThis(s ?? 0),
-        SectionKind.pinned => l10n.semesterStillFollowing(s ?? 0),
-        SectionKind.previous => l10n.semesterPrevious,
-        SectionKind.semester =>
-          s == null ? l10n.tabModules : l10n.semesterLabel(s),
-      };
-      children.add(
-        Padding(
-          padding: const EdgeInsetsDirectional.only(
-            top: KSpace.lg,
-            bottom: KSpace.sm,
-            start: KSpace.xs,
-          ),
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(title, style: headerStyle),
-          ),
+    // WP17-A: only the current semester's modules reach this list.
+    final semester = ref.watch(currentSemesterProvider);
+    final children = <Widget>[
+      Padding(
+        padding: const EdgeInsetsDirectional.only(
+          top: KSpace.lg,
+          bottom: KSpace.sm,
+          start: KSpace.xs,
         ),
-      );
-      for (final m in section.modules) {
-        children.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: KSpace.md),
-            child: ModuleCard(
-              module: m,
-              downloading: downloading.contains(m.id),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                semester == null
+                    ? l10n.tabModules
+                    : l10n.semesterThis(semester),
+                style: headerStyle,
+              ),
             ),
-          ),
-        );
-      }
-    }
+            TextButton(
+              onPressed: () => showStudyLevelSheet(context, ref),
+              child: Text(l10n.studyLevelChange),
+            ),
+          ],
+        ),
+      ),
+      for (final m in modules)
+        Padding(
+          padding: const EdgeInsets.only(bottom: KSpace.md),
+          child: ModuleCard(module: m, downloading: downloading.contains(m.id)),
+        ),
+    ];
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(KSpace.lg, 0, KSpace.lg, KSpace.xxl),

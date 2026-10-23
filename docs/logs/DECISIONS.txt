@@ -74,3 +74,11 @@ title|caption, annotations [{line, text|note}] with per-language text). Always L
 Copy (toast), "Result" panel, numbered badges on annotated lines + numbered notes under the block, simple colouring from
 the figure palette (keywords c2, builtins c1, strings c6, numbers c4, comments muted). System monospace font (no new
 font file). Paragraphs: `inline code` = monospace chip, ```lang fences``` = a CodeBlock between the text parts.
+D-032 (2026-10-23, founder + lead WP17-A) The current semester is the ONLY content shown. "Did you pass?" and confirm_year
+removed; pinned / previous semesters removed. The student sets year + semester (set_study_level, LMD pairs L1 S1/S2,
+L2 S3/S4, L3 S5/S6, M1 S1/S2, M2 S3/S4) from Profile ("My year & semester"), the Modules header ("Change") or the Home
+banner (Jan 15-Mar 15, Jun 15-Oct 15, dismiss = 14 days). Offline: saved on the phone (study_level_pending), applied at
+once, sent after the next sync; a refused value is rolled back. Filter = inSemester(module, current): Modules tab,
+onboarding download list, Home feed (all 5 buckets), Continue sheet, open cases, automatic downloads. No current
+semester yet = every module that has one; a module without semester is never shown. Other-semester data stays local.
+A semester change clears feed_last_first, rebuilds the feed and starts a sync.

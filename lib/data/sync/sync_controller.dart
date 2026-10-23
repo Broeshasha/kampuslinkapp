@@ -9,6 +9,7 @@ import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
 import '../chat/chat_providers.dart';
+import '../profile/study_level.dart';
 import '../providers.dart';
 import 'download_failure.dart';
 import 'module_downloader.dart';
@@ -152,6 +153,7 @@ class SyncController extends Notifier<SyncState> {
       modules: ref.read(moduleRepositoryProvider),
       downloader: downloader,
       fetchModules: api.getMyModules,
+      include: (m) => inSemester(m, ref.read(currentSemesterProvider)),
     );
     final report = await service.sync(
       _firstLanguages(),

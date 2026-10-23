@@ -7,6 +7,7 @@ import '../../core/auth/auth_repository.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
 import '../lessons/lesson_repository.dart';
+import '../profile/study_level.dart';
 import '../providers.dart';
 import '../sync/sync_controller.dart';
 import 'feed_repository.dart';
@@ -30,7 +31,7 @@ final quizRepositoryProvider = Provider<QuizRepository>(
 /// Changes only when a module's downloaded content changes (not on every
 /// sync), so the feed does not reshuffle under the student's finger.
 final downloadedKeyProvider = Provider<String>(
-  (ref) => switch (ref.watch(modulesStreamProvider)) {
+  (ref) => switch (ref.watch(visibleModulesProvider)) {
     AsyncData(:final value) => [
       for (final m in value)
         if (m.localVersion > 0) '${m.id}:${m.localVersion}',
@@ -70,9 +71,19 @@ final studyDaysProvider = StreamProvider<Map<String, int>>((ref) {
   return ref.watch(feedRepositoryProvider).watchStudyDays();
 });
 
+/// Unfinished lessons of the CURRENT semester only (WP17-A, A3).
 final continueProvider = StreamProvider<List<ContinueItem>>((ref) {
   if (!ref.watch(isSignedInProvider)) return Stream.value(const []);
-  return ref.watch(feedRepositoryProvider).watchContinue();
+  final semester = ref.watch(currentSemesterProvider);
+  return ref
+      .watch(feedRepositoryProvider)
+      .watchContinue()
+      .map(
+        (items) => [
+          for (final i in items)
+            if (inSemester(i.module, semester)) i,
+        ],
+      );
 });
 
 const _statsKey = 'server_stats';
@@ -87,12 +98,8 @@ const _statsKeys = [
   'speciality_name',
   'academic_year',
   'reminders_enabled',
-  // Contract 11
+  // Contract 11 / WP17-A
   'current_semester',
-  'pinned_semesters',
-  'year_question_key',
-  'year_confirmed_for',
-  'year_question_due',
   'is_admin',
 ];
 

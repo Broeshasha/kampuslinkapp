@@ -13,6 +13,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get studyLevelTitle => 'My year & semester';
+
+  @override
+  String studyLevelValue(String year, int number) {
+    return '$year · Semester $number';
+  }
+
+  @override
+  String get studyLevelChange => 'Change';
+
+  @override
+  String get studyLevelYear => 'Year';
+
+  @override
+  String get studyLevelSemester => 'Semester';
+
+  @override
+  String get studyLevelSaved => 'Saved. Your modules are being updated.';
+
+  @override
+  String get studyLevelPending =>
+      'Saved on this phone, sent when you are online.';
+
+  @override
+  String get semesterBannerText => 'Finished your semester? Change it here';
+
+  @override
   String get codeCopy => 'Copy';
 
   @override

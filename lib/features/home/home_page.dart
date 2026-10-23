@@ -17,6 +17,7 @@ import '../../data/learning/learning_providers.dart';
 import '../../data/lessons/figures.dart';
 import '../../data/lessons/lesson_content.dart';
 import '../../data/lessons/lesson_repository.dart';
+import '../../data/profile/study_level.dart';
 import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/coming_soon.dart';
@@ -26,10 +27,10 @@ import '../cases/case_models.dart';
 import '../cases/case_set_view.dart';
 import '../cases/demo_cases.dart';
 import '../cases/report_sheet.dart';
+import '../profile/semester_sheet.dart';
 import 'flash_card.dart';
 import 'quick_question_card.dart';
 import 'study_activity.dart';
-import 'year_question_card.dart';
 
 int _int(Object? v, int fallback) =>
     v is num ? v.toInt() : int.tryParse('$v') ?? fallback;
@@ -56,7 +57,7 @@ class HomePage extends ConsumerWidget {
           child: Column(
             children: [
               _HomeHeader(),
-              YearQuestionCard(),
+              SemesterBanner(),
               Expanded(child: _Feed()),
             ],
           ),
@@ -226,10 +227,12 @@ class _ResumeButton extends ConsumerWidget {
       _ => const <CaseSource>[],
     };
     final lang = Localizations.localeOf(context).languageCode;
+    final visible = ref.watch(visibleModuleIdsProvider);
     final cases = <CaseSet>[
       for (final source in sources)
-        if (progress[source.id] case final p? when p.started && !p.finished)
-          CaseSet.fromSource(source.source, lang),
+        if (visible.contains(source.moduleId))
+          if (progress[source.id] case final p? when p.started && !p.finished)
+            CaseSet.fromSource(source.source, lang),
     ].take(2).toList();
     if (lessons.isEmpty && cases.isEmpty) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);

@@ -1,5 +1,6 @@
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
+import '../db/app_database.dart';
 import '../modules/module_repository.dart';
 import 'download_failure.dart';
 import 'module_downloader.dart';
@@ -28,11 +29,16 @@ class ModuleSyncService {
     required this.modules,
     required this.downloader,
     required this.fetchModules,
+    this.include,
   });
 
   final ModuleRepository modules;
   final ModuleDownloader downloader;
   final FetchModules fetchModules;
+
+  /// Which modules may be downloaded (WP17-A: current semester only);
+  /// null = all.
+  final bool Function(ModuleRow module)? include;
 
   Future<ModuleSyncReport> sync(
     List<String> langs, {
@@ -46,7 +52,11 @@ class ModuleSyncService {
       case Ok(:final value):
         await modules.saveServerList(value);
     }
-    final todo = await modules.needingDownload(langs: langs);
+    final filter = include;
+    final todo = [
+      for (final m in await modules.needingDownload(langs: langs))
+        if (filter == null || filter(m)) m,
+    ];
     var downloaded = 0;
     final failures = <int, DownloadFailure>{};
     for (final m in todo) {

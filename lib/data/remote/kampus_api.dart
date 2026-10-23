@@ -43,26 +43,18 @@ class KampusApi {
         .timeout(_timeout),
   );
 
-  /// Contract 11: current semester (1..6) and pinned semesters (null =
-  /// keep the old pins, [] = clear them). Returns the new get_me().
-  Future<Map<String, dynamic>> setSemester(
-    int semester,
-    List<int>? pinned,
-  ) async => _map(
-    await _client
-        .rpc(
-          'set_semester',
-          params: {'p_semester': semester, 'p_pinned': pinned},
-        )
-        .timeout(_timeout),
-  );
-
-  /// Contract 11: 'passed' | 'repeat' | 'passed_with_debts'. Returns get_me().
-  Future<Map<String, dynamic>> confirmYear(String result) async => _map(
-    await _client
-        .rpc('confirm_year', params: {'p_result': result})
-        .timeout(_timeout),
-  );
+  /// WP17-A: the student's year (L1..M2) and current semester (LMD pair of
+  /// the year). Clears pinned semesters. Returns the new get_me().
+  /// Errors: invalid_year, invalid_semester, profile_missing.
+  Future<Map<String, dynamic>> setStudyLevel(String year, int semester) async =>
+      _map(
+        await _client
+            .rpc(
+              'set_study_level',
+              params: {'p_year': year, 'p_semester': semester},
+            )
+            .timeout(_timeout),
+      );
 
   /// Contract 11 (admins only): the bundle WITH draft lessons and sets.
   Future<Map<String, dynamic>> getModuleBundlePreview(
