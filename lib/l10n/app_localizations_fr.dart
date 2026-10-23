@@ -13,6 +13,88 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get reasonWrongAnswer => 'Réponse fausse';
+
+  @override
+  String get reasonTypo => 'Faute de frappe';
+
+  @override
+  String get reasonUnclear => 'Pas clair';
+
+  @override
+  String get reasonTranslation => 'Problème de traduction';
+
+  @override
+  String get semesterPick => 'Tu es en quel semestre ?';
+
+  @override
+  String get semesterPinnedHelp =>
+      'Semestres que tu suis encore (dettes, rattrapages) :';
+
+  @override
+  String get semesterNone => 'Choisis ton semestre actuel';
+
+  @override
+  String semesterCurrent(int number) {
+    return 'Semestre actuel : S$number';
+  }
+
+  @override
+  String semesterPinned(String list) {
+    return 'Suivis aussi : $list';
+  }
+
+  @override
+  String get semesterNewHint =>
+      'Nouveau semestre ? Vérifie que le tien est juste.';
+
+  @override
+  String get semesterUpdate => 'Mettre à jour';
+
+  @override
+  String semesterThis(int number) {
+    return 'Ce semestre · S$number';
+  }
+
+  @override
+  String semesterStillFollowing(int number) {
+    return 'S$number · encore suivi';
+  }
+
+  @override
+  String get semesterPrevious => 'Semestres précédents';
+
+  @override
+  String yearQuestionTitle(String year) {
+    return 'As-tu validé ton année ($year) ?';
+  }
+
+  @override
+  String get yearPassed => 'J’ai validé';
+
+  @override
+  String get yearPassedDebts => 'Validé avec dettes';
+
+  @override
+  String get yearRepeat => 'Je redouble';
+
+  @override
+  String get yearThanks => 'C’est noté. Tes modules sont mis à jour.';
+
+  @override
+  String get previewTitle => 'Aperçu des brouillons';
+
+  @override
+  String get previewDrafts => 'Aperçu des brouillons';
+
+  @override
+  String get previewDraftsHelp =>
+      'Admins seulement : voir les leçons et séries en brouillon avant publication.';
+
+  @override
+  String get draftBadge => 'BROUILLON';
+
+  @override
   String get kindMystery => 'Mystère';
 
   @override

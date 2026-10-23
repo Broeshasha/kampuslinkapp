@@ -53,3 +53,9 @@ A carousel set may follow 2 posts of its own lesson (different format). Carousel
 'case_progress' {set_id, reached, guess, correct, completed, at}; learn_set_progress is merged when the server has it.
 Demo cases are OFF (kShowDemoCases = false); sets come from get_module_extras / the bundle. Reports on a slide use
 target_type 'learn_set', target_id '<set_id>#<slide_id>', reason 'wrong_information' (lead: confirm or rename).
+D-028 (2026-10-23, lead WP16 A / contract 11) Reports go through the outbox as 'content_report' {target_type card|question|set|
+lesson|block, target_id, lesson_id (required for block), reason wrong_answer|typo|unclear|translation|other, note <= 300};
+replaceKey content_report:<type>:<id>. Carousel reports use target 'set' + the set id (no more 'learn_set'). Semester and
+"did you pass" need the network (set_semester / confirm_year return get_me, cached). Admin preview: Profile switch (admins
+only), module page Drafts button, bundle kept under preview_bundle:<module>, DRAFT = id not in the student copy, nothing saved.
+Older uncommitted wp16a attempt kept in git stash 'older-wp16a-attempt' (not used).

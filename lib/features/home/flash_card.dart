@@ -25,6 +25,7 @@ class FlashCardView extends StatefulWidget {
     this.saved = false,
     this.onLike,
     this.onSave,
+    this.onReport,
   });
 
   final String front;
@@ -37,6 +38,9 @@ class FlashCardView extends StatefulWidget {
   final bool saved;
   final ValueChanged<bool>? onLike;
   final ValueChanged<bool>? onSave;
+
+  /// "Report a mistake" (flag under like / save).
+  final VoidCallback? onReport;
 
   @override
   State<FlashCardView> createState() => _FlashCardViewState();
@@ -186,6 +190,15 @@ class _FlashCardViewState extends State<FlashCardView>
                   widget.onSave?.call(_saved);
                 },
               ),
+              if (widget.onReport != null) ...[
+                const SizedBox(height: KSpace.md),
+                _SideButton(
+                  icon: Icons.flag_outlined,
+                  color: kc.textSecondary,
+                  tooltip: l10n.reportMistake,
+                  onTap: widget.onReport!,
+                ),
+              ],
               const SizedBox(height: KSpace.xl),
             ],
           ),

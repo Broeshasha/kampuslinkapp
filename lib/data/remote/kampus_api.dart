@@ -43,6 +43,40 @@ class KampusApi {
         .timeout(_timeout),
   );
 
+  /// Contract 11: current semester (1..6) and pinned semesters (null =
+  /// keep the old pins, [] = clear them). Returns the new get_me().
+  Future<Map<String, dynamic>> setSemester(
+    int semester,
+    List<int>? pinned,
+  ) async => _map(
+    await _client
+        .rpc(
+          'set_semester',
+          params: {'p_semester': semester, 'p_pinned': pinned},
+        )
+        .timeout(_timeout),
+  );
+
+  /// Contract 11: 'passed' | 'repeat' | 'passed_with_debts'. Returns get_me().
+  Future<Map<String, dynamic>> confirmYear(String result) async => _map(
+    await _client
+        .rpc('confirm_year', params: {'p_result': result})
+        .timeout(_timeout),
+  );
+
+  /// Contract 11 (admins only): the bundle WITH draft lessons and sets.
+  Future<Map<String, dynamic>> getModuleBundlePreview(
+    int moduleId,
+    List<String> langs,
+  ) async => _map(
+    await _client
+        .rpc(
+          'get_module_bundle_preview',
+          params: {'p_module': moduleId, 'p_langs': langs},
+        )
+        .timeout(const Duration(seconds: 90)),
+  );
+
   /// The client may update its own study_goal_minutes (row security).
   Future<void> setStudyGoal(int minutes) async {
     final uid = _client.auth.currentUser?.id;

@@ -7,6 +7,8 @@ import '../../core/errors/failure_mapper.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/db/app_database.dart';
+import '../../data/learning/learning_providers.dart';
+import '../../data/profile/me_values.dart';
 import '../../data/providers.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -14,7 +16,9 @@ import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 import '../../ui/sync_chip.dart';
 import '../auth/google_sign_in_button.dart';
+import '../profile/semester_sheet.dart';
 import 'module_card.dart';
+import 'module_sections.dart';
 
 /// Modules tab: reads ONLY the local database; pull down = sync.
 class ModulesPage extends ConsumerWidget {
@@ -113,50 +117,59 @@ class _ModulesBody extends ConsumerWidget {
   }
 }
 
-class _ModuleList extends StatelessWidget {
+class _ModuleList extends ConsumerWidget {
   const _ModuleList({required this.modules, required this.downloading});
 
   final List<ModuleRow> modules;
   final Set<int> downloading;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final headerStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
       color: context.kc.textSecondary,
       fontWeight: FontWeight.w700,
     );
-    final children = <Widget>[];
-    int? currentSemester;
-    var first = true;
-    for (final m in modules) {
-      if (first || m.semester != currentSemester) {
-        first = false;
-        currentSemester = m.semester;
-        final s = m.semester;
+    final me = ref.watch(serverStatsProvider).value;
+    final sections = moduleSections(
+      modules,
+      current: currentSemesterOf(me),
+      pinned: pinnedSemestersOf(me),
+    );
+    final children = <Widget>[const SemesterBanner()];
+    for (final section in sections) {
+      final s = section.semester;
+      final title = switch (section.kind) {
+        SectionKind.current => l10n.semesterThis(s ?? 0),
+        SectionKind.pinned => l10n.semesterStillFollowing(s ?? 0),
+        SectionKind.previous => l10n.semesterPrevious,
+        SectionKind.semester =>
+          s == null ? l10n.tabModules : l10n.semesterLabel(s),
+      };
+      children.add(
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+            top: KSpace.lg,
+            bottom: KSpace.sm,
+            start: KSpace.xs,
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(title, style: headerStyle),
+          ),
+        ),
+      );
+      for (final m in section.modules) {
         children.add(
           Padding(
-            padding: const EdgeInsetsDirectional.only(
-              top: KSpace.lg,
-              bottom: KSpace.sm,
-              start: KSpace.xs,
-            ),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Text(
-                s == null ? l10n.tabModules : l10n.semesterLabel(s),
-                style: headerStyle,
-              ),
+            padding: const EdgeInsets.only(bottom: KSpace.md),
+            child: ModuleCard(
+              module: m,
+              downloading: downloading.contains(m.id),
             ),
           ),
         );
       }
-      children.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: KSpace.md),
-          child: ModuleCard(module: m, downloading: downloading.contains(m.id)),
-        ),
-      );
     }
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),

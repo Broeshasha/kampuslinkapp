@@ -21,6 +21,7 @@ class QuickQuestionCard extends StatefulWidget {
     required this.moduleName,
     required this.accent,
     required this.onAnswered,
+    this.onReport,
   });
 
   final String prompt;
@@ -31,6 +32,7 @@ class QuickQuestionCard extends StatefulWidget {
   final String moduleName;
   final Color accent;
   final ValueChanged<bool> onAnswered;
+  final VoidCallback? onReport;
 
   @override
   State<QuickQuestionCard> createState() => _QuickQuestionCardState();
@@ -97,6 +99,16 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
                         ),
                       ),
                     ),
+                    if (widget.onReport != null)
+                      IconButton(
+                        tooltip: l10n.reportMistake,
+                        visualDensity: VisualDensity.compact,
+                        onPressed: widget.onReport,
+                        icon: Icon(
+                          Icons.flag_outlined,
+                          color: kc.textSecondary,
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: KSpace.md),

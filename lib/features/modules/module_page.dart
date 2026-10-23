@@ -14,6 +14,7 @@ import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../preview/preview_page.dart';
 import 'download_status.dart';
 import 'library_tab.dart';
 
@@ -48,13 +49,13 @@ class ModulePage extends ConsumerWidget {
 /// themed). Flip to true to bring the Library tab back.
 const showLibrary = false;
 
-class _ModuleScaffold extends StatelessWidget {
+class _ModuleScaffold extends ConsumerWidget {
   const _ModuleScaffold({required this.module});
 
   final ModuleRow module;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final accent = moduleAccent(module.id);
     final title = Text(
@@ -67,9 +68,16 @@ class _ModuleScaffold extends StatelessWidget {
       icon: const Icon(Icons.forum_outlined),
       onPressed: () => context.go('/modules/${module.id}/chat'),
     );
+    final drafts = ref.watch(previewDraftsProvider)
+        ? IconButton(
+            tooltip: l10n.previewTitle,
+            icon: const Icon(Icons.drafts_outlined),
+            onPressed: () => context.push('/preview/${module.id}'),
+          )
+        : null;
     if (!showLibrary) {
       return Scaffold(
-        appBar: AppBar(title: title, actions: [chat]),
+        appBar: AppBar(title: title, actions: [?drafts, chat]),
         body: _LessonsTab(module: module),
         floatingActionButton: FloatingActionButton.extended(
           heroTag: 'chat-${module.id}',
@@ -86,7 +94,7 @@ class _ModuleScaffold extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: title,
-          actions: [chat],
+          actions: [?drafts, chat],
           bottom: TabBar(
             indicatorColor: accent,
             labelColor: accent,

@@ -23,6 +23,7 @@ import '../../render/reader_settings.dart';
 import '../../ui/confetti.dart';
 import '../../ui/download_issue.dart';
 import '../../ui/states.dart';
+import '../cases/report_sheet.dart';
 import '../home/study_activity.dart';
 
 /// The lesson reader: header, blocks, resume (MASTER_PLAN 7.7), text size,
@@ -208,6 +209,17 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          IconButton(
+            tooltip: l10n.reportMistake,
+            icon: const Icon(Icons.flag_outlined),
+            onPressed: () => showReportMistake(
+              context,
+              ref,
+              targetType: 'lesson',
+              targetId: '${widget.lessonId}',
+              lessonId: widget.lessonId,
+            ),
+          ),
           PopupMenuButton<String>(
             tooltip: l10n.lessonLanguage,
             icon: const Icon(Icons.translate_rounded),
@@ -249,6 +261,13 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
               scale: readerScale(step),
               initialBlockId: _resumeId,
               onPosition: _onPosition,
+              onBlockLongPress: (blockId) => showReportMistake(
+                context,
+                ref,
+                targetType: 'block',
+                targetId: blockId,
+                lessonId: widget.lessonId,
+              ),
               header: _LessonHeader(content: content, accent: accent),
               footer: _LessonFooter(
                 done: done,

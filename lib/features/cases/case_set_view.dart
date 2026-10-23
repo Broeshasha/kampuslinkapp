@@ -33,6 +33,7 @@ class CaseSetView extends StatefulWidget {
     this.onHintSeen,
     this.onNext,
     this.onReport,
+    this.badge,
   });
 
   final CaseSet set;
@@ -50,6 +51,9 @@ class CaseSetView extends StatefulWidget {
 
   /// "Report a mistake" for the slide id.
   final ValueChanged<String>? onReport;
+
+  /// An extra label next to the kind (e.g. DRAFT in the admin preview).
+  final String? badge;
 
   @override
   State<CaseSetView> createState() => _CaseSetViewState();
@@ -235,6 +239,10 @@ class _CaseSetViewState extends State<CaseSetView>
                           if (widget.demo) ...[
                             const SizedBox(width: KSpace.xs),
                             _Chip(text: l10n.demoBadge, color: kc.warning),
+                          ],
+                          if (widget.badge case final badge?) ...[
+                            const SizedBox(width: KSpace.xs),
+                            _Chip(text: badge, color: kc.warning),
                           ],
                           const SizedBox(width: KSpace.sm),
                           Expanded(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/auth/auth_repository.dart';
 import '../../core/l10n/locale_controller.dart';
@@ -76,6 +77,35 @@ final continueProvider = StreamProvider<List<ContinueItem>>((ref) {
 
 const _statsKey = 'server_stats';
 
+const _statsKeys = [
+  'xp',
+  'current_streak',
+  'longest_streak',
+  'study_goal_minutes',
+  'username',
+  'university_name',
+  'speciality_name',
+  'academic_year',
+  'reminders_enabled',
+  // Contract 11
+  'current_semester',
+  'pinned_semesters',
+  'year_question_key',
+  'year_confirmed_for',
+  'year_question_due',
+  'is_admin',
+];
+
+/// Keeps the parts of get_me() the app shows (cached for offline starts).
+Future<Map<String, dynamic>> storeServerStats(
+  SharedPreferences prefs,
+  Map<String, dynamic> me,
+) async {
+  final stats = <String, dynamic>{for (final key in _statsKeys) key: me[key]};
+  await prefs.setString(_statsKey, jsonEncode(stats));
+  return stats;
+}
+
 /// Server stats (get_me: xp, current_streak, study_goal_minutes), refreshed
 /// after every successful sync and cached for offline starts. null = never
 /// fetched: the Home header then falls back to the local streak.
@@ -99,22 +129,7 @@ final serverStatsProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
   try {
     final me = await api.getMe();
     if (me == null) return cached();
-    final stats = <String, dynamic>{
-      for (final key in const [
-        'xp',
-        'current_streak',
-        'longest_streak',
-        'study_goal_minutes',
-        'username',
-        'university_name',
-        'speciality_name',
-        'academic_year',
-        'reminders_enabled',
-      ])
-        key: me[key],
-    };
-    await prefs.setString(_statsKey, jsonEncode(stats));
-    return stats;
+    return await storeServerStats(prefs, me);
   } catch (error) {
     appLog.info('stats offline: $error');
     return cached();

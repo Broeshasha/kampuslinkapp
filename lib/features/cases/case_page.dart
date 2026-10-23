@@ -59,11 +59,12 @@ class CasePage extends ConsumerWidget {
             onProgress: (p) =>
                 guard(() => ref.read(caseRepositoryProvider).save(p)),
             onNext: () => Navigator.of(context).maybePop(),
-            onReport: (slideId) => showReportMistake(
+            onReport: (_) => showReportMistake(
               context,
               ref,
-              targetType: 'learn_set',
-              targetId: '${set.id}#$slideId',
+              targetType: 'set',
+              targetId: set.id,
+              lessonId: set.lessonId,
             ),
           ),
         ),

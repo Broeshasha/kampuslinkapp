@@ -13,6 +13,87 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get reasonWrongAnswer => 'Wrong answer';
+
+  @override
+  String get reasonTypo => 'Typo';
+
+  @override
+  String get reasonUnclear => 'Unclear';
+
+  @override
+  String get reasonTranslation => 'Translation problem';
+
+  @override
+  String get semesterPick => 'Which semester are you in?';
+
+  @override
+  String get semesterPinnedHelp =>
+      'Semesters you still follow (debts, retakes):';
+
+  @override
+  String get semesterNone => 'Choose your current semester';
+
+  @override
+  String semesterCurrent(int number) {
+    return 'Current semester: S$number';
+  }
+
+  @override
+  String semesterPinned(String list) {
+    return 'Also following: $list';
+  }
+
+  @override
+  String get semesterNewHint => 'New semester? Check that yours is right.';
+
+  @override
+  String get semesterUpdate => 'Update';
+
+  @override
+  String semesterThis(int number) {
+    return 'This semester · S$number';
+  }
+
+  @override
+  String semesterStillFollowing(int number) {
+    return 'S$number · still following';
+  }
+
+  @override
+  String get semesterPrevious => 'Previous semesters';
+
+  @override
+  String yearQuestionTitle(String year) {
+    return 'Did you pass your year ($year)?';
+  }
+
+  @override
+  String get yearPassed => 'I passed';
+
+  @override
+  String get yearPassedDebts => 'Passed with debts';
+
+  @override
+  String get yearRepeat => 'I repeat the year';
+
+  @override
+  String get yearThanks => 'Saved. Your modules are being updated.';
+
+  @override
+  String get previewTitle => 'Draft preview';
+
+  @override
+  String get previewDrafts => 'Preview drafts';
+
+  @override
+  String get previewDraftsHelp =>
+      'Admins only: see draft lessons and sets before they are published.';
+
+  @override
+  String get draftBadge => 'DRAFT';
+
+  @override
   String get kindMystery => 'Mystery';
 
   @override

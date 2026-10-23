@@ -15,6 +15,7 @@ import '../../render/rich_block_text.dart';
 import '../../ui/confetti.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../cases/report_sheet.dart';
 import '../home/study_activity.dart';
 
 /// Lesson quiz: one question per screen, instant feedback + explanation,
@@ -139,6 +140,20 @@ class _QuizPageState extends ConsumerState<QuizPage> {
           icon: const Icon(Icons.close_rounded),
           onPressed: _close,
         ),
+        actions: [
+          if (questions != null && _index < questions.length)
+            IconButton(
+              tooltip: l10n.reportMistake,
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: () => showReportMistake(
+                context,
+                ref,
+                targetType: 'question',
+                targetId: '${questions[_index].id}',
+                lessonId: widget.lessonId,
+              ),
+            ),
+        ],
       ),
       body: StudyActivity(child: body),
     );

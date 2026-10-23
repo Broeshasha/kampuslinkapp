@@ -20,8 +20,10 @@ import '../../render/reader_settings.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 import '../auth/google_sign_in_button.dart';
+import '../preview/preview_page.dart';
 import 'account_actions.dart';
 import 'language_picker.dart';
+import 'semester_sheet.dart';
 
 /// Where "Send feedback" writes to. Change it here only.
 const feedbackEmail = 'chidafarai06@gmail.com';
@@ -59,7 +61,13 @@ class ProfilePage extends ConsumerWidget {
       const SizedBox(height: KSpace.xl),
       _SectionTitle(l10n.settingsTitle),
       const _SettingsCard(),
-      if (signedIn) ...[const SizedBox(height: KSpace.md), const _SyncRow()],
+      if (signedIn) ...[
+        const SizedBox(height: KSpace.md),
+        const SemesterCard(),
+        const SizedBox(height: KSpace.md),
+        const _SyncRow(),
+        const PreviewDraftsTile(),
+      ],
       const SizedBox(height: KSpace.xl),
       _SectionTitle(l10n.aboutTitle),
       const _AboutCard(),

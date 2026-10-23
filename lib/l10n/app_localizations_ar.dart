@@ -13,6 +13,87 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get reasonWrongAnswer => 'إجابة خاطئة';
+
+  @override
+  String get reasonTypo => 'خطأ مطبعي';
+
+  @override
+  String get reasonUnclear => 'غير واضح';
+
+  @override
+  String get reasonTranslation => 'مشكلة في الترجمة';
+
+  @override
+  String get semesterPick => 'في أي سداسي أنت؟';
+
+  @override
+  String get semesterPinnedHelp =>
+      'السداسيات التي ما زلت تتابعها (ديون، استدراك):';
+
+  @override
+  String get semesterNone => 'اختر سداسيك الحالي';
+
+  @override
+  String semesterCurrent(int number) {
+    return 'السداسي الحالي: S$number';
+  }
+
+  @override
+  String semesterPinned(String list) {
+    return 'تتابع أيضًا: $list';
+  }
+
+  @override
+  String get semesterNewHint => 'سداسي جديد؟ تأكد أن اختيارك صحيح.';
+
+  @override
+  String get semesterUpdate => 'تحديث';
+
+  @override
+  String semesterThis(int number) {
+    return 'هذا السداسي · S$number';
+  }
+
+  @override
+  String semesterStillFollowing(int number) {
+    return 'S$number · ما زلت تتابعه';
+  }
+
+  @override
+  String get semesterPrevious => 'السداسيات السابقة';
+
+  @override
+  String yearQuestionTitle(String year) {
+    return 'هل نجحت في سنتك ($year)؟';
+  }
+
+  @override
+  String get yearPassed => 'نجحت';
+
+  @override
+  String get yearPassedDebts => 'نجحت بديون';
+
+  @override
+  String get yearRepeat => 'أعيد السنة';
+
+  @override
+  String get yearThanks => 'تم الحفظ. يجري تحديث مقاييسك.';
+
+  @override
+  String get previewTitle => 'معاينة المسودات';
+
+  @override
+  String get previewDrafts => 'معاينة المسودات';
+
+  @override
+  String get previewDraftsHelp =>
+      'للمشرفين فقط: رؤية الدروس والسلاسل قبل النشر.';
+
+  @override
+  String get draftBadge => 'مسودة';
+
+  @override
   String get kindMystery => 'لغز';
 
   @override

@@ -27,6 +27,7 @@ import '../cases/report_sheet.dart';
 import 'flash_card.dart';
 import 'quick_question_card.dart';
 import 'study_activity.dart';
+import 'year_question_card.dart';
 
 int _int(Object? v, int fallback) =>
     v is num ? v.toInt() : int.tryParse('$v') ?? fallback;
@@ -53,6 +54,7 @@ class HomePage extends ConsumerWidget {
           child: Column(
             children: [
               _HomeHeader(),
+              YearQuestionCard(),
               _ContinueCard(),
               _ContinueCaseCard(),
               Expanded(child: _Feed()),
@@ -342,11 +344,12 @@ class _FeedState extends ConsumerState<_Feed> {
           onProgress: (p) =>
               guard(() => ref.read(caseRepositoryProvider).save(p)),
           onNext: _next,
-          onReport: (slideId) => showReportMistake(
+          onReport: (_) => showReportMistake(
             context,
             ref,
-            targetType: 'learn_set',
-            targetId: '${set.id}#$slideId',
+            targetType: 'set',
+            targetId: set.id,
+            lessonId: set.lessonId,
           ),
         ),
       );
@@ -366,6 +369,13 @@ class _FeedState extends ConsumerState<_Feed> {
           onAnswered: (right) => ref
               .read(feedQueueProvider.notifier)
               .outcome(item.key, right ? 'right' : 'wrong'),
+          onReport: () => showReportMistake(
+            context,
+            ref,
+            targetType: 'question',
+            targetId: '${payload.question.id}',
+            lessonId: payload.question.lessonId,
+          ),
         ),
       );
     }
@@ -384,6 +394,13 @@ class _FeedState extends ConsumerState<_Feed> {
         onAnswer: (knewIt) => _answer(item, card, knewIt),
         onLike: (on) => guard(() => feed.setLiked(card.card.id, on: on)),
         onSave: (on) => guard(() => feed.setSaved(card.card.id, on: on)),
+        onReport: () => showReportMistake(
+          context,
+          ref,
+          targetType: 'card',
+          targetId: '${card.card.id}',
+          lessonId: card.card.lessonId,
+        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../features/lesson/lesson_reader_page.dart';
 import '../features/modules/module_page.dart';
 import '../features/modules/modules_page.dart';
 import '../features/onboarding/onboarding_page.dart';
+import '../features/preview/preview_page.dart';
 import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
 import '../features/quiz/quiz_page.dart';
@@ -48,6 +49,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingPage()),
       GoRoute(path: '/doctor', builder: (_, _) => const DownloadDoctorPage()),
+      GoRoute(
+        path: '/preview/:moduleId',
+        builder: (_, state) =>
+            PreviewModulePage(moduleId: _id(state, 'moduleId')),
+      ),
       GoRoute(
         path: '/case/:setId',
         builder: (_, state) =>

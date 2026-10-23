@@ -27,6 +27,7 @@ class LessonView extends StatefulWidget {
     this.onPosition,
     this.header,
     this.footer,
+    this.onBlockLongPress,
   });
 
   final List<Map<String, dynamic>> blocks;
@@ -36,6 +37,9 @@ class LessonView extends StatefulWidget {
   final BlockPositionCallback? onPosition;
   final Widget? header;
   final Widget? footer;
+
+  /// Long-press on a block (e.g. "report a mistake" in this block).
+  final ValueChanged<String>? onBlockLongPress;
 
   @override
   State<LessonView> createState() => LessonViewState();
@@ -160,10 +164,19 @@ class LessonViewState extends State<LessonView> {
                       child: MaxWidth(
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: KSpace.md),
-                          child: BlockView(
-                            key: ValueKey<String>('${widget.blocks[i]['id']}'),
-                            block: widget.blocks[i],
-                            style: style,
+                          child: GestureDetector(
+                            onLongPress: widget.onBlockLongPress == null
+                                ? null
+                                : () => widget.onBlockLongPress!(
+                                    '${widget.blocks[i]['id']}',
+                                  ),
+                            child: BlockView(
+                              key: ValueKey<String>(
+                                '${widget.blocks[i]['id']}',
+                              ),
+                              block: widget.blocks[i],
+                              style: style,
+                            ),
                           ),
                         ),
                       ),

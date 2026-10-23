@@ -106,6 +106,144 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @reasonWrongAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong answer'**
+  String get reasonWrongAnswer;
+
+  /// No description provided for @reasonTypo.
+  ///
+  /// In en, this message translates to:
+  /// **'Typo'**
+  String get reasonTypo;
+
+  /// No description provided for @reasonUnclear.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclear'**
+  String get reasonUnclear;
+
+  /// No description provided for @reasonTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation problem'**
+  String get reasonTranslation;
+
+  /// No description provided for @semesterPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Which semester are you in?'**
+  String get semesterPick;
+
+  /// No description provided for @semesterPinnedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Semesters you still follow (debts, retakes):'**
+  String get semesterPinnedHelp;
+
+  /// No description provided for @semesterNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your current semester'**
+  String get semesterNone;
+
+  /// No description provided for @semesterCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current semester: S{number}'**
+  String semesterCurrent(int number);
+
+  /// No description provided for @semesterPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Also following: {list}'**
+  String semesterPinned(String list);
+
+  /// No description provided for @semesterNewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New semester? Check that yours is right.'**
+  String get semesterNewHint;
+
+  /// No description provided for @semesterUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get semesterUpdate;
+
+  /// No description provided for @semesterThis.
+  ///
+  /// In en, this message translates to:
+  /// **'This semester · S{number}'**
+  String semesterThis(int number);
+
+  /// No description provided for @semesterStillFollowing.
+  ///
+  /// In en, this message translates to:
+  /// **'S{number} · still following'**
+  String semesterStillFollowing(int number);
+
+  /// No description provided for @semesterPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous semesters'**
+  String get semesterPrevious;
+
+  /// No description provided for @yearQuestionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you pass your year ({year})?'**
+  String yearQuestionTitle(String year);
+
+  /// No description provided for @yearPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'I passed'**
+  String get yearPassed;
+
+  /// No description provided for @yearPassedDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed with debts'**
+  String get yearPassedDebts;
+
+  /// No description provided for @yearRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'I repeat the year'**
+  String get yearRepeat;
+
+  /// No description provided for @yearThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Your modules are being updated.'**
+  String get yearThanks;
+
+  /// No description provided for @previewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft preview'**
+  String get previewTitle;
+
+  /// No description provided for @previewDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview drafts'**
+  String get previewDrafts;
+
+  /// No description provided for @previewDraftsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Admins only: see draft lessons and sets before they are published.'**
+  String get previewDraftsHelp;
+
+  /// No description provided for @draftBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'DRAFT'**
+  String get draftBadge;
+
   /// No description provided for @kindMystery.
   ///
   /// In en, this message translates to:
