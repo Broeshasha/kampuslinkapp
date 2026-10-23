@@ -1,6 +1,9 @@
 {
   "@@locale": "en",
   "appTitle": "KampusLink",
+  "codeCopy": "Copy",
+  "codeCopied": "Code copied",
+  "codeResult": "Result",
   "diagramUnavailable": "Diagram unavailable",
   "zoomFigure": "Enlarge",
   "resumeTitle": "Pick up where you left off",

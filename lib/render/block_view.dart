@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/logging/logger.dart';
 import '../core/theme/tokens.dart';
 import 'block_style.dart';
+import 'code_block.dart';
 import 'figure_block.dart';
 import 'math_view.dart';
 import 'rich_block_text.dart';
@@ -116,6 +117,7 @@ class BlockView extends StatelessWidget {
       ),
       'table' => TableBlock(block: block, style: style),
       'figure' => FigureBlock(block: block, style: style),
+      'code' => CodeBlock.fromBlock(block, style),
       _ => _unknown(type, rich, content.isEmpty),
     };
   }

@@ -69,3 +69,8 @@ carousel slide figure {asset{type svg, svg, alt}, caption}; alt/caption may be p
 themed SVG, fixed height, shimmer while parsing, tap to zoom (options: zoom button, tap still answers), alt text,
 unsafe/broken SVG = "diagram unavailable" chip + one log line. Flash card: figure on top (45% of the text area). Questions:
 figure under the prompt; option figures 2x2, one column under 340 px. Carousel: hook slide shows the first figure as cover.
+D-031 (2026-10-23, lead WP16 C) Lesson block "code": fields read leniently (code|content|source, language, output|result,
+title|caption, annotations [{line, text|note}] with per-language text). Always LTR, horizontal scroll, line numbers,
+Copy (toast), "Result" panel, numbered badges on annotated lines + numbered notes under the block, simple colouring from
+the figure palette (keywords c2, builtins c1, strings c6, numbers c4, comments muted). System monospace font (no new
+font file). Paragraphs: `inline code` = monospace chip, ```lang fences``` = a CodeBlock between the text parts.

@@ -1,6 +1,9 @@
 {
   "@@locale": "fr",
   "appTitle": "KampusLink",
+  "codeCopy": "Copier",
+  "codeCopied": "Code copi\u00e9",
+  "codeResult": "R\u00e9sultat",
   "diagramUnavailable": "Sch\u00e9ma indisponible",
   "zoomFigure": "Agrandir",
   "resumeTitle": "Reprends l\u00e0 o\u00f9 tu t\u2019es arr\u00eat\u00e9",

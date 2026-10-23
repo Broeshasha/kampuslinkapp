@@ -13,6 +13,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get codeCopy => 'Copy';
+
+  @override
+  String get codeCopied => 'Code copied';
+
+  @override
+  String get codeResult => 'Result';
+
+  @override
   String get diagramUnavailable => 'Diagram unavailable';
 
   @override

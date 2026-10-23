@@ -13,6 +13,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get codeCopy => 'نسخ';
+
+  @override
+  String get codeCopied => 'تم نسخ الكود';
+
+  @override
+  String get codeResult => 'النتيجة';
+
+  @override
   String get diagramUnavailable => 'الرسم غير متاح';
 
   @override

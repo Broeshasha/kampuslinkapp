@@ -106,6 +106,24 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @codeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get codeCopy;
+
+  /// No description provided for @codeCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied'**
+  String get codeCopied;
+
+  /// No description provided for @codeResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get codeResult;
+
   /// No description provided for @diagramUnavailable.
   ///
   /// In en, this message translates to:

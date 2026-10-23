@@ -1,8 +1,9 @@
 /// CONTENT_FORMAT 5.3: split a text into plain / highlighted / inline-math
-/// segments. Inline math \( ... \) is cut out first; highlights are placed
+/// / inline-code segments. Inline math \( ... \) is cut out first, then
+/// `inline code` (WP16 C); highlights are placed
 /// longest first, first free occurrence, never overlapping; a highlight whose
 /// text is not found is ignored.
-enum SegmentKind { plain, term, value, formula, warning, math }
+enum SegmentKind { plain, term, value, formula, warning, math, code }
 
 class TextSegment {
   const TextSegment(this.text, this.kind);
@@ -30,6 +31,7 @@ SegmentKind _kindOf(String? kind) => switch (kind) {
 };
 
 final _inlineMath = RegExp(r'\\\((.+?)\\\)');
+final _inlineCode = RegExp(r'`([^`\n]+)`');
 
 List<TextSegment> segmentText(String text, List<Object?> highlights) {
   final ranges = <({int start, int end, SegmentKind kind, String text})>[];
@@ -42,6 +44,15 @@ List<TextSegment> segmentText(String text, List<Object?> highlights) {
     ));
   }
   bool overlaps(int s, int e) => ranges.any((r) => s < r.end && e > r.start);
+  for (final m in _inlineCode.allMatches(text)) {
+    if (overlaps(m.start, m.end)) continue;
+    ranges.add((
+      start: m.start,
+      end: m.end,
+      kind: SegmentKind.code,
+      text: m.group(1) ?? '',
+    ));
+  }
   final wanted = [
     for (final h in highlights)
       if (h is Map && h['text'] is String && (h['text'] as String).isNotEmpty)
