@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../db/app_database.dart';
+import '../lessons/figures.dart';
 import '../lessons/lesson_content.dart';
 import '../sync/outbox_repository.dart';
 import 'progress_repository.dart';
@@ -17,6 +18,8 @@ class QuizQuestion {
     required this.options,
     required this.explanation,
     required this.language,
+    this.figure,
+    this.optionFigures = const [],
   });
 
   final int id;
@@ -26,6 +29,10 @@ class QuizQuestion {
   final List<String> options;
   final String explanation;
   final String language;
+
+  /// WP16 B: optional diagram, and one per option (null = none).
+  final Map<String, dynamic>? figure;
+  final List<Map<String, dynamic>?> optionFigures;
 }
 
 String _quizKey(int lessonId) => 'quiz:$lessonId';
@@ -63,6 +70,19 @@ class QuizRepository {
                 (t) => OrderingTerm.asc(t.id),
               ]))
             .get();
+    final metaRow = await (_db.select(
+      _db.keyValues,
+    )..where((t) => t.name.equals('meta:$lessonId'))).getSingleOrNull();
+    var meta = const <String, dynamic>{};
+    if (metaRow != null) {
+      try {
+        final v = jsonDecode(metaRow.value);
+        final qs = v is Map ? v['q'] : null;
+        if (qs is Map) meta = qs.cast<String, dynamic>();
+      } on FormatException {
+        meta = const {};
+      }
+    }
     final out = <QuizQuestion>[];
     for (final q in rows) {
       Map<String, dynamic> i18n;
@@ -78,6 +98,9 @@ class QuizRepository {
           ? t.cast<String, dynamic>()
           : const <String, dynamic>{};
       final options = m['options'];
+      final shared = meta['${q.id}'];
+      final sharedMap = shared is Map ? shared : const <String, dynamic>{};
+      final optionCount = options is List ? options.length : 0;
       out.add(
         QuizQuestion(
           id: q.id,
@@ -89,6 +112,12 @@ class QuizRepository {
               : const <String>[],
           explanation: '${m['explanation'] ?? ''}',
           language: lang,
+          figure: pickFigure(text: m, shared: sharedMap['figure']),
+          optionFigures: pickOptionFigures(
+            text: m,
+            shared: sharedMap['option_figures'],
+            count: optionCount,
+          ),
         ),
       );
     }

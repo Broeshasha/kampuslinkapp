@@ -13,6 +13,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get diagramUnavailable => 'Schéma indisponible';
+
+  @override
+  String get zoomFigure => 'Agrandir';
+
+  @override
   String get resumeTitle => 'Reprends là où tu t’es arrêté';
 
   @override

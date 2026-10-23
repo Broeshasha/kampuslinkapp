@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
+import '../../render/compact_figure.dart';
 import '../../render/figure_block.dart';
 import '../../render/rich_block_text.dart';
 import '../../ui/confetti.dart';
@@ -73,6 +74,15 @@ class _CaseSetViewState extends State<CaseSetView>
   late bool _hint = widget.showSwipeHint;
 
   CaseSet get _set => widget.set;
+
+  /// First figure of the set: the cover of the hook slide in the feed.
+  Map<String, dynamic>? get _cover {
+    for (final s in _set.slides) {
+      if (s.figure != null) return s.figure;
+    }
+    return null;
+  }
+
   int get _commit => _set.commitIndex;
   int get _last => _set.slides.length - 1;
 
@@ -312,6 +322,9 @@ class _CaseSetViewState extends State<CaseSetView>
                             onReport: widget.onReport == null
                                 ? null
                                 : () => widget.onReport!(slide.id),
+                            cover: slide.role == SlideRole.hook
+                                ? slide.figure ?? _cover
+                                : null,
                           );
                           if (slide.role != SlideRole.commit) return body;
                           return AnimatedBuilder(
@@ -504,6 +517,7 @@ class _SlideBody extends StatelessWidget {
     required this.onSave,
     this.onNext,
     this.onReport,
+    this.cover,
   });
 
   final CaseSlide slide;
@@ -521,6 +535,9 @@ class _SlideBody extends StatelessWidget {
   final VoidCallback onSave;
   final VoidCallback? onNext;
   final VoidCallback? onReport;
+
+  /// Hook slide only: the set's first figure, shown as a cover.
+  final Map<String, dynamic>? cover;
 
   String _roleLabel(AppLocalizations l10n) => switch (slide.role) {
     SlideRole.hook => l10n.roleHook,
@@ -595,6 +612,14 @@ class _SlideBody extends StatelessWidget {
               children: [
                 _label(l10n, kc.textPrimary),
                 const SizedBox(height: KSpace.lg),
+                if (cover case final fig?) ...[
+                  CompactFigure(
+                    figure: fig,
+                    language: style.language,
+                    height: 170,
+                  ),
+                  const SizedBox(height: KSpace.lg),
+                ],
                 if (slide.title.isNotEmpty)
                   Text(
                     slide.title,

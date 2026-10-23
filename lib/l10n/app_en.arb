@@ -1,6 +1,8 @@
 {
   "@@locale": "en",
   "appTitle": "KampusLink",
+  "diagramUnavailable": "Diagram unavailable",
+  "zoomFigure": "Enlarge",
   "resumeTitle": "Pick up where you left off",
   "reasonWrongAnswer": "Wrong answer",
   "reasonTypo": "Typo",

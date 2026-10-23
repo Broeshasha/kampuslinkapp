@@ -8,11 +8,13 @@ import '../../core/errors/result.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
+import '../../data/learning/content_meta.dart';
 import '../../data/learning/feed_pool.dart';
 import '../../data/learning/feed_queue.dart';
 import '../../data/learning/feed_queue_provider.dart';
 import '../../data/learning/feed_repository.dart';
 import '../../data/learning/learning_providers.dart';
+import '../../data/lessons/figures.dart';
 import '../../data/lessons/lesson_content.dart';
 import '../../data/lessons/lesson_repository.dart';
 import '../../data/providers.dart';
@@ -474,6 +476,7 @@ class _FeedState extends ConsumerState<_Feed> {
     String lang,
     Map<String, CaseProgress> caseProgress,
     bool hintSeen,
+    Map<String, Map<String, dynamic>> meta,
   ) {
     final feed = ref.read(feedRepositoryProvider);
     final payload = item.payload;
@@ -508,6 +511,8 @@ class _FeedState extends ConsumerState<_Feed> {
     }
     if (payload is FeedQuestion) {
       final text = payload.text(lang);
+      final local = langText(payload.question.i18nJson, text.language);
+      final shared = meta['q:${payload.question.id}'];
       return MaxWidth(
         child: QuickQuestionCard(
           key: ValueKey<String>(item.key),
@@ -516,6 +521,12 @@ class _FeedState extends ConsumerState<_Feed> {
           correctIndex: payload.question.correctIndex,
           explanation: text.explanation,
           language: text.language,
+          figure: pickFigure(text: local, shared: shared?['figure']),
+          optionFigures: pickOptionFigures(
+            text: local,
+            shared: shared?['option_figures'],
+            count: text.options.length,
+          ),
           moduleName: payload.module.name,
           accent: moduleAccent(payload.module.id),
           onAnswered: (right) => ref
@@ -533,12 +544,17 @@ class _FeedState extends ConsumerState<_Feed> {
     }
     final card = payload as FeedCard;
     final text = card.text(lang);
+    final figure = pickFigure(
+      text: langText(card.card.i18nJson, text.language),
+      shared: meta['c:${card.card.id}']?['figure'],
+    );
     return MaxWidth(
       child: FlashCardView(
         key: ValueKey<String>(item.key),
         front: text.front,
         back: text.back,
         language: text.language,
+        figure: figure,
         moduleName: card.module.name,
         accent: moduleAccent(card.module.id),
         liked: card.liked,
@@ -573,6 +589,10 @@ class _FeedState extends ConsumerState<_Feed> {
       AsyncData(:final value) => value,
       _ => const <String, CaseProgress>{},
     };
+    final meta = switch (ref.watch(contentMetaProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <String, Map<String, dynamic>>{},
+    };
     final hintSeen = switch (ref.watch(caseHintSeenProvider)) {
       AsyncData(:final value) => value,
       _ => true,
@@ -595,7 +615,7 @@ class _FeedState extends ConsumerState<_Feed> {
         onPageChanged: (i) => ref.read(feedQueueProvider.notifier).shown(i),
         itemBuilder: (context, i) => i == value.length
             ? const _FeedDone()
-            : _post(context, value[i], lang, caseProgress, hintSeen),
+            : _post(context, value[i], lang, caseProgress, hintSeen, meta),
       ),
       AsyncError(:final error) => ErrorView(
         failure: mapError(error),

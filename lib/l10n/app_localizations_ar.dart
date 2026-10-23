@@ -13,6 +13,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get diagramUnavailable => 'الرسم غير متاح';
+
+  @override
+  String get zoomFigure => 'تكبير';
+
+  @override
   String get resumeTitle => 'تابع من حيث توقفت';
 
   @override

@@ -188,8 +188,9 @@ class BundleImporter {
         );
   }
 
-  /// File 13 fields the feed uses (cards: concept, difficulty, card_kind;
-  /// questions: concept, difficulty), kept in key_values `meta:<lesson>`
+  /// File 13 fields the feed uses (cards: concept, difficulty, card_kind,
+  /// figure; questions: concept, difficulty, figure, option_figures), kept
+  /// in key_values `meta:<lesson>`
   /// so no schema change is needed. Null fields are simply left out.
   Future<void> _saveMeta(
     Map<String, dynamic> lesson, {
@@ -206,11 +207,17 @@ class BundleImporter {
           'concept',
           'difficulty',
           'card_kind',
+          'figure',
         ]),
     }..removeWhere((_, v) => (v as Map).isEmpty);
     final questions = <String, dynamic>{
       for (final q in _list(lesson['questions']).map(_map))
-        '${_int(q['id'])}': fields(q, const ['concept', 'difficulty']),
+        '${_int(q['id'])}': fields(q, const [
+          'concept',
+          'difficulty',
+          'figure',
+          'option_figures',
+        ]),
     }..removeWhere((_, v) => (v as Map).isEmpty);
     if (merge) {
       if (cards.isEmpty && questions.isEmpty) return;

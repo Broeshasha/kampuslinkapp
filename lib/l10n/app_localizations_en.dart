@@ -13,6 +13,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get diagramUnavailable => 'Diagram unavailable';
+
+  @override
+  String get zoomFigure => 'Enlarge';
+
+  @override
   String get resumeTitle => 'Pick up where you left off';
 
   @override

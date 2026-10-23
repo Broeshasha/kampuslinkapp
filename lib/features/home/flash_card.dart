@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
+import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
 
 /// One flashcard, reels style: tap = soft 3D flip; the back shows the
@@ -26,6 +27,7 @@ class FlashCardView extends StatefulWidget {
     this.onLike,
     this.onSave,
     this.onReport,
+    this.figure,
   });
 
   final String front;
@@ -41,6 +43,9 @@ class FlashCardView extends StatefulWidget {
 
   /// "Report a mistake" (flag under like / save).
   final VoidCallback? onReport;
+
+  /// Optional diagram on top of both faces (max 45% of the text area).
+  final Map<String, dynamic>? figure;
 
   @override
   State<FlashCardView> createState() => _FlashCardViewState();
@@ -157,6 +162,7 @@ class _FlashCardViewState extends State<FlashCardView>
                 text: showBack ? widget.back : widget.front,
                 style: style,
                 rail: rail,
+                figure: widget.figure,
                 footer: showBack
                     ? Row(
                         children: [
@@ -205,6 +211,7 @@ class _Face extends StatelessWidget {
     required this.style,
     required this.footer,
     required this.rail,
+    this.figure,
   });
 
   final Color accent;
@@ -216,6 +223,7 @@ class _Face extends StatelessWidget {
 
   /// Like / save / report, stacked at the bottom end of the text area.
   final Widget rail;
+  final Map<String, dynamic>? figure;
 
   @override
   Widget build(BuildContext context) {
@@ -270,16 +278,41 @@ class _Face extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsetsDirectional.only(
-                        end: _ActionRail.width,
-                      ),
-                      child: Directionality(
-                        textDirection: style.direction,
-                        child: RichBlockText(text: text, style: style),
-                      ),
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, box) {
+                      final fig = figure;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (fig != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: KSpace.sm),
+                              child: CompactFigure(
+                                figure: fig,
+                                language: style.language,
+                                height: box.maxHeight * 0.45,
+                                showCaption: false,
+                              ),
+                            ),
+                          Expanded(
+                            child: Center(
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsetsDirectional.only(
+                                  end: _ActionRail.width,
+                                ),
+                                child: Directionality(
+                                  textDirection: style.direction,
+                                  child: RichBlockText(
+                                    text: text,
+                                    style: style,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 PositionedDirectional(end: 0, bottom: 0, child: rail),

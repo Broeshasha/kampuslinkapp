@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
+import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
 
 /// Feed post Q: one MCQ about something the student knows. One tap answers
@@ -22,6 +23,8 @@ class QuickQuestionCard extends StatefulWidget {
     required this.accent,
     required this.onAnswered,
     this.onReport,
+    this.figure,
+    this.optionFigures = const [],
   });
 
   final String prompt;
@@ -33,6 +36,10 @@ class QuickQuestionCard extends StatefulWidget {
   final Color accent;
   final ValueChanged<bool> onAnswered;
   final VoidCallback? onReport;
+
+  /// Optional diagram under the prompt, and one per option (WP16 B).
+  final Map<String, dynamic>? figure;
+  final List<Map<String, dynamic>?> optionFigures;
 
   @override
   State<QuickQuestionCard> createState() => _QuickQuestionCardState();
@@ -122,12 +129,21 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
                     base: style.base.copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
-                const SizedBox(height: KSpace.md),
-                for (var i = 0; i < widget.options.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: KSpace.sm),
-                    child: _option(context, i, answer, style),
+                if (widget.figure case final fig?) ...[
+                  const SizedBox(height: KSpace.md),
+                  CompactFigure(
+                    figure: fig,
+                    language: style.language,
+                    height: 160,
                   ),
+                ],
+                const SizedBox(height: KSpace.md),
+                OptionGrid(
+                  count: widget.options.length,
+                  withFigures: widget.optionFigures.isNotEmpty,
+                  itemBuilder: (context, i) =>
+                      _option(context, i, answer, style),
+                ),
                 if (answer != null) ...[
                   Text(
                     answer == widget.correctIndex
@@ -164,6 +180,7 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
         ? kc.danger
         : kc.border;
     return Material(
+      key: ValueKey<String>('option-$i'),
       color: answer != null && (right || i == answer)
           ? color.withValues(alpha: 0.14)
           : kc.surface,
@@ -176,9 +193,31 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
         onTap: answer == null ? () => _pick(i) : null,
         child: Padding(
           padding: const EdgeInsets.all(KSpace.md),
-          child: RichBlockText(text: widget.options[i], style: style),
+          child: _optionBody(i, style),
         ),
       ),
+    );
+  }
+
+  Widget _optionBody(int i, BlockStyle style) {
+    final text = RichBlockText(text: widget.options[i], style: style);
+    final fig = i < widget.optionFigures.length
+        ? widget.optionFigures[i]
+        : null;
+    if (fig == null) return text;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CompactFigure(
+          figure: fig,
+          language: style.language,
+          height: 96,
+          showCaption: false,
+          zoomButton: true,
+        ),
+        const SizedBox(height: KSpace.xs),
+        text,
+      ],
     );
   }
 }

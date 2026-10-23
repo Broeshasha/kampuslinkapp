@@ -11,6 +11,7 @@ import '../../data/learning/learning_providers.dart';
 import '../../data/learning/quiz_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
+import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
 import '../../ui/confetti.dart';
 import '../../ui/max_width.dart';
@@ -236,24 +237,31 @@ class _QuestionView extends StatelessWidget {
                   ),
                 ),
               ),
+              if (question.figure case final fig?) ...[
+                const SizedBox(height: KSpace.md),
+                CompactFigure(figure: fig, language: lang, height: 200),
+              ],
               const SizedBox(height: KSpace.lg),
-              for (var i = 0; i < options.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: KSpace.sm),
-                  child: _OptionTile(
-                    letter: String.fromCharCode(65 + i),
-                    text: options[i],
-                    style: style,
-                    state: answered == null
-                        ? _OptionState.idle
-                        : i == question.correctIndex
-                        ? _OptionState.right
-                        : i == answered
-                        ? _OptionState.wrong
-                        : _OptionState.dim,
-                    onTap: answered == null ? () => onChoose(i) : null,
-                  ),
+              OptionGrid(
+                count: options.length,
+                withFigures: question.optionFigures.isNotEmpty,
+                itemBuilder: (context, i) => _OptionTile(
+                  letter: String.fromCharCode(65 + i),
+                  text: options[i],
+                  style: style,
+                  figure: i < question.optionFigures.length
+                      ? question.optionFigures[i]
+                      : null,
+                  state: answered == null
+                      ? _OptionState.idle
+                      : i == question.correctIndex
+                      ? _OptionState.right
+                      : i == answered
+                      ? _OptionState.wrong
+                      : _OptionState.dim,
+                  onTap: answered == null ? () => onChoose(i) : null,
                 ),
+              ),
               if (answered != null) ...[
                 const SizedBox(height: KSpace.sm),
                 _Feedback(
@@ -289,6 +297,7 @@ class _OptionTile extends StatelessWidget {
     required this.style,
     required this.state,
     required this.onTap,
+    this.figure,
   });
 
   final String letter;
@@ -296,6 +305,7 @@ class _OptionTile extends StatelessWidget {
   final BlockStyle style;
   final _OptionState state;
   final VoidCallback? onTap;
+  final Map<String, dynamic>? figure;
 
   @override
   Widget build(BuildContext context) {
@@ -325,28 +335,44 @@ class _OptionTile extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(KSpace.md),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: kc.surfaceRaised,
-                  child: Text(
-                    letter,
-                    style: TextStyle(
-                      color: kc.textPrimary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                if (figure case final fig?)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: KSpace.sm),
+                    child: CompactFigure(
+                      figure: fig,
+                      language: style.language,
+                      height: 96,
+                      showCaption: false,
+                      zoomButton: true,
                     ),
                   ),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: kc.surfaceRaised,
+                      child: Text(
+                        letter,
+                        style: TextStyle(
+                          color: kc.textPrimary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: KSpace.md),
+                    Expanded(
+                      child: Directionality(
+                        textDirection: style.direction,
+                        child: RichBlockText(text: text, style: style),
+                      ),
+                    ),
+                    if (icon != null) Icon(icon, color: color),
+                  ],
                 ),
-                const SizedBox(width: KSpace.md),
-                Expanded(
-                  child: Directionality(
-                    textDirection: style.direction,
-                    child: RichBlockText(text: text, style: style),
-                  ),
-                ),
-                if (icon != null) Icon(icon, color: color),
               ],
             ),
           ),

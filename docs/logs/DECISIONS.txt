@@ -63,3 +63,9 @@ D-029 (2026-10-23, founder) Home = the card is the main actor: flash card uses t
 TikTok-style stack on the card (bottom end of the text area), not a side column. "Continue lesson" / "Continue the case"
 bars removed from the top of Home: one round Resume button with a dot in the header opens a sheet (up to 3 lessons + 2 open
 cases). Feed posts (card, quick question, carousel) use 12 px side margins instead of 16.
+D-030 (2026-10-23, lead WP16 B) Figures on cards and questions: optional figure / option_figures, either on the item
+(stored in key_values meta:<lesson>, like concept/difficulty) or inside one language's text (language wins). Shape =
+carousel slide figure {asset{type svg, svg, alt}, caption}; alt/caption may be per language. One widget (CompactFigure):
+themed SVG, fixed height, shimmer while parsing, tap to zoom (options: zoom button, tap still answers), alt text,
+unsafe/broken SVG = "diagram unavailable" chip + one log line. Flash card: figure on top (45% of the text area). Questions:
+figure under the prompt; option figures 2x2, one column under 340 px. Carousel: hook slide shows the first figure as cover.

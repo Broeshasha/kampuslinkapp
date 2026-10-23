@@ -131,3 +131,6 @@ TESTED: content_report op shape, replace, note cut to 300, block needs lesson, b
 [2026-10-23 22:00] LANE: D4 | AI/Person: founder + Claude | WP: 16-H Home redesign (founder request)
 DID: flash card full width + stacked action rail (like, save, report) on the card; Continue bars moved into a header Resume button + bottom sheet; tighter header and post margins; new key resumeTitle (en/fr/ar).
 TESTED: flash_card_layout_test (320x568 at 1.5x: footer centred on full width, rail stacked inside the screen, like/report fire, tapping a button does not flip the card).
+[2026-10-23 23:00] LANE: D4 | AI/Person: founder + Claude | WP: 16-B diagrams everywhere
+DID: lib/data/lessons/figures.dart (figure parsing), lib/render/compact_figure.dart (CompactFigure, DiagramUnavailable chip, FigureShimmer, OptionGrid), content_meta provider; figures on flash cards, feed quick questions, lesson quizzes (+ option figures), carousel hook cover; importer keeps figure / option_figures in meta; keys diagramUnavailable, zoomFigure.
+TESTED: figures_test (language figure wins, bare svg, option lists, unsafe svg -> chip, tap -> zoom page, quick question 320/412 x 1.5 x fr/ar: 1 column vs 2x2, flash card ar 320 1.5x, 2 goldens).

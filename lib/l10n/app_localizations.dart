@@ -106,6 +106,18 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @diagramUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagram unavailable'**
+  String get diagramUnavailable;
+
+  /// No description provided for @zoomFigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Enlarge'**
+  String get zoomFigure;
+
   /// No description provided for @resumeTitle.
   ///
   /// In en, this message translates to:
