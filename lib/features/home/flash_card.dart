@@ -94,115 +94,102 @@ class _FlashCardViewState extends State<FlashCardView>
       base: Theme.of(context).textTheme.bodyLarge ?? const TextStyle(),
     );
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    // TikTok style: like / save / report stacked on the card itself
+    // (bottom end), so the card keeps the full width of the phone.
+    final rail = _ActionRail(
+      children: [
+        _RailButton(
+          icon: _liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: _liked ? kc.danger : kc.textPrimary,
+          tooltip: l10n.likeLabel,
+          onTap: () {
+            setState(() => _liked = !_liked);
+            widget.onLike?.call(_liked);
+          },
+        ),
+        _RailButton(
+          icon: _saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+          color: _saved ? kc.xp : kc.textPrimary,
+          tooltip: l10n.saveLabel,
+          onTap: () {
+            setState(() => _saved = !_saved);
+            widget.onSave?.call(_saved);
+          },
+        ),
+        if (widget.onReport case final report?)
+          _RailButton(
+            icon: Icons.flag_outlined,
+            color: kc.textSecondary,
+            tooltip: l10n.reportMistake,
+            onTap: report,
+          ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        KSpace.lg,
-        KSpace.sm,
-        KSpace.lg,
-        KSpace.lg,
+        KSpace.md,
+        KSpace.xs,
+        KSpace.md,
+        KSpace.md,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: _toggle,
-              child: AnimatedBuilder(
-                animation: _flip,
-                builder: (context, _) {
-                  final t = reduceMotion
-                      ? (_flip.value < 0.5 ? 0.0 : 1.0)
-                      : Curves.easeInOutCubic.transform(_flip.value);
-                  final showBack = t >= 0.5;
-                  final angle = t * math.pi;
-                  return Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.0012)
-                      ..multiply(
-                        Matrix4.rotationY(showBack ? angle - math.pi : angle),
-                      ),
-                    child: _Face(
-                      key: ValueKey<bool>(showBack),
-                      accent: widget.accent,
-                      moduleName: widget.moduleName,
-                      back: showBack,
-                      text: showBack ? widget.back : widget.front,
-                      style: style,
-                      footer: showBack
-                          ? Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _answer(false),
-                                    icon: const Icon(Icons.replay_rounded),
-                                    label: Text(l10n.again),
-                                  ),
-                                ),
-                                const SizedBox(width: KSpace.sm),
-                                Expanded(
-                                  child: FilledButton.icon(
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: widget.accent,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    onPressed: () => _answer(true),
-                                    icon: const Icon(Icons.check_rounded),
-                                    label: Text(l10n.knewIt),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Text(
-                              l10n.tapToFlip,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: kc.textSecondary),
-                            ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: KSpace.sm),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _SideButton(
-                icon: _liked
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: _liked ? kc.danger : kc.textSecondary,
-                tooltip: l10n.likeLabel,
-                onTap: () {
-                  setState(() => _liked = !_liked);
-                  widget.onLike?.call(_liked);
-                },
-              ),
-              const SizedBox(height: KSpace.md),
-              _SideButton(
-                icon: _saved
-                    ? Icons.bookmark_rounded
-                    : Icons.bookmark_border_rounded,
-                color: _saved ? kc.xp : kc.textSecondary,
-                tooltip: l10n.saveLabel,
-                onTap: () {
-                  setState(() => _saved = !_saved);
-                  widget.onSave?.call(_saved);
-                },
-              ),
-              if (widget.onReport != null) ...[
-                const SizedBox(height: KSpace.md),
-                _SideButton(
-                  icon: Icons.flag_outlined,
-                  color: kc.textSecondary,
-                  tooltip: l10n.reportMistake,
-                  onTap: widget.onReport!,
+      child: GestureDetector(
+        onTap: _toggle,
+        child: AnimatedBuilder(
+          animation: _flip,
+          builder: (context, _) {
+            final t = reduceMotion
+                ? (_flip.value < 0.5 ? 0.0 : 1.0)
+                : Curves.easeInOutCubic.transform(_flip.value);
+            final showBack = t >= 0.5;
+            final angle = t * math.pi;
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.0012)
+                ..multiply(
+                  Matrix4.rotationY(showBack ? angle - math.pi : angle),
                 ),
-              ],
-              const SizedBox(height: KSpace.xl),
-            ],
-          ),
-        ],
+              child: _Face(
+                key: ValueKey<bool>(showBack),
+                accent: widget.accent,
+                moduleName: widget.moduleName,
+                back: showBack,
+                text: showBack ? widget.back : widget.front,
+                style: style,
+                rail: rail,
+                footer: showBack
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _answer(false),
+                              icon: const Icon(Icons.replay_rounded),
+                              label: Text(l10n.again),
+                            ),
+                          ),
+                          const SizedBox(width: KSpace.sm),
+                          Expanded(
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: widget.accent,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () => _answer(true),
+                              icon: const Icon(Icons.check_rounded),
+                              label: Text(l10n.knewIt),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        l10n.tapToFlip,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: kc.textSecondary),
+                      ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -217,6 +204,7 @@ class _Face extends StatelessWidget {
     required this.text,
     required this.style,
     required this.footer,
+    required this.rail,
   });
 
   final Color accent;
@@ -225,6 +213,9 @@ class _Face extends StatelessWidget {
   final String text;
   final BlockStyle style;
   final Widget footer;
+
+  /// Like / save / report, stacked at the bottom end of the text area.
+  final Widget rail;
 
   @override
   Widget build(BuildContext context) {
@@ -276,13 +267,23 @@ class _Face extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Directionality(
-                  textDirection: style.direction,
-                  child: RichBlockText(text: text, style: style),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsetsDirectional.only(
+                        end: _ActionRail.width,
+                      ),
+                      child: Directionality(
+                        textDirection: style.direction,
+                        child: RichBlockText(text: text, style: style),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                PositionedDirectional(end: 0, bottom: 0, child: rail),
+              ],
             ),
           ),
           const SizedBox(height: KSpace.md),
@@ -293,8 +294,28 @@ class _Face extends StatelessWidget {
   }
 }
 
-class _SideButton extends StatelessWidget {
-  const _SideButton({
+class _ActionRail extends StatelessWidget {
+  const _ActionRail({required this.children});
+
+  /// Room kept free at the end of the card text for the rail.
+  static const double width = 48;
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (var i = 0; i < children.length; i++) ...[
+        if (i > 0) const SizedBox(height: KSpace.sm),
+        children[i],
+      ],
+    ],
+  );
+}
+
+class _RailButton extends StatelessWidget {
+  const _RailButton({
     required this.icon,
     required this.color,
     required this.tooltip,
@@ -309,10 +330,12 @@ class _SideButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context.kc.surfaceRaised,
+      color: context.kc.surfaceRaised.withValues(alpha: 0.85),
       shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
       child: IconButton(
         tooltip: tooltip,
+        iconSize: 26,
         onPressed: () {
           HapticFeedback.selectionClick();
           onTap();

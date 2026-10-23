@@ -67,10 +67,10 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
       textDirection: style.direction,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          KSpace.lg,
-          KSpace.sm,
-          KSpace.lg,
-          KSpace.lg,
+          KSpace.md,
+          KSpace.xs,
+          KSpace.md,
+          KSpace.md,
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(

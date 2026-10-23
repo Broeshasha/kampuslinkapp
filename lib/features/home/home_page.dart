@@ -55,8 +55,6 @@ class HomePage extends ConsumerWidget {
             children: [
               _HomeHeader(),
               YearQuestionCard(),
-              _ContinueCard(),
-              _ContinueCaseCard(),
               Expanded(child: _Feed()),
             ],
           ),
@@ -94,9 +92,9 @@ class _HomeHeader extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         KSpace.lg,
-        KSpace.md,
-        KSpace.lg,
         KSpace.sm,
+        KSpace.md,
+        KSpace.xs,
       ),
       child: MaxWidth(
         child: Row(
@@ -110,6 +108,7 @@ class _HomeHeader extends ConsumerWidget {
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
+            const _ResumeButton(),
             IconButton(
               tooltip: l10n.shuffleFeed,
               visualDensity: VisualDensity.compact,
@@ -204,78 +203,231 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _ContinueCard extends ConsumerWidget {
-  const _ContinueCard();
+/// "Continue where you left off" lives in the header (one round button
+/// with a dot), so the feed card keeps the whole screen. Tap = a sheet
+/// with the unfinished lessons and the open case.
+class _ResumeButton extends ConsumerWidget {
+  const _ResumeButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = switch (ref.watch(continueProvider)) {
-      AsyncData(:final value) => value,
+    final lessons = switch (ref.watch(continueProvider)) {
+      AsyncData(:final value) => value.take(3).toList(),
       _ => const <ContinueItem>[],
     };
-    if (items.isEmpty) return const SizedBox.shrink();
-    final item = items.first;
+    final progress = switch (ref.watch(caseProgressProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <String, CaseProgress>{},
+    };
+    final sources = switch (ref.watch(caseSourcesProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <CaseSource>[],
+    };
+    final lang = Localizations.localeOf(context).languageCode;
+    final cases = <CaseSet>[
+      for (final source in sources)
+        if (progress[source.id] case final p? when p.started && !p.finished)
+          CaseSet.fromSource(source.source, lang),
+    ].take(2).toList();
+    if (lessons.isEmpty && cases.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final kc = context.kc;
+    return IconButton(
+      tooltip: l10n.resumeTitle,
+      visualDensity: VisualDensity.compact,
+      onPressed: () {
+        final router = GoRouter.of(context);
+        showModalBottomSheet<void>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          builder: (sheet) => _ResumeSheet(
+            lessons: lessons,
+            cases: cases,
+            onLesson: (item) {
+              Navigator.of(sheet).pop();
+              router.go('/modules/${item.module.id}/lesson/${item.lesson.id}');
+            },
+            onCase: (set) {
+              Navigator.of(sheet).pop();
+              router.push('/case/${set.id}');
+            },
+          ),
+        );
+      },
+      icon: Badge(
+        smallSize: 8,
+        backgroundColor: kc.accent,
+        child: Icon(Icons.play_circle_outline_rounded, color: kc.accentText),
+      ),
+    );
+  }
+}
+
+class _ResumeSheet extends StatelessWidget {
+  const _ResumeSheet({
+    required this.lessons,
+    required this.cases,
+    required this.onLesson,
+    required this.onCase,
+  });
+
+  final List<ContinueItem> lessons;
+  final List<CaseSet> cases;
+  final ValueChanged<ContinueItem> onLesson;
+  final ValueChanged<CaseSet> onCase;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        KSpace.lg,
+        KSpace.sm,
+        KSpace.lg,
+        KSpace.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.resumeTitle, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: KSpace.md),
+          for (final item in lessons)
+            Padding(
+              padding: const EdgeInsets.only(bottom: KSpace.sm),
+              child: _ContinueLessonTile(
+                item: item,
+                onTap: () => onLesson(item),
+              ),
+            ),
+          for (final set in cases)
+            Padding(
+              padding: const EdgeInsets.only(bottom: KSpace.sm),
+              child: _ContinueCaseTile(set: set, onTap: () => onCase(set)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContinueLessonTile extends StatelessWidget {
+  const _ContinueLessonTile({required this.item, required this.onTap});
+
+  final ContinueItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
     final accent = moduleAccent(item.module.id);
     final lang = Localizations.localeOf(context).languageCode;
     final title = LessonContent.of(item.lesson, lang).title;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(KSpace.lg, 0, KSpace.lg, KSpace.sm),
-      child: MaxWidth(
-        child: Material(
-          color: kc.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(KRadius.chip),
-            side: BorderSide(color: accent.withValues(alpha: 0.5)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => context.go(
-              '/modules/${item.module.id}/lesson/${item.lesson.id}',
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(KSpace.md),
-              child: Row(
-                children: [
-                  Icon(Icons.play_circle_fill_rounded, color: accent, size: 36),
-                  const SizedBox(width: KSpace.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${l10n.continueLabel} \u00b7 ${item.module.name}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: KSpace.xs),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: item.position.progress,
-                            minHeight: 4,
-                            color: accent,
-                            backgroundColor: accent.withValues(alpha: 0.15),
-                          ),
-                        ),
-                      ],
+    return Material(
+      color: kc.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(KRadius.chip),
+        side: BorderSide(color: accent.withValues(alpha: 0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(KSpace.md),
+          child: Row(
+            children: [
+              Icon(Icons.play_circle_fill_rounded, color: accent, size: 36),
+              const SizedBox(width: KSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.continueLabel} \u00b7 ${item.module.name}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: KSpace.xs),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: item.position.progress,
+                        minHeight: 4,
+                        color: accent,
+                        backgroundColor: accent.withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContinueCaseTile extends StatelessWidget {
+  const _ContinueCaseTile({required this.set, required this.onTap});
+
+  final CaseSet set;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final kc = context.kc;
+    return Material(
+      color: kc.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(KRadius.chip),
+        side: BorderSide(color: kc.accentAlt.withValues(alpha: 0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(KSpace.md),
+          child: Row(
+            children: [
+              Icon(Icons.search_rounded, color: kc.accentAlt, size: 28),
+              const SizedBox(width: KSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.continueCase,
+                      style: TextStyle(
+                        color: kc.accentAlt,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      set.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -489,81 +641,6 @@ class _FeedDone extends ConsumerWidget {
               ref.invalidate(feedProvider);
               ref.invalidate(feedQueueProvider);
             },
-    );
-  }
-}
-
-class _ContinueCaseCard extends ConsumerWidget {
-  const _ContinueCaseCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final progress = switch (ref.watch(caseProgressProvider)) {
-      AsyncData(:final value) => value,
-      _ => const <String, CaseProgress>{},
-    };
-    final sources = switch (ref.watch(caseSourcesProvider)) {
-      AsyncData(:final value) => value,
-      _ => const <CaseSource>[],
-    };
-    final lang = Localizations.localeOf(context).languageCode;
-    CaseSet? open;
-    for (final source in sources) {
-      final p = progress[source.id];
-      if (p != null && p.started && !p.finished) {
-        open = CaseSet.fromSource(source.source, lang);
-        break;
-      }
-    }
-    final set = open;
-    if (set == null) return const SizedBox.shrink();
-    final l10n = AppLocalizations.of(context);
-    final kc = context.kc;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(KSpace.lg, 0, KSpace.lg, KSpace.sm),
-      child: MaxWidth(
-        child: Material(
-          color: kc.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(KRadius.chip),
-            side: BorderSide(color: kc.accentAlt.withValues(alpha: 0.5)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => context.push('/case/${set.id}'),
-            child: Padding(
-              padding: const EdgeInsets.all(KSpace.md),
-              child: Row(
-                children: [
-                  Icon(Icons.search_rounded, color: kc.accentAlt, size: 28),
-                  const SizedBox(width: KSpace.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.continueCase,
-                          style: TextStyle(
-                            color: kc.accentAlt,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          set.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

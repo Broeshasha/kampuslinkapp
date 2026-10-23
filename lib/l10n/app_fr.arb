@@ -1,6 +1,7 @@
 {
   "@@locale": "fr",
   "appTitle": "KampusLink",
+  "resumeTitle": "Reprends l\u00e0 o\u00f9 tu t\u2019es arr\u00eat\u00e9",
   "reasonWrongAnswer": "R\u00e9ponse fausse",
   "reasonTypo": "Faute de frappe",
   "reasonUnclear": "Pas clair",

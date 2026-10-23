@@ -13,6 +13,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get resumeTitle => 'تابع من حيث توقفت';
+
+  @override
   String get reasonWrongAnswer => 'إجابة خاطئة';
 
   @override

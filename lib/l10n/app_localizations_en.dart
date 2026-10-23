@@ -13,6 +13,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get resumeTitle => 'Pick up where you left off';
+
+  @override
   String get reasonWrongAnswer => 'Wrong answer';
 
   @override

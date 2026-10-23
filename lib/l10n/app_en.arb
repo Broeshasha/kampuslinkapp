@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
   "appTitle": "KampusLink",
+  "resumeTitle": "Pick up where you left off",
   "reasonWrongAnswer": "Wrong answer",
   "reasonTypo": "Typo",
   "reasonUnclear": "Unclear",

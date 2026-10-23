@@ -59,3 +59,7 @@ replaceKey content_report:<type>:<id>. Carousel reports use target 'set' + the s
 "did you pass" need the network (set_semester / confirm_year return get_me, cached). Admin preview: Profile switch (admins
 only), module page Drafts button, bundle kept under preview_bundle:<module>, DRAFT = id not in the student copy, nothing saved.
 Older uncommitted wp16a attempt kept in git stash 'older-wp16a-attempt' (not used).
+D-029 (2026-10-23, founder) Home = the card is the main actor: flash card uses the full width, like / save / report are a
+TikTok-style stack on the card (bottom end of the text area), not a side column. "Continue lesson" / "Continue the case"
+bars removed from the top of Home: one round Resume button with a dot in the header opens a sheet (up to 3 lessons + 2 open
+cases). Feed posts (card, quick question, carousel) use 12 px side margins instead of 16.

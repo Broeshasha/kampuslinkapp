@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @resumeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up where you left off'**
+  String get resumeTitle;
+
   /// No description provided for @reasonWrongAnswer.
   ///
   /// In en, this message translates to:
