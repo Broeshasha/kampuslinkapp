@@ -52,6 +52,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
 
   bool _loading = true;
   LessonRow? _row;
+  Map<String, dynamic>? _i18n;
   LessonRow? _next;
   String? _resumeId;
   String? _contentLang;
@@ -76,9 +77,11 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
     final position = await _lessons.readingPosition(widget.lessonId);
     final next = row == null ? null : await _lessons.nextLesson(row);
     final questions = await _quiz.questionCount(widget.lessonId);
+    final i18n = row == null ? null : await decodeLessonI18n(row.i18nJson);
     if (!mounted) return;
     setState(() {
       _row = row;
+      _i18n = i18n;
       _next = next;
       _questions = questions;
       _resumeId = position?.blockId;
@@ -141,9 +144,11 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
       return;
     }
     final row = await _lessons.lesson(widget.lessonId);
+    final i18n = row == null ? null : await decodeLessonI18n(row.i18nJson);
     if (!mounted) return;
     setState(() {
       _row = row;
+      _i18n = i18n;
       _contentLang = code;
     });
   }
@@ -185,7 +190,10 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
       );
     }
     final uiLang = Localizations.localeOf(context).languageCode;
-    final content = LessonContent.of(row, _contentLang ?? uiLang);
+    final i18n = _i18n;
+    final content = i18n == null
+        ? LessonContent.of(row, _contentLang ?? uiLang)
+        : LessonContent.fromI18n(row, i18n, _contentLang ?? uiLang);
     final blocks = content.blocks;
     final step = ref.watch(readerScaleStepProvider);
     final done = switch (ref.watch(lessonDoneProvider(row.id))) {

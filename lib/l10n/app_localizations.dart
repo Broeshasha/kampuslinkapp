@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @webStorageWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads may be lost when you close the browser. Use the phone app.'**
+  String get webStorageWarning;
+
   /// No description provided for @studyLevelTitle.
   ///
   /// In en, this message translates to:

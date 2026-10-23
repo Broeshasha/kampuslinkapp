@@ -13,6 +13,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get webStorageWarning =>
+      'Downloads may be lost when you close the browser. Use the phone app.';
+
+  @override
   String get studyLevelTitle => 'My year & semester';
 
   @override

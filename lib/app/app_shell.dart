@@ -8,6 +8,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../ui/offline_banner.dart';
+import '../ui/storage_banner.dart';
 
 typedef _Tab = (IconData icon, IconData selectedIcon, String label);
 
@@ -79,6 +80,9 @@ class AppShell extends StatelessWidget {
                   child: Column(
                     children: [
                       const OfflineBanner(margin: EdgeInsets.all(KSpace.sm)),
+                      const StorageWarningBanner(
+                        margin: EdgeInsets.all(KSpace.sm),
+                      ),
                       Expanded(child: navigationShell),
                     ],
                   ),
@@ -117,6 +121,9 @@ class _FloatingNavBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const OfflineBanner(margin: EdgeInsets.only(bottom: KSpace.sm)),
+            const StorageWarningBanner(
+              margin: EdgeInsets.only(bottom: KSpace.sm),
+            ),
             MediaQuery.removePadding(
               context: context,
               removeBottom: true,

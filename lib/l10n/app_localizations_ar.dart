@@ -13,6 +13,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get webStorageWarning =>
+      'قد تضيع التنزيلات عند إغلاق المتصفح. استخدم تطبيق الهاتف.';
+
+  @override
   String get studyLevelTitle => 'سنتي وسداسيي';
 
   @override

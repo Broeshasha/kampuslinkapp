@@ -140,3 +140,6 @@ TESTED: code_block_test (tokens, fences, inline code segment, block at 320 ar / 
 [2026-10-24 00:30] LANE: D4 | AI/Person: founder + Claude | WP: 17-A semester = the only content shown
 DID: lib/data/profile/study_level.dart (StudyLevelController, set_study_level + offline pending, inSemester, visibleModulesProvider, banner dates); KampusApi.setStudyLevel (confirmYear / setSemester removed); semester filter in feed pool, feed queue (rebuild on change), continueProvider, Resume sheet cases, module sync (downloads), Modules tab, onboarding download; Profile row + sheet + Home banner; removed year_question_card, module_sections.
 TESTED: semester_rule_test (visible modules, banner dates, S3 student with S4 content: no S4 item in any feed bucket, switch to S4, Modules list S3 -> S4 via providers, 2 banner goldens en/ar 320).
+[2026-10-24 01:00] LANE: D4 | AI/Person: founder + Claude | WP: 16-E web extras
+DID: decodeLessonI18n (compute) + LessonContent.fromI18n used by the lesson reader; webStorageStatus from drift onResult (logged); StorageWarningBanner in the app shell; key webStorageWarning.
+TESTED: web_extras_test (600-block lesson decoded off-thread = same content and fallback, unsafe storage mapping, banner shows only for unsafe storage and closes).

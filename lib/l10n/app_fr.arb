@@ -1,6 +1,7 @@
 {
   "@@locale": "fr",
   "appTitle": "KampusLink",
+  "webStorageWarning": "Les t\u00e9l\u00e9chargements peuvent \u00eatre perdus quand tu fermes le navigateur. Utilise l\u2019application sur ton t\u00e9l\u00e9phone.",
   "studyLevelTitle": "Mon ann\u00e9e et mon semestre",
   "studyLevelValue": "{year} \u00b7 Semestre {number}",
   "studyLevelChange": "Changer",

@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
   "appTitle": "KampusLink",
+  "webStorageWarning": "Downloads may be lost when you close the browser. Use the phone app.",
   "studyLevelTitle": "My year & semester",
   "studyLevelValue": "{year} \u00b7 Semester {number}",
   "@studyLevelValue": {"placeholders": {"year": {"type": "String"}, "number": {"type": "int"}}},
