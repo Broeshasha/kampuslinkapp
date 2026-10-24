@@ -13,6 +13,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get contentNotSupported =>
+      'This part needs a newer version of the app.';
+
+  @override
+  String get updateAvailable => 'A new version of KampusLink is available.';
+
+  @override
   String get webStorageWarning =>
       'Downloads may be lost when you close the browser. Use the phone app.';
 

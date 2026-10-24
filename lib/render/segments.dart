@@ -33,6 +33,10 @@ SegmentKind _kindOf(String? kind) => switch (kind) {
 final _inlineMath = RegExp(r'\\\((.+?)\\\)');
 final _inlineCode = RegExp(r'`([^`\n]+)`');
 
+/// $x^2$ style inline math (no space right after the opening $ or right
+/// before the closing one, so prices like "5 $ et 6 $" stay text).
+final _dollarMath = RegExp(r'\$(?!\s)([^$\n]+?)(?<!\s)\$');
+
 List<TextSegment> segmentText(String text, List<Object?> highlights) {
   final ranges = <({int start, int end, SegmentKind kind, String text})>[];
   for (final m in _inlineMath.allMatches(text)) {
@@ -44,6 +48,15 @@ List<TextSegment> segmentText(String text, List<Object?> highlights) {
     ));
   }
   bool overlaps(int s, int e) => ranges.any((r) => s < r.end && e > r.start);
+  for (final m in _dollarMath.allMatches(text)) {
+    if (overlaps(m.start, m.end)) continue;
+    ranges.add((
+      start: m.start,
+      end: m.end,
+      kind: SegmentKind.math,
+      text: m.group(1) ?? '',
+    ));
+  }
   for (final m in _inlineCode.allMatches(text)) {
     if (overlaps(m.start, m.end)) continue;
     ranges.add((

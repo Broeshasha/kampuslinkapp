@@ -43,16 +43,41 @@ class TableCellData {
   });
 
   factory TableCellData.from(Object? raw, String lang) {
-    const fields = {'value', 'text', 'content', 'latex', 'unit', 'note'};
+    const fields = {
+      'value',
+      'text',
+      'content',
+      'label',
+      'latex',
+      'unit',
+      'note',
+    };
     if (raw is Map && raw.keys.any(fields.contains)) {
-      return TableCellData(
-        value: tableText(raw['value'] ?? raw['text'] ?? raw['content'], lang),
+      return TableCellData._dollars(
+        value: tableText(
+          raw['value'] ?? raw['text'] ?? raw['content'] ?? raw['label'],
+          lang,
+        ),
         unit: tableText(raw['unit'], lang),
         note: tableText(raw['note'], lang),
         latex: tableText(raw['latex'], lang),
       );
     }
-    return TableCellData(value: tableText(raw, lang));
+    return TableCellData._dollars(value: tableText(raw, lang));
+  }
+
+  /// A whole value written as $...$ (or $$...$$) is a formula.
+  factory TableCellData._dollars({
+    String value = '',
+    String unit = '',
+    String note = '',
+    String latex = '',
+  }) {
+    final m = RegExp(r'^\$\$?([^$]+?)\$\$?$').firstMatch(value.trim());
+    if (m != null && latex.isEmpty) {
+      return TableCellData(latex: m.group(1)!.trim(), unit: unit, note: note);
+    }
+    return TableCellData(value: value, unit: unit, note: note, latex: latex);
   }
 
   final String value;
@@ -115,9 +140,9 @@ class TableBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final kc = style.kc;
     final lang = style.language;
+    // Header cells: a string, a language map or {id, label, latex?, unit?}.
     final columns = [
-      for (final c in _list(block['columns']))
-        tableText(c is Map && c.containsKey('label') ? c['label'] : c, lang),
+      for (final c in _list(block['columns'])) TableCellData.from(c, lang),
     ];
     final rows = [
       for (final r in _list(block['rows']))
@@ -206,7 +231,7 @@ class TableBlock extends StatelessWidget {
     }
 
     for (var i = 0; i < columns.length; i++) {
-      grow(i, TableCellData(value: columns[i]), bold);
+      grow(i, columns[i], bold);
     }
     for (final r in rows) {
       grow(0, TableCellData.from(r['label'], lang), bold);
@@ -258,8 +283,7 @@ class TableBlock extends StatelessWidget {
                 TableRow(
                   decoration: BoxDecoration(color: kc.surfaceRaised),
                   children: fit([
-                    for (final c in columns)
-                      content(TableCellData(value: c), bold: true),
+                    for (final c in columns) content(c, bold: true),
                   ]),
                 ),
               for (final r in rows)

@@ -93,3 +93,9 @@ from catalog.levels (labels per language; a level without semesters saves semest
 Rule changed: visible = module.semester == current OR module.semester null (whole year); no current semester = all.
 Banner windows and snooze days from config (no constants). Tables: cells may be strings, numbers, {value,unit,note,latex}
 or language maps; raw LaTeX, latex fields and inline \( \) are drawn as math; rows with string cells no longer show blank.
+D-035 (2026-10-24, lead Play release check) Release shell: forced update from config (catalog.config, else app_config rows
+min_supported_build / latest_build / update_url, cached for offline starts): build < min = blocking screen, Update opens
+update_url (else the Play page); build < latest = small closable "new version" bar. kShowDemoCases removed: demo sets
+only when config.show_demo_cases is true. Unknown block = neutral "needs a newer version" card (+ its text), never a
+crash. Tables: header cells may be {label, latex, unit} or $...$; inline $...$ math in text (no space inside the $).
+Version 1.1.0+6 (versionCode 6, lead ok 2026-10-24).

@@ -191,6 +191,10 @@ final catalogProvider = AsyncNotifierProvider<CatalogController, Catalog?>(
 );
 
 /// The catalog when known (null while loading or never fetched).
+/// config.show_demo_cases (off unless the server says true).
+bool showDemoCases(Catalog? catalog) =>
+    catalog?.config['show_demo_cases'] == true;
+
 final catalogValueProvider = Provider<Catalog?>(
   (ref) => ref.watch(catalogProvider).value,
 );

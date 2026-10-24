@@ -1,7 +1,7 @@
 name: kampuslink
 description: "KampusLink -- study app for Algerian university students: lessons, flashcards, quizzes and module chat, offline, in Arabic, French and English."
 publish_to: 'none'
-version: 1.0.2+5
+version: 1.1.0+6
 environment:
   sdk: ^3.13.0
 dependencies:

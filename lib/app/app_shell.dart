@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:go_router/go_router.dart';
 
+import '../core/config/app_config.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import '../l10n/app_localizations.dart';
@@ -83,6 +84,9 @@ class AppShell extends StatelessWidget {
                       const StorageWarningBanner(
                         margin: EdgeInsets.all(KSpace.sm),
                       ),
+                      const UpdateAvailableBanner(
+                        margin: EdgeInsets.all(KSpace.sm),
+                      ),
                       Expanded(child: navigationShell),
                     ],
                   ),
@@ -122,6 +126,9 @@ class _FloatingNavBar extends StatelessWidget {
           children: [
             const OfflineBanner(margin: EdgeInsets.only(bottom: KSpace.sm)),
             const StorageWarningBanner(
+              margin: EdgeInsets.only(bottom: KSpace.sm),
+            ),
+            const UpdateAvailableBanner(
               margin: EdgeInsets.only(bottom: KSpace.sm),
             ),
             MediaQuery.removePadding(

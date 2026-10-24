@@ -145,6 +145,7 @@ class FeedPoolLoader {
     Map<String, bool> finishedSets = const {},
     Set<String> startedSets = const {},
     int? semester,
+    bool showDemoCases = false,
   }) async {
     final meta = await _meta();
     final open = await _openLessons();
@@ -253,11 +254,12 @@ class FeedPoolLoader {
 
     // S: carousel sets, finished ones left out.
     final sets = <FeedItem>[];
-    final sources = await _cases.sources();
+    final sources = await _cases.sources(includeDemo: showDemoCases);
     for (var i = 0; i < sources.length; i++) {
       final s = sources[i];
       if (finishedSets[s.id] ?? false) continue;
-      if (!inSemester(modules[s.moduleId], semester)) continue;
+      final demo = showDemoCases && s.moduleId == null;
+      if (!demo && !inSemester(modules[s.moduleId], semester)) continue;
       sets.add(
         FeedItem(
           key: 's:${s.id}',

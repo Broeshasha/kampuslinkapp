@@ -1,8 +1,6 @@
 /// DEMO carousel cases (lead brief B3) until the real content arrives with
 /// backend file 11. Source format: every text is {en, fr, ar}.
-/// Switch kShowDemoCases off before a Play Store release.
-const kShowDemoCases = false;
-
+/// Shown only when config.show_demo_cases is true.
 const List<Map<String, Object?>> demoCases = [
   {
     'id': 'demo_case_sodium',

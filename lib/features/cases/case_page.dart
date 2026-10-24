@@ -9,7 +9,6 @@ import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 import 'case_models.dart';
 import 'case_set_view.dart';
-import 'demo_cases.dart';
 import 'report_sheet.dart';
 
 /// "Continue the case": one carousel set full screen, back where you were.
@@ -51,7 +50,7 @@ class CasePage extends ConsumerWidget {
         child: MaxWidth(
           child: CaseSetView(
             set: set,
-            demo: kShowDemoCases && found.moduleId == null,
+            demo: found.moduleId == null,
             accent: found.moduleId == null
                 ? null
                 : moduleAccent(found.moduleId!),

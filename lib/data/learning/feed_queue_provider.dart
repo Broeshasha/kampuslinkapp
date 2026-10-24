@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/errors/result.dart';
 import '../cases/case_repository.dart';
+import '../catalog/catalog.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
 import 'feed_pool.dart';
@@ -67,6 +68,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
               if (e.value.started && !e.value.finished) e.key,
           },
           semester: ref.read(currentSemesterProvider),
+          showDemoCases: showDemoCases(ref.read(catalogValueProvider)),
         );
     _random = math.Random(now.microsecondsSinceEpoch);
     final list = buildFeedQueue(

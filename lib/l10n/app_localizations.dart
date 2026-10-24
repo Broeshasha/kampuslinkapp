@@ -106,6 +106,18 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @contentNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This part needs a newer version of the app.'**
+  String get contentNotSupported;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of KampusLink is available.'**
+  String get updateAvailable;
+
   /// No description provided for @webStorageWarning.
   ///
   /// In en, this message translates to:

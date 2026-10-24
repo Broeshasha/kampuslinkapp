@@ -13,6 +13,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get contentNotSupported =>
+      'هذا الجزء يحتاج إلى إصدار أحدث من التطبيق.';
+
+  @override
+  String get updateAvailable => 'يتوفر إصدار جديد من KampusLink.';
+
+  @override
   String get webStorageWarning =>
       'قد تضيع التنزيلات عند إغلاق المتصفح. استخدم تطبيق الهاتف.';
 

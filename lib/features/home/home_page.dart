@@ -25,7 +25,6 @@ import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 import '../cases/case_models.dart';
 import '../cases/case_set_view.dart';
-import '../cases/demo_cases.dart';
 import '../cases/report_sheet.dart';
 import '../profile/semester_sheet.dart';
 import 'flash_card.dart';
@@ -489,7 +488,7 @@ class _FeedState extends ConsumerState<_Feed> {
         child: CaseSetView(
           key: ValueKey<String>(item.key),
           set: set,
-          demo: kShowDemoCases && payload.moduleId == null,
+          demo: payload.moduleId == null,
           accent: payload.moduleId == null
               ? null
               : moduleAccent(payload.moduleId!),

@@ -1,6 +1,8 @@
 {
   "@@locale": "fr",
   "appTitle": "KampusLink",
+  "contentNotSupported": "Cette partie demande une version plus r\u00e9cente de l\u2019application.",
+  "updateAvailable": "Une nouvelle version de KampusLink est disponible.",
   "webStorageWarning": "Les t\u00e9l\u00e9chargements peuvent \u00eatre perdus quand tu fermes le navigateur. Utilise l\u2019application sur ton t\u00e9l\u00e9phone.",
   "studyLevelTitle": "Mon ann\u00e9e et mon semestre",
   "studyLevelValue": "{year} \u00b7 Semestre {number}",

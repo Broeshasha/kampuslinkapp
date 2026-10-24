@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../features/cases/case_models.dart';
 import '../../features/cases/demo_cases.dart';
+import '../catalog/catalog.dart';
 import '../db/app_database.dart';
 import '../learning/learning_providers.dart';
 import '../providers.dart';
@@ -98,9 +99,9 @@ class CaseRepository {
       ),
   };
 
-  /// Every stored set, by module then position (+ the demo sets while
-  /// kShowDemoCases is on).
-  Future<List<CaseSource>> sources() async {
+  /// Every stored set, by module then position (+ the demo sets when
+  /// config.show_demo_cases is on).
+  Future<List<CaseSource>> sources({bool includeDemo = false}) async {
     final rows = await (_db.select(
       _db.keyValues,
     )..where((t) => t.name.like('sets:%'))).get();
@@ -134,7 +135,7 @@ class CaseRepository {
       final m = (a.moduleId ?? 0).compareTo(b.moduleId ?? 0);
       return m != 0 ? m : a.position.compareTo(b.position);
     });
-    if (kShowDemoCases) {
+    if (includeDemo) {
       for (var i = 0; i < demoCases.length; i++) {
         out.add(
           CaseSource(
@@ -177,7 +178,9 @@ final caseProgressProvider = StreamProvider<Map<String, CaseProgress>>((ref) {
 /// Stored sets, reloaded when downloaded content changes.
 final caseSourcesProvider = FutureProvider<List<CaseSource>>((ref) {
   ref.watch(downloadedKeyProvider);
-  return ref.watch(caseRepositoryProvider).sources();
+  return ref
+      .watch(caseRepositoryProvider)
+      .sources(includeDemo: showDemoCases(ref.watch(catalogValueProvider)));
 });
 
 final caseHintSeenProvider = FutureProvider<bool>(

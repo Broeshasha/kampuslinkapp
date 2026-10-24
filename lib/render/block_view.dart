@@ -122,11 +122,42 @@ class BlockView extends StatelessWidget {
     };
   }
 
+  /// Never a crash: a neutral "needs a newer app" card, with the block's
+  /// text when it has one.
   Widget _unknown(String type, Widget Function() rich, bool empty) {
     if (_loggedUnknown.add(type)) {
-      appLog.warn('renderer: unknown block type "$type" (shown as text)');
+      appLog.warn('renderer: unknown block type "$type" (neutral card)');
     }
-    return empty ? const SizedBox.shrink() : rich();
+    final kc = style.kc;
+    return Container(
+      padding: const EdgeInsets.all(KSpace.md),
+      decoration: BoxDecoration(
+        color: kc.surfaceRaised,
+        borderRadius: BorderRadius.circular(KRadius.chip),
+        border: Border.all(color: kc.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.extension_outlined, size: 18, color: kc.textSecondary),
+              const SizedBox(width: KSpace.sm),
+              Expanded(
+                child: Text(
+                  style.labels.contentNotSupported,
+                  style: TextStyle(
+                    color: kc.textSecondary,
+                    fontSize: 13 * style.scale,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!empty) ...[const SizedBox(height: KSpace.sm), rich()],
+        ],
+      ),
+    );
   }
 }
 

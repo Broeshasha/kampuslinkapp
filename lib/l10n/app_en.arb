@@ -1,6 +1,8 @@
 {
   "@@locale": "en",
   "appTitle": "KampusLink",
+  "contentNotSupported": "This part needs a newer version of the app.",
+  "updateAvailable": "A new version of KampusLink is available.",
   "webStorageWarning": "Downloads may be lost when you close the browser. Use the phone app.",
   "studyLevelTitle": "My year & semester",
   "studyLevelValue": "{year} \u00b7 Semester {number}",
