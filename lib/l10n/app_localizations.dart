@@ -106,6 +106,216 @@ abstract class AppLocalizations {
   /// **'KampusLink'**
   String get appTitle;
 
+  /// No description provided for @practiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice'**
+  String get practiceTitle;
+
+  /// No description provided for @examsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mock exams'**
+  String get examsTitle;
+
+  /// No description provided for @practiceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} exercises'**
+  String practiceCount(int count);
+
+  /// No description provided for @examCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} papers'**
+  String examCount(int count);
+
+  /// No description provided for @assessNotDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not downloaded yet. Connect to the internet and pull down to refresh.'**
+  String get assessNotDownloaded;
+
+  /// No description provided for @exerciseNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise {n}'**
+  String exerciseNumber(int n);
+
+  /// No description provided for @practiceNextPart.
+  ///
+  /// In en, this message translates to:
+  /// **'Next question'**
+  String get practiceNextPart;
+
+  /// No description provided for @practiceRate.
+  ///
+  /// In en, this message translates to:
+  /// **'How did it go?'**
+  String get practiceRate;
+
+  /// No description provided for @rateGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get rateGotIt;
+
+  /// No description provided for @ratePartly.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly'**
+  String get ratePartly;
+
+  /// No description provided for @rateMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get rateMissed;
+
+  /// No description provided for @practiceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint'**
+  String get practiceHint;
+
+  /// No description provided for @practiceHintCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint {n}/{total}'**
+  String practiceHintCount(int n, int total);
+
+  /// No description provided for @practiceShowSolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Show solution'**
+  String get practiceShowSolution;
+
+  /// No description provided for @practiceSolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Solution'**
+  String get practiceSolution;
+
+  /// No description provided for @practiceAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get practiceAnswer;
+
+  /// No description provided for @examMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min · {points} pts'**
+  String examMeta(int minutes, String points);
+
+  /// No description provided for @examOnPaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your answers on paper. The app shows only the statements; the correction opens when you finish.'**
+  String get examOnPaper;
+
+  /// No description provided for @examStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get examStart;
+
+  /// No description provided for @examBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best {score}/20'**
+  String examBest(String score);
+
+  /// No description provided for @examResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get examResume;
+
+  /// No description provided for @examCorrection.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction'**
+  String get examCorrection;
+
+  /// No description provided for @examTenMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'10 minutes left'**
+  String get examTenMinutes;
+
+  /// No description provided for @examTimeUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Time is up. Here is the correction.'**
+  String get examTimeUp;
+
+  /// No description provided for @examKeepGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep going'**
+  String get examKeepGoing;
+
+  /// No description provided for @examFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get examFinish;
+
+  /// No description provided for @examFinishConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the exam now? The correction will open.'**
+  String get examFinishConfirm;
+
+  /// No description provided for @examQuitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the exam?'**
+  String get examQuitTitle;
+
+  /// No description provided for @examQuitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'If you leave now, this attempt is marked as abandoned.'**
+  String get examQuitBody;
+
+  /// No description provided for @examQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get examQuit;
+
+  /// No description provided for @examTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {total} / {max}'**
+  String examTotal(String total, String max);
+
+  /// No description provided for @examOn20.
+  ///
+  /// In en, this message translates to:
+  /// **'{score} / 20'**
+  String examOn20(String score);
+
+  /// No description provided for @examPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts'**
+  String examPoints(String points);
+
+  /// No description provided for @examMarking.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking scheme'**
+  String get examMarking;
+
+  /// No description provided for @examYourPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Your points'**
+  String get examYourPoints;
+
   /// No description provided for @contentNotSupported.
   ///
   /// In en, this message translates to:

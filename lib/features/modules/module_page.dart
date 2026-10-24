@@ -15,6 +15,7 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/module_look.dart';
 import '../../ui/states.dart';
+import '../assess/assess_entries.dart';
 import '../preview/preview_page.dart';
 import 'download_status.dart';
 import 'library_tab.dart';
@@ -226,6 +227,7 @@ class _LessonList extends StatelessWidget {
             ? _UpdateBanner(busy: busy, online: online, onUpdate: onUpdate)
             : null,
       ),
+      AssessEntries(moduleId: module.id),
     ];
     String? currentUnit;
     var number = 0;

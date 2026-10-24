@@ -13,6 +13,131 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get practiceTitle => 'تمارين';
+
+  @override
+  String get examsTitle => 'امتحانات تجريبية';
+
+  @override
+  String practiceCount(int count) {
+    return '$count تمارين';
+  }
+
+  @override
+  String examCount(int count) {
+    return '$count مواضيع';
+  }
+
+  @override
+  String get assessNotDownloaded =>
+      'لم يتم التنزيل بعد. اتصل بالإنترنت ثم اسحب للأسفل للتحديث.';
+
+  @override
+  String exerciseNumber(int n) {
+    return 'التمرين $n';
+  }
+
+  @override
+  String get practiceNextPart => 'السؤال التالي';
+
+  @override
+  String get practiceRate => 'كيف كان أداؤك؟';
+
+  @override
+  String get rateGotIt => 'فهمت';
+
+  @override
+  String get ratePartly => 'جزئيًا';
+
+  @override
+  String get rateMissed => 'لم أفهم';
+
+  @override
+  String get practiceHint => 'تلميح';
+
+  @override
+  String practiceHintCount(int n, int total) {
+    return 'تلميح $n/$total';
+  }
+
+  @override
+  String get practiceShowSolution => 'عرض الحل';
+
+  @override
+  String get practiceSolution => 'الحل';
+
+  @override
+  String get practiceAnswer => 'الإجابة';
+
+  @override
+  String examMeta(int minutes, String points) {
+    return '$minutes دقيقة · $points نقطة';
+  }
+
+  @override
+  String get examOnPaper =>
+      'اكتب إجاباتك على الورق. يعرض التطبيق نص الأسئلة فقط، ويظهر التصحيح عند الانتهاء.';
+
+  @override
+  String get examStart => 'ابدأ';
+
+  @override
+  String examBest(String score) {
+    return 'الأفضل $score/20';
+  }
+
+  @override
+  String get examResume => 'متابعة';
+
+  @override
+  String get examCorrection => 'التصحيح';
+
+  @override
+  String get examTenMinutes => 'بقيت 10 دقائق';
+
+  @override
+  String get examTimeUp => 'انتهى الوقت. إليك التصحيح.';
+
+  @override
+  String get examKeepGoing => 'واصل';
+
+  @override
+  String get examFinish => 'إنهاء';
+
+  @override
+  String get examFinishConfirm => 'إنهاء الامتحان الآن؟ سيظهر التصحيح.';
+
+  @override
+  String get examQuitTitle => 'مغادرة الامتحان؟';
+
+  @override
+  String get examQuitBody => 'إذا غادرت الآن، ستُسجَّل هذه المحاولة كمتروكة.';
+
+  @override
+  String get examQuit => 'مغادرة';
+
+  @override
+  String examTotal(String total, String max) {
+    return 'المجموع: $total / $max';
+  }
+
+  @override
+  String examOn20(String score) {
+    return '$score / 20';
+  }
+
+  @override
+  String examPoints(String points) {
+    return '$points ن';
+  }
+
+  @override
+  String get examMarking => 'سلم التنقيط';
+
+  @override
+  String get examYourPoints => 'نقاطك';
+
+  @override
   String get contentNotSupported =>
       'هذا الجزء يحتاج إلى إصدار أحدث من التطبيق.';
 

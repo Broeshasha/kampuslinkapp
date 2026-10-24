@@ -14,11 +14,16 @@ class RichBlockText extends StatelessWidget {
     required this.text,
     required this.style,
     this.highlights = const <Object?>[],
+    this.shrinkMath = false,
   });
 
   final String text;
   final List<Object?> highlights;
   final BlockStyle style;
+
+  /// Narrow places (exam corrections): a formula wider than the line is
+  /// scaled down instead of overflowing.
+  final bool shrinkMath;
 
   @override
   Widget build(BuildContext context) {
@@ -110,11 +115,19 @@ class RichBlockText extends StatelessWidget {
           );
         case SegmentKind.math:
           spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.baseline,
-              baseline: TextBaseline.alphabetic,
-              child: InlineMath(latex: s.text, style: base),
-            ),
+            shrinkMath
+                ? WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: InlineMath(latex: s.text, style: base),
+                    ),
+                  )
+                : WidgetSpan(
+                    alignment: PlaceholderAlignment.baseline,
+                    baseline: TextBaseline.alphabetic,
+                    child: InlineMath(latex: s.text, style: base),
+                  ),
           );
       }
     }

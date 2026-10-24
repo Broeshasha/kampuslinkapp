@@ -1,7 +1,15 @@
 import '../sync/outbox_repository.dart';
 
 /// Contract 11, B4: what a student can report and why.
-const reportTargetTypes = {'card', 'question', 'set', 'lesson', 'block'};
+const reportTargetTypes = {
+  'card',
+  'question',
+  'set',
+  'lesson',
+  'block',
+  'practice',
+  'exam',
+};
 const reportReasons = [
   'wrong_answer',
   'typo',

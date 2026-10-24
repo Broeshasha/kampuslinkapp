@@ -99,3 +99,14 @@ update_url (else the Play page); build < latest = small closable "new version" b
 only when config.show_demo_cases is true. Unknown block = neutral "needs a newer version" card (+ its text), never a
 crash. Tables: header cells may be {label, latex, unit} or $...$; inline $...$ math in text (no space inside the $).
 Version 1.1.0+6 (versionCode 6, lead ok 2026-10-24).
+D-036 (2026-10-24, lead WP17-B / contract file 15) Practice + mock exams. Stored in key_values (practice_index:<m>,
+exams:<m>, practice:<m>:<chapter>, exam:<paper> + rev keys, practice_prog:<id>, exam_attempts:<paper>), downloaded after
+each sync for current-semester modules only (manifest practice/exams, all 3 languages, re-download on rev change, delete
+removed), attempts merged from get_my_exam_attempts. Tolerant readers: T or string, T-list as list / map of lists /
+single, parts keys question/statement, steps/solution, answer; marking as {points|null, criterion} or plain text lines;
+"parts" only (questions/sections copies ignored); 994 solution_code/solution_output shown as a code block. Sync ops:
+practice_progress (max hints, sticky solution, latest rating; one unsent op per item) and exam_attempt (whole scores map,
+newest "at" wins, finished never goes back; one unsent op per attempt). Exam mode = statements + figures only, countdown
+from started_at (keeps running in background), 10-min warning, auto-finish at 0, leaving asks and marks abandoned.
+Correction = steps, answer, marking, solution figure/code, 0.25 stepper per part clamped 0..points, total X / total and
+X / 20. Reports: 'practice' (id) and 'exam' (paper id, part key "ex2/b" put first in the note).

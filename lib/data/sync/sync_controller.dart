@@ -8,10 +8,12 @@ import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
+import '../assess/assess_providers.dart';
 import '../catalog/catalog.dart';
 import '../chat/chat_providers.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
+import '../remote/kampus_api.dart';
 import 'download_failure.dart';
 import 'module_downloader.dart';
 import 'module_sync.dart';
@@ -177,6 +179,10 @@ class SyncController extends Notifier<SyncState> {
           firstFailure = failure;
       }
     }
+    // Practice + mock exams of the current semester (contract file 15).
+    if (firstFailure == null) {
+      await _syncAssess(api);
+    }
     // Other languages: in the background, only on Wi-Fi (lead brief 2, B6).
     if (firstFailure == null && await _onWifi()) {
       await service.sync(allContentLanguages, onBusy: _busy);
@@ -190,6 +196,32 @@ class SyncController extends Notifier<SyncState> {
       lastSyncedAt: firstFailure == null ? now : null,
       failure: firstFailure,
     );
+  }
+
+  Future<void> _syncAssess(KampusApi api) async {
+    final store = ref.read(assessStoreProvider);
+    final db = ref.read(appDatabaseProvider);
+    final semester = ref.read(currentSemesterProvider);
+    final modules = [
+      for (final m in await db.select(db.modules).get())
+        if (inSemester(m, semester)) m,
+    ];
+    for (final m in modules) {
+      final r = await guard(() async {
+        final manifest = await api.getModuleManifest(m.id, allContentLanguages);
+        await store.applyManifest(
+          m.id,
+          manifest,
+          fetchPractice: (chapter) =>
+              api.getPractice(m.id, chapter, allContentLanguages),
+          fetchPaper: (id) => api.getExamPaper(id, allContentLanguages),
+        );
+        await store.mergeServerAttempts(await api.getMyExamAttempts(m.id));
+      });
+      if (r case Err(:final failure)) {
+        appLog.info('practice/exams of module ${m.id}: $failure');
+      }
+    }
   }
 
   /// "Retry" on one module (module page / onboarding).

@@ -223,6 +223,48 @@ class KampusApi {
     ),
   );
 
+  /// Contract file 15: the practice items of one chapter (all languages
+  /// asked); an ARRAY.
+  Future<List<Object?>> getPractice(
+    int moduleId,
+    String chapterRef,
+    List<String> langs,
+  ) async {
+    final rows = await _client
+        .rpc(
+          'get_practice',
+          params: {
+            'p_module': moduleId,
+            'p_chapter': chapterRef,
+            'p_langs': langs,
+          },
+        )
+        .timeout(const Duration(seconds: 45));
+    return rows is List ? rows : const <Object?>[];
+  }
+
+  /// Contract file 15: one mock exam paper.
+  Future<Map<String, dynamic>> getExamPaper(
+    int paperId,
+    List<String> langs,
+  ) async => _map(
+    await _client
+        .rpc('get_exam_paper', params: {'p_paper': paperId, 'p_langs': langs})
+        .timeout(const Duration(seconds: 45)),
+  );
+
+  /// Contract file 15: the student's attempts of a module (new phone).
+  Future<List<Map<String, dynamic>>> getMyExamAttempts(int moduleId) async {
+    final rows = await _client
+        .rpc('get_my_exam_attempts', params: {'p_module': moduleId})
+        .timeout(_timeout);
+    return [
+      if (rows is List)
+        for (final r in rows)
+          if (r is Map) r.cast<String, dynamic>(),
+    ];
+  }
+
   /// Fallback only (servers without file 13): the whole module at once.
   Future<Map<String, dynamic>> getModuleBundle(
     int moduleId,

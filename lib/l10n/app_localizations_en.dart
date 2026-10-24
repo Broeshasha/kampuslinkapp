@@ -13,6 +13,133 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'KampusLink';
 
   @override
+  String get practiceTitle => 'Practice';
+
+  @override
+  String get examsTitle => 'Mock exams';
+
+  @override
+  String practiceCount(int count) {
+    return '$count exercises';
+  }
+
+  @override
+  String examCount(int count) {
+    return '$count papers';
+  }
+
+  @override
+  String get assessNotDownloaded =>
+      'Not downloaded yet. Connect to the internet and pull down to refresh.';
+
+  @override
+  String exerciseNumber(int n) {
+    return 'Exercise $n';
+  }
+
+  @override
+  String get practiceNextPart => 'Next question';
+
+  @override
+  String get practiceRate => 'How did it go?';
+
+  @override
+  String get rateGotIt => 'Got it';
+
+  @override
+  String get ratePartly => 'Partly';
+
+  @override
+  String get rateMissed => 'Missed';
+
+  @override
+  String get practiceHint => 'Hint';
+
+  @override
+  String practiceHintCount(int n, int total) {
+    return 'Hint $n/$total';
+  }
+
+  @override
+  String get practiceShowSolution => 'Show solution';
+
+  @override
+  String get practiceSolution => 'Solution';
+
+  @override
+  String get practiceAnswer => 'Answer';
+
+  @override
+  String examMeta(int minutes, String points) {
+    return '$minutes min · $points pts';
+  }
+
+  @override
+  String get examOnPaper =>
+      'Write your answers on paper. The app shows only the statements; the correction opens when you finish.';
+
+  @override
+  String get examStart => 'Start';
+
+  @override
+  String examBest(String score) {
+    return 'Best $score/20';
+  }
+
+  @override
+  String get examResume => 'Resume';
+
+  @override
+  String get examCorrection => 'Correction';
+
+  @override
+  String get examTenMinutes => '10 minutes left';
+
+  @override
+  String get examTimeUp => 'Time is up. Here is the correction.';
+
+  @override
+  String get examKeepGoing => 'Keep going';
+
+  @override
+  String get examFinish => 'Finish';
+
+  @override
+  String get examFinishConfirm =>
+      'Finish the exam now? The correction will open.';
+
+  @override
+  String get examQuitTitle => 'Leave the exam?';
+
+  @override
+  String get examQuitBody =>
+      'If you leave now, this attempt is marked as abandoned.';
+
+  @override
+  String get examQuit => 'Leave';
+
+  @override
+  String examTotal(String total, String max) {
+    return 'Total: $total / $max';
+  }
+
+  @override
+  String examOn20(String score) {
+    return '$score / 20';
+  }
+
+  @override
+  String examPoints(String points) {
+    return '$points pts';
+  }
+
+  @override
+  String get examMarking => 'Marking scheme';
+
+  @override
+  String get examYourPoints => 'Your points';
+
+  @override
   String get contentNotSupported =>
       'This part needs a newer version of the app.';
 

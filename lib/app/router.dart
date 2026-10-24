@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/assess/exam_pages.dart';
+import '../features/assess/practice_pages.dart';
 import '../features/cases/case_page.dart';
 import '../features/chat/chat_page.dart';
 import '../features/home/home_page.dart';
@@ -78,6 +80,19 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) =>
                         ModulePage(moduleId: _id(state, 'moduleId')),
                     routes: [
+                      GoRoute(
+                        path: 'practice',
+                        parentNavigatorKey: rootKey,
+                        builder: (_, state) => PracticeChaptersPage(
+                          moduleId: _id(state, 'moduleId'),
+                        ),
+                      ),
+                      GoRoute(
+                        path: 'exams',
+                        parentNavigatorKey: rootKey,
+                        builder: (_, state) =>
+                            ExamListPage(moduleId: _id(state, 'moduleId')),
+                      ),
                       GoRoute(
                         path: 'chat',
                         parentNavigatorKey: rootKey,

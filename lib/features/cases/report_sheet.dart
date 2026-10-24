@@ -32,6 +32,7 @@ Future<void> showReportMistake(
   required String targetType,
   required String targetId,
   int? lessonId,
+  String? notePrefix,
 }) async {
   final l10n = AppLocalizations.of(context);
   final messenger = ScaffoldMessenger.of(context);
@@ -50,7 +51,9 @@ Future<void> showReportMistake(
           targetId: targetId,
           lessonId: lessonId,
           reason: answer.$1,
-          note: answer.$2,
+          note: notePrefix == null
+              ? answer.$2
+              : [notePrefix, answer.$2].where((s) => s.isNotEmpty).join(': '),
         ),
   );
   messenger.showSnackBar(
