@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,23 +7,34 @@ import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/catalog/catalog.dart';
 import '../../data/profile/study_level.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 
-/// WP17-A, A1: "My year & semester" sheet: year chips, then the 2
-/// semesters of that year, Save -> set_study_level (queued when offline).
+/// "My year & semester" sheet: the year chips and the semesters of that
+/// year come from catalog.levels (no list in the app); Save ->
+/// set_study_level, queued when offline (lead WP17/18-2).
 Future<void> showStudyLevelSheet(BuildContext context, WidgetRef ref) async {
   final level = ref.read(studyLevelProvider);
   final l10n = AppLocalizations.of(context);
   final messenger = ScaffoldMessenger.of(context);
-  final choice = await showModalBottomSheet<(String, int)>(
+  final levels = ref.read(catalogValueProvider)?.levels ?? const [];
+  if (levels.isEmpty) {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.errorOffline)));
+    unawaited(ref.read(catalogProvider.notifier).refresh());
+    return;
+  }
+  final choice = await showModalBottomSheet<(String, int?)>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) =>
-        _StudyLevelSheet(year: level.year, semester: level.semester),
+    builder: (_) => _StudyLevelSheet(
+      levels: levels,
+      year: level.year,
+      semester: level.semester,
+    ),
   );
   if (choice == null) return;
   final r = await ref
@@ -40,8 +53,9 @@ Future<void> showStudyLevelSheet(BuildContext context, WidgetRef ref) async {
 }
 
 class _StudyLevelSheet extends StatefulWidget {
-  const _StudyLevelSheet({this.year, this.semester});
+  const _StudyLevelSheet({required this.levels, this.year, this.semester});
 
+  final List<CatalogLevel> levels;
   final String? year;
   final int? semester;
 
@@ -50,20 +64,23 @@ class _StudyLevelSheet extends StatefulWidget {
 }
 
 class _StudyLevelSheetState extends State<_StudyLevelSheet> {
-  late String _year = yearSemesters.containsKey(widget.year)
-      ? widget.year!
-      : 'L2';
-  late int _semester = _pick(widget.semester);
+  late CatalogLevel _level = widget.levels.firstWhere(
+    (l) => l.year == widget.year,
+    orElse: () => widget.levels.first,
+  );
+  late int? _semester = _pick(widget.semester);
 
-  int _pick(int? wanted) {
-    final pair = yearSemesters[_year]!;
-    return pair.contains(wanted) ? wanted! : pair.first;
+  int? _pick(int? wanted) {
+    final list = _level.semesters;
+    if (list.isEmpty) return null;
+    return list.contains(wanted) ? wanted : list.first;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
+    final lang = Localizations.localeOf(context).languageCode;
     final label = TextStyle(color: kc.textSecondary);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(KSpace.lg),
@@ -82,42 +99,60 @@ class _StudyLevelSheetState extends State<_StudyLevelSheet> {
             spacing: KSpace.sm,
             runSpacing: KSpace.sm,
             children: [
-              for (final y in yearSemesters.keys)
+              for (final lv in widget.levels)
                 ChoiceChip(
-                  label: Text(y),
-                  selected: _year == y,
+                  key: ValueKey<String>('year-${lv.year}'),
+                  label: Text(lv.labelIn(lang)),
+                  selected: _level.year == lv.year,
                   onSelected: (_) => setState(() {
-                    _year = y;
+                    _level = lv;
                     _semester = _pick(_semester);
                   }),
                 ),
             ],
           ),
-          const SizedBox(height: KSpace.lg),
-          Text(l10n.studyLevelSemester, style: label),
-          const SizedBox(height: KSpace.sm),
-          Wrap(
-            spacing: KSpace.sm,
-            runSpacing: KSpace.sm,
-            children: [
-              for (final s in yearSemesters[_year]!)
-                ChoiceChip(
-                  key: ValueKey<String>('semester-$s'),
-                  label: Text(l10n.semesterLabel(s)),
-                  selected: _semester == s,
-                  onSelected: (_) => setState(() => _semester = s),
-                ),
-            ],
-          ),
+          if (_level.semesters.isNotEmpty) ...[
+            const SizedBox(height: KSpace.lg),
+            Text(l10n.studyLevelSemester, style: label),
+            const SizedBox(height: KSpace.sm),
+            Wrap(
+              spacing: KSpace.sm,
+              runSpacing: KSpace.sm,
+              children: [
+                for (final s in _level.semesters)
+                  ChoiceChip(
+                    key: ValueKey<String>('semester-$s'),
+                    label: Text(l10n.semesterLabel(s)),
+                    selected: _semester == s,
+                    onSelected: (_) => setState(() => _semester = s),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: KSpace.xl),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop((_year, _semester)),
+            onPressed: () =>
+                Navigator.of(context).pop((_level.year, _semester)),
             child: Text(l10n.saveLabel),
           ),
         ],
       ),
     );
   }
+}
+
+/// "L2, Semester 3" (year label from the catalog in the UI language).
+String studyLevelText(
+  AppLocalizations l10n,
+  Catalog? catalog,
+  StudyLevel level,
+  String lang,
+) {
+  final year = level.year;
+  if (year == null || year.isEmpty) return l10n.semesterNone;
+  final label = catalog?.level(year)?.labelIn(lang) ?? year;
+  final semester = level.semester;
+  return semester == null ? label : l10n.studyLevelValue(label, semester);
 }
 
 /// Profile: "My year & semester  L2, Semester 3  Change", always there.
@@ -129,16 +164,19 @@ class SemesterCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
     final level = ref.watch(studyLevelProvider);
-    final year = level.year;
-    final semester = level.semester;
-    final value = semester == null
-        ? l10n.semesterNone
-        : l10n.studyLevelValue(year ?? '', semester);
+    final lang = Localizations.localeOf(context).languageCode;
+    final value = studyLevelText(
+      l10n,
+      ref.watch(catalogValueProvider),
+      level,
+      lang,
+    );
+    final unset = level.year == null || level.year!.isEmpty;
     return Material(
       color: kc.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(KRadius.card),
-        side: BorderSide(color: semester == null ? kc.accent : kc.border),
+        side: BorderSide(color: unset ? kc.accent : kc.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: ListTile(
@@ -159,8 +197,8 @@ class SemesterCard extends ConsumerWidget {
 
 const _bannerKey = 'semester_banner_hidden_until';
 
-/// WP17-A, A2: top of Home, Jan 15 - Mar 15 and Jun 15 - Oct 15; "x" hides
-/// it for 14 days.
+/// Top of Home inside config.semester_banner_windows; "x" snoozes it for
+/// config.semester_banner_snooze_days.
 class SemesterBanner extends ConsumerStatefulWidget {
   const SemesterBanner({super.key, this.now});
 
@@ -177,8 +215,16 @@ class _SemesterBannerState extends ConsumerState<SemesterBanner> {
   Widget build(BuildContext context) {
     final now = widget.now ?? DateTime.now();
     final prefs = ref.watch(sharedPrefsProvider);
+    final config = ref.watch(catalogValueProvider)?.config ?? const {};
+    final windows = config['semester_banner_windows'];
+    final snooze = config['semester_banner_snooze_days'];
     final until = DateTime.tryParse(prefs.getString(_bannerKey) ?? '');
-    if (_hidden || !semesterBannerDue(now, hiddenUntil: until)) {
+    if (_hidden ||
+        !semesterBannerDue(
+          now,
+          windows is List ? windows : const [],
+          hiddenUntil: until,
+        )) {
       return const SizedBox.shrink();
     }
     return Padding(
@@ -189,7 +235,9 @@ class _SemesterBannerState extends ConsumerState<SemesterBanner> {
           onDismiss: () {
             prefs.setString(
               _bannerKey,
-              now.add(const Duration(days: 14)).toIso8601String(),
+              now
+                  .add(Duration(days: snooze is num ? snooze.toInt() : 14))
+                  .toIso8601String(),
             );
             setState(() => _hidden = true);
           },

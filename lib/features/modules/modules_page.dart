@@ -6,6 +6,7 @@ import '../../core/connectivity/connectivity.dart';
 import '../../core/errors/failure_mapper.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/catalog/catalog.dart';
 import '../../data/db/app_database.dart';
 import '../../data/profile/study_level.dart';
 import '../../data/providers.dart';
@@ -130,6 +131,7 @@ class _ModuleList extends ConsumerWidget {
     );
     // WP17-A: only the current semester's modules reach this list.
     final semester = ref.watch(currentSemesterProvider);
+    final catalog = ref.watch(catalogValueProvider);
     final children = <Widget>[
       Padding(
         padding: const EdgeInsetsDirectional.only(
@@ -157,7 +159,11 @@ class _ModuleList extends ConsumerWidget {
       for (final m in modules)
         Padding(
           padding: const EdgeInsets.only(bottom: KSpace.md),
-          child: ModuleCard(module: m, downloading: downloading.contains(m.id)),
+          child: ModuleCard(
+            module: m,
+            downloading: downloading.contains(m.id),
+            catalog: catalog?.module(m.id),
+          ),
         ),
     ];
     return ListView(

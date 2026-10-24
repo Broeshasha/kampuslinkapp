@@ -13,6 +13,7 @@ import '../../data/lessons/lesson_repository.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
+import '../../ui/module_look.dart';
 import '../../ui/states.dart';
 import '../preview/preview_page.dart';
 import 'download_status.dart';
@@ -59,7 +60,7 @@ class _ModuleScaffold extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final accent = moduleAccent(module.id);
     final title = Text(
-      module.name,
+      ltrName(context, module.name),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );

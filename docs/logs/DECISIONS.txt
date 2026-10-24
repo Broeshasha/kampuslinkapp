@@ -86,3 +86,10 @@ D-033 (2026-10-24, lead WP16 E) Web extras: lesson i18n JSON over 20 KB is decod
 same thread later on the web, sync fallback on error). Web storage: drift's onResult logs the chosen implementation and
 missing features; unsafeIndexedDb / inMemory = a warning bar under the offline bar ("Downloads may be lost when you close
 the browser. Use the phone app."), closable until the next start. sharedIndexedDb / OPFS are fine, no warning.
+D-034 (2026-10-24, lead WP17/18 1-3) Backend-driven catalog: get_my_catalog() stored in key_values 'catalog' (offline =
+last copy), refreshed at every sync (start / pull to refresh) and after set_study_level. Years and semesters come ONLY
+from catalog.levels (labels per language; a level without semesters saves semester null). Module order, icon key
+(unknown = book) and colour token c1..c6 (unknown = c1) from the catalog; names stay French, isolated LTR in Arabic.
+Rule changed: visible = module.semester == current OR module.semester null (whole year); no current semester = all.
+Banner windows and snooze days from config (no constants). Tables: cells may be strings, numbers, {value,unit,note,latex}
+or language maps; raw LaTeX, latex fields and inline \( \) are drawn as math; rows with string cells no longer show blank.

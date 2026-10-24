@@ -7,23 +7,15 @@ import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
+import '../catalog/catalog.dart';
 import '../db/app_database.dart';
 import '../learning/feed_queue_provider.dart';
 import '../learning/learning_providers.dart';
 import '../providers.dart';
 import '../sync/sync_controller.dart';
 
-/// LMD: the 2 semesters of each year (lead WP17-A).
-const yearSemesters = <String, List<int>>{
-  'L1': [1, 2],
-  'L2': [3, 4],
-  'L3': [5, 6],
-  'M1': [1, 2],
-  'M2': [3, 4],
-};
-
-/// The year the student is in and the semester he studies now. The
-/// semester decides EVERYTHING the app shows (lead WP17-A, A3).
+/// The year the student is in and the semester he studies now (null for a
+/// year without semesters). Allowed values come from catalog.levels.
 class StudyLevel {
   const StudyLevel({this.year, this.semester, this.pending = false});
 
@@ -34,25 +26,45 @@ class StudyLevel {
   final bool pending;
 }
 
-/// A3 hard rule: a module is shown only when its semester is the current
-/// one. Without a current semester (never chosen): every module that has a
-/// semester. A module without a semester is never shown.
+/// Hard rule (lead WP17/18-3): a module is shown when its semester is the
+/// current one, or when it has no semester (a whole-year module). With no
+/// current semester (a year without semesters), every module of the year.
 bool inSemester(ModuleRow? module, int? semester) =>
     module != null &&
-    module.semester != null &&
-    (semester == null || module.semester == semester);
+    (semester == null ||
+        module.semester == null ||
+        module.semester == semester);
 
 List<ModuleRow> visibleModules(List<ModuleRow> all, int? semester) => [
   for (final m in all)
     if (inSemester(m, semester)) m,
 ];
 
-/// A2: the "Finished your semester?" banner shows from Jan 15 to Mar 15 and
-/// from Jun 15 to Oct 15 (inclusive), unless dismissed in the last 14 days.
-bool semesterBannerDue(DateTime now, {DateTime? hiddenUntil}) {
+int? _monthDay(Object? v) {
+  final m = RegExp(r'^(\d{1,2})-(\d{1,2})$').firstMatch('${v ?? ''}'.trim());
+  if (m == null) return null;
+  return int.parse(m.group(1)!) * 100 + int.parse(m.group(2)!);
+}
+
+/// The "Finished your semester?" banner: inside one of
+/// config.semester_banner_windows [{from: "MM-DD", to: "MM-DD"}] (a window
+/// may wrap over the new year), unless snoozed until [hiddenUntil].
+bool semesterBannerDue(
+  DateTime now,
+  List<Object?> windows, {
+  DateTime? hiddenUntil,
+}) {
   if (hiddenUntil != null && now.isBefore(hiddenUntil)) return false;
   final d = now.month * 100 + now.day;
-  return (d >= 115 && d <= 315) || (d >= 615 && d <= 1015);
+  for (final w in windows) {
+    if (w is! Map) continue;
+    final from = _monthDay(w['from']);
+    final to = _monthDay(w['to']);
+    if (from == null || to == null) continue;
+    final inside = from <= to ? d >= from && d <= to : d >= from || d <= to;
+    if (inside) return true;
+  }
+  return false;
 }
 
 const _pendingKey = 'study_level_pending';
@@ -99,7 +111,7 @@ class StudyLevelController extends Notifier<StudyLevel> {
   /// Modules tab and the downloads switch now), sent to the server now or
   /// after the next sync when offline. A refused value (invalid_year...)
   /// is rolled back and returned as the failure.
-  Future<Result<void>> save(String year, int semester) async {
+  Future<Result<void>> save(String year, int? semester) async {
     final prefs = ref.read(sharedPrefsProvider);
     final before = state;
     await prefs.setString(
@@ -107,7 +119,8 @@ class StudyLevelController extends Notifier<StudyLevel> {
       jsonEncode({'year': year, 'semester': semester}),
     );
     state = StudyLevel(year: year, semester: semester, pending: true);
-    if (before.semester != semester) {
+    final changed = before.semester != semester || before.year != year;
+    if (changed) {
       await guard(() => ref.read(feedSeenStoreProvider).setLastFirst(''));
       ref.invalidate(feedQueueProvider);
     }
@@ -118,7 +131,7 @@ class StudyLevelController extends Notifier<StudyLevel> {
       ref.invalidate(feedQueueProvider);
       return r;
     }
-    if (before.semester != semester) {
+    if (changed) {
       unawaited(ref.read(syncControllerProvider.notifier).syncNow());
     }
     return const Ok(null);
@@ -130,7 +143,7 @@ class StudyLevelController extends Notifier<StudyLevel> {
     final pending = _readPending();
     final year = pending?.year;
     final semester = pending?.semester;
-    if (pending == null || year == null || semester == null) {
+    if (pending == null || year == null || year.isEmpty) {
       return const Ok(null);
     }
     final api = ref.read(kampusApiProvider);
@@ -142,6 +155,7 @@ class StudyLevelController extends Notifier<StudyLevel> {
     if (r is Ok) {
       await prefs.remove(_pendingKey);
       ref.invalidate(serverStatsProvider);
+      unawaited(ref.read(catalogProvider.notifier).refresh());
       appLog.info('study level saved: $year S$semester');
     }
     return r;
@@ -160,9 +174,17 @@ final currentSemesterProvider = Provider<int?>(
 /// THIS list, never the raw one.
 final visibleModulesProvider = Provider<AsyncValue<List<ModuleRow>>>((ref) {
   final semester = ref.watch(currentSemesterProvider);
-  return ref
-      .watch(modulesStreamProvider)
-      .whenData((all) => visibleModules(all, semester));
+  final catalog = ref.watch(catalogValueProvider);
+  return ref.watch(modulesStreamProvider).whenData((all) {
+    final list = visibleModules(all, semester);
+    // Catalog order (the server decides), unknown modules last.
+    if (catalog != null) {
+      list.sort(
+        (a, b) => catalog.orderOf(a.id).compareTo(catalog.orderOf(b.id)),
+      );
+    }
+    return list;
+  });
 });
 
 /// Ids of the visible modules (empty while loading: nothing leaks).

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kampuslink/data/bundle/bundle_importer.dart';
 import 'package:kampuslink/data/cases/case_repository.dart';
+import 'package:kampuslink/data/catalog/catalog.dart';
 import 'package:kampuslink/data/db/app_database.dart';
 import 'package:kampuslink/data/learning/feed_pool.dart';
 import 'package:kampuslink/data/learning/feed_queue.dart';
@@ -104,37 +105,39 @@ class _Fixed extends StudyLevelController {
 }
 
 void main() {
-  test('only current-semester modules; none without a semester', () {
+  test('current semester + whole-year modules; no semester = all', () {
     final all = [module(1, 3), module(2, 4), module(3, null), module(4, 3)];
-    expect(visibleModules(all, 3).map((m) => m.id), [1, 4]);
-    expect(visibleModules(all, 4).map((m) => m.id), [2]);
-    expect(visibleModules(all, null).map((m) => m.id), [1, 2, 4]);
+    expect(visibleModules(all, 3).map((m) => m.id), [1, 3, 4]);
+    expect(visibleModules(all, 4).map((m) => m.id), [2, 3]);
+    expect(visibleModules(all, null).map((m) => m.id), [1, 2, 3, 4]);
     expect(inSemester(null, 3), isFalse);
-    expect(yearSemesters['L2'], [3, 4]);
-    expect(yearSemesters['M1'], [1, 2]);
   });
 
-  test('banner dates: Jan 15 - Mar 15 and Jun 15 - Oct 15, 14-day dismiss', () {
-    bool due(int m, int d) => semesterBannerDue(DateTime(2026, m, d, 12));
+  test('banner windows come from config (one may wrap the new year)', () {
+    const windows = [
+      {'from': '01-15', 'to': '03-15'},
+      {'from': '06-15', 'to': '10-15'},
+      {'from': '12-20', 'to': '01-05'},
+    ];
+    bool due(int m, int d) =>
+        semesterBannerDue(DateTime(2026, m, d, 12), windows);
     expect(
       [due(1, 14), due(1, 15), due(3, 15), due(3, 16)],
       [false, true, true, false],
     );
     expect(
-      [due(6, 14), due(6, 15), due(10, 15), due(10, 16)],
-      [false, true, true, false],
+      [due(6, 14), due(10, 15), due(12, 25), due(1, 3)],
+      [false, true, true, true],
     );
+    expect(semesterBannerDue(DateTime(2026, 2, 1), const []), isFalse);
     final now = DateTime(2026, 2, 1);
-    expect(
-      semesterBannerDue(now, hiddenUntil: now.add(const Duration(days: 3))),
-      isFalse,
-    );
     expect(
       semesterBannerDue(
         now,
-        hiddenUntil: now.subtract(const Duration(days: 1)),
+        windows,
+        hiddenUntil: now.add(const Duration(days: 3)),
       ),
-      isTrue,
+      isFalse,
     );
   });
 
@@ -210,10 +213,17 @@ void main() {
     });
   });
 
-  test('Modules list follows the semester (S3 -> S4)', () async {
+  test('Modules list follows the semester, in catalog order', () async {
+    const catalog = Catalog(
+      modules: [
+        CatalogModule(id: 9, name: 'Year'),
+        CatalogModule(id: 8, name: 'S4'),
+        CatalogModule(id: 7, name: 'S3'),
+      ],
+    );
     for (final (semester, ids) in [
-      (3, {7}),
-      (4, {8}),
+      (3, [9, 7]),
+      (4, [9, 8]),
     ]) {
       final container = ProviderContainer(
         overrides: [
@@ -224,12 +234,16 @@ void main() {
           studyLevelProvider.overrideWith(
             () => _Fixed(StudyLevel(year: 'L2', semester: semester)),
           ),
+          catalogValueProvider.overrideWithValue(catalog),
         ],
       );
       addTearDown(container.dispose);
       container.listen(visibleModulesProvider, (_, _) {});
       await container.read(modulesStreamProvider.future);
-      expect(container.read(visibleModuleIdsProvider), ids);
+      expect(
+        container.read(visibleModulesProvider).value?.map((m) => m.id),
+        ids,
+      );
     }
   });
 

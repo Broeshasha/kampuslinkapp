@@ -3,22 +3,32 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/catalog/catalog.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
+import '../../ui/module_look.dart';
 
-/// One module: its own accent colour (id mod 12) on the icon tile, the UE
-/// tag and the progress ring. Tap = open the module page.
+/// One module: catalog icon and colour on the icon tile, the UE tag and
+/// the progress ring. Tap = open the module page.
 class ModuleCard extends StatelessWidget {
-  const ModuleCard({super.key, required this.module, this.downloading = false});
+  const ModuleCard({
+    super.key,
+    required this.module,
+    this.downloading = false,
+    this.catalog,
+  });
 
   final ModuleRow module;
   final bool downloading;
+
+  /// Icon and colour from the catalog (WP17/18-1).
+  final CatalogModule? catalog;
 
   @override
   Widget build(BuildContext context) {
     final kc = context.kc;
     final l10n = AppLocalizations.of(context);
-    final accent = moduleAccent(module.id);
+    final accent = moduleColor(kc, module.id, catalog);
     final total = module.lessonCount;
     final progress = total == 0
         ? 0.0
@@ -44,7 +54,7 @@ class ModuleCard extends StatelessWidget {
                   color: accent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(KRadius.chip),
                 ),
-                child: Icon(Icons.menu_book_rounded, color: accent),
+                child: Icon(moduleIcon(catalog?.icon), color: accent),
               ),
               const SizedBox(width: KSpace.md),
               Expanded(
@@ -52,7 +62,7 @@ class ModuleCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      module.name,
+                      ltrName(context, module.name),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium

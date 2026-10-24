@@ -8,6 +8,7 @@ import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
+import '../catalog/catalog.dart';
 import '../chat/chat_providers.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
@@ -142,6 +143,8 @@ class SyncController extends Notifier<SyncState> {
     if (outboxSync != null) {
       firstFailure = (await outboxSync.flush()).failure;
     }
+    // The catalog (years, modules, settings) first: it decides what shows.
+    await ref.read(catalogProvider.notifier).refresh();
     // Chat messages typed offline go out with the sync too (MASTER_PLAN 7.8).
     await guard(() async {
       final chat = ref.read(chatRepositoryProvider);

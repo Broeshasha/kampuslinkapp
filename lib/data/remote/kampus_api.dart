@@ -43,18 +43,24 @@ class KampusApi {
         .timeout(_timeout),
   );
 
-  /// WP17-A: the student's year (L1..M2) and current semester (LMD pair of
-  /// the year). Clears pinned semesters. Returns the new get_me().
+  /// The student's year and current semester (null for a year without
+  /// semesters). Returns the new get_me().
   /// Errors: invalid_year, invalid_semester, profile_missing.
-  Future<Map<String, dynamic>> setStudyLevel(String year, int semester) async =>
-      _map(
-        await _client
-            .rpc(
-              'set_study_level',
-              params: {'p_year': year, 'p_semester': semester},
-            )
-            .timeout(_timeout),
-      );
+  Future<Map<String, dynamic>> setStudyLevel(
+    String year,
+    int? semester,
+  ) async => _map(
+    await _client
+        .rpc(
+          'set_study_level',
+          params: {'p_year': year, 'p_semester': semester},
+        )
+        .timeout(_timeout),
+  );
+
+  /// WP17/18-1: config, me, speciality, levels and modules in one call.
+  Future<Map<String, dynamic>> getMyCatalog() async =>
+      _map(await _client.rpc('get_my_catalog').timeout(_timeout));
 
   /// Contract 11 (admins only): the bundle WITH draft lessons and sets.
   Future<Map<String, dynamic>> getModuleBundlePreview(
