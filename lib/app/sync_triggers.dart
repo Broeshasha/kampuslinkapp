@@ -5,10 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/auth/auth_repository.dart';
 import '../core/connectivity/connectivity.dart';
+import '../core/supabase/supabase_bootstrap.dart';
+import '../data/learning/feed_queue_provider.dart';
 import '../data/sync/sync_controller.dart';
 
 /// MASTER_PLAN 7.4: sync at start, on resume, when the network comes back,
-/// right after sign-in, and every 15 minutes while the app is open.
+/// right after sign-in, when Supabase is ready (it starts in the
+/// background) and every 15 minutes while the app is open. Going to the
+/// background saves the next Home posts for an instant next start.
 class SyncTriggers extends ConsumerStatefulWidget {
   const SyncTriggers({super.key, required this.child});
 
@@ -39,21 +43,45 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _sync();
+    if (state == AppLifecycleState.resumed) {
+      _sync();
+    }
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _saveFeed();
+    }
   }
 
   void _sync() {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     ref.read(syncControllerProvider.notifier).syncNow();
+  }
+
+  void _saveFeed() {
+    if (!mounted || !ref.read(isSignedInProvider)) {
+      return;
+    }
+    unawaited(ref.read(feedQueueProvider.notifier).saveSnapshot());
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<bool>(isOnlineProvider, (previous, next) {
-      if (previous == false && next) _sync();
+      if (previous == false && next) {
+        _sync();
+      }
     });
     ref.listen<bool>(isSignedInProvider, (previous, next) {
-      if (previous != true && next) _sync();
+      if (previous != true && next) {
+        _sync();
+      }
+    });
+    ref.listen(supabaseClientProvider, (previous, next) {
+      if (previous == null && next != null) {
+        _sync();
+      }
     });
     return widget.child;
   }

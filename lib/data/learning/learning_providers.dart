@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import '../../core/logging/logger.dart';
 import '../lessons/lesson_repository.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
+import '../remote/kampus_api.dart';
 import '../sync/sync_controller.dart';
 import 'feed_repository.dart';
 import 'quiz_repository.dart';
@@ -113,35 +115,59 @@ Future<Map<String, dynamic>> storeServerStats(
   return stats;
 }
 
-/// Server stats (get_me: xp, current_streak, study_goal_minutes), refreshed
-/// after every successful sync and cached for offline starts. null = never
-/// fetched: the Home header then falls back to the local streak.
-final serverStatsProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
-  if (!ref.watch(isSignedInProvider)) return null;
-  ref.watch(syncControllerProvider.select((s) => s.lastSyncedAt));
-  final prefs = ref.read(sharedPrefsProvider);
-  Map<String, dynamic>? cached() {
-    final raw = prefs.getString(_statsKey);
-    if (raw == null) return null;
-    try {
-      final v = jsonDecode(raw);
-      return v is Map ? v.cast<String, dynamic>() : null;
-    } on FormatException {
-      return null;
+/// Server stats (get_me: xp, current_streak, study_goal_minutes, semester).
+/// Stale-while-revalidate: the copy saved on the phone at once (so the
+/// semester and the Home header never wait for the network), then a fresh
+/// get_me() in the background after start and after every sync.
+class ServerStatsController
+    extends Notifier<AsyncValue<Map<String, dynamic>?>> {
+  @override
+  AsyncValue<Map<String, dynamic>?> build() {
+    if (!ref.watch(isSignedInProvider)) {
+      return const AsyncData(null);
     }
+    ref.watch(syncControllerProvider.select((s) => s.lastSyncedAt));
+    final prefs = ref.read(sharedPrefsProvider);
+    final api = ref.watch(kampusApiProvider);
+    if (api != null) {
+      unawaited(_refresh(api, prefs));
+    }
+    return AsyncData(_cachedStats(prefs));
   }
 
-  final api = ref.watch(kampusApiProvider);
-  if (api == null) return cached();
-  try {
-    final me = await api.getMe();
-    if (me == null) return cached();
-    return await storeServerStats(prefs, me);
-  } catch (error) {
-    appLog.info('stats offline: $error');
-    return cached();
+  Future<void> _refresh(KampusApi api, SharedPreferences prefs) async {
+    try {
+      final me = await api.getMe();
+      if (me == null) {
+        return;
+      }
+      final stats = await storeServerStats(prefs, me);
+      if (ref.mounted) {
+        state = AsyncData(stats);
+      }
+    } catch (error) {
+      appLog.info('stats offline: $error');
+    }
   }
-});
+}
+
+Map<String, dynamic>? _cachedStats(SharedPreferences prefs) {
+  final raw = prefs.getString(_statsKey);
+  if (raw == null) {
+    return null;
+  }
+  try {
+    final v = jsonDecode(raw);
+    return v is Map ? v.cast<String, dynamic>() : null;
+  } on FormatException {
+    return null;
+  }
+}
+
+final serverStatsProvider =
+    NotifierProvider<ServerStatsController, AsyncValue<Map<String, dynamic>?>>(
+      ServerStatsController.new,
+    );
 
 final savedCardsProvider = StreamProvider<List<FeedCard>>((ref) {
   if (!ref.watch(isSignedInProvider)) return Stream.value(const []);

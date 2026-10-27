@@ -7,6 +7,7 @@ import 'package:kampuslink/core/auth/auth_controller.dart';
 import 'package:kampuslink/core/connectivity/connectivity.dart';
 import 'package:kampuslink/core/errors/app_failure.dart';
 import 'package:kampuslink/core/l10n/locale_controller.dart';
+import 'package:kampuslink/core/supabase/supabase_bootstrap.dart';
 import 'package:kampuslink/features/onboarding/onboarding_status.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
@@ -25,9 +26,19 @@ Future<void> _settle() async {
   }
 }
 
-ProviderContainer _container(FakeAuthGateway gateway, Stream<bool> online) {
+Future<SharedPreferences> _prefs([Map<String, Object> values = const {}]) {
+  SharedPreferences.setMockInitialValues(values);
+  return SharedPreferences.getInstance();
+}
+
+Future<ProviderContainer> _container(
+  FakeAuthGateway gateway,
+  Stream<bool> online,
+) async {
+  final prefs = await _prefs();
   final container = ProviderContainer(
     overrides: [
+      sharedPrefsProvider.overrideWithValue(prefs),
       authGatewayProvider.overrideWithValue(gateway),
       connectivityProvider.overrideWith((ref) => online),
     ],
@@ -42,7 +53,7 @@ void main() {
     'offline cold start with an expired access token stays signed in',
     () async {
       final gw = FakeAuthGateway(expiredUser);
-      final c = _container(gw, Stream.value(false));
+      final c = await _container(gw, Stream.value(false));
       expect(c.read(isSignedInProvider), isTrue);
       await _settle();
       expect(c.read(isSignedInProvider), isTrue);
@@ -56,7 +67,7 @@ void main() {
     'refresh failing with network errors keeps the student signed in',
     () async {
       final gw = FakeAuthGateway(expiredUser);
-      final c = _container(gw, Stream.value(false));
+      final c = await _container(gw, Stream.value(false));
       for (final error in <Object>[
         const SocketException('Failed host lookup: x.supabase.co'),
         TimeoutException('refresh'),
@@ -78,7 +89,7 @@ void main() {
         ..refreshError = const SocketException('Network is unreachable');
       final online = StreamController<bool>();
       addTearDown(online.close);
-      final c = _container(gw, online.stream);
+      final c = await _container(gw, online.stream);
       online.add(false);
       await _settle();
       online.add(true);
@@ -98,7 +109,7 @@ void main() {
 
   test('rejected refresh token signs out exactly once', () async {
     final gw = FakeAuthGateway(expiredUser);
-    final c = _container(gw, Stream.value(true));
+    final c = await _container(gw, Stream.value(true));
     gw.fail(_rejected);
     gw.fail(_rejected);
     await _settle();
@@ -108,10 +119,11 @@ void main() {
 
   test('the student tapping Sign out signs out', () async {
     final gw = FakeAuthGateway(expiredUser);
-    final c = _container(gw, Stream.value(true));
+    final c = await _container(gw, Stream.value(true));
     gw.emit(AuthView.signedOut);
     await _settle();
     expect(c.read(isSignedInProvider), isFalse);
+    expect(c.read(sharedPrefsProvider).getString(lastUserIdKey), isNull);
   });
 
   test('only an explicit refresh-token rejection counts', () {
@@ -140,8 +152,7 @@ void main() {
   });
 
   test('get_me failing offline never routes to onboarding', () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs();
     final c = ProviderContainer(
       overrides: [
         authGatewayProvider.overrideWithValue(FakeAuthGateway(expiredUser)),
@@ -155,5 +166,32 @@ void main() {
     await _settle();
     expect(c.read(meProvider).hasError, isTrue);
     expect(c.read(onboardingStatusProvider), OnboardingStatus.done);
+  });
+
+  test('a signed-in student is remembered for the next start', () async {
+    final c = await _container(
+      FakeAuthGateway(expiredUser),
+      Stream.value(true),
+    );
+    await _settle();
+    expect(c.read(sharedPrefsProvider).getString(lastUserIdKey), 'u1');
+  });
+
+  test('while Supabase starts, the remembered student is signed in', () async {
+    final prefs = await _prefs({lastUserIdKey: 'u9'});
+    final c = ProviderContainer(
+      overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
+        connectivityProvider.overrideWith((ref) => Stream.value(false)),
+      ],
+    );
+    addTearDown(c.dispose);
+    c.listen(authControllerProvider, (_, _) {});
+    expect(c.read(isSignedInProvider), isFalse); // no backend at all
+    c.read(backendStartingProvider.notifier).set(true);
+    expect(c.read(isSignedInProvider), isTrue);
+    expect(c.read(authControllerProvider).userId, 'u9');
+    c.read(backendStartingProvider.notifier).set(false);
+    expect(c.read(isSignedInProvider), isFalse);
   });
 }

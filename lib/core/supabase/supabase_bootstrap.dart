@@ -4,9 +4,32 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../logging/logger.dart';
 
-/// null = Supabase not available (tests, missing config, init failure).
-/// main() overrides it with the real client.
-final supabaseClientProvider = Provider<SupabaseClient?>((ref) => null);
+/// null = Supabase not available yet (still starting), or never (tests,
+/// missing config, init failure). main() sets it once Supabase is ready.
+class SupabaseClientHolder extends Notifier<SupabaseClient?> {
+  @override
+  SupabaseClient? build() => null;
+
+  void set(SupabaseClient? client) => state = client;
+}
+
+final supabaseClientProvider =
+    NotifierProvider<SupabaseClientHolder, SupabaseClient?>(
+      SupabaseClientHolder.new,
+    );
+
+/// true while Supabase starts in the background (main sets it). Until then
+/// the app trusts the student remembered on the phone.
+class BackendStarting extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool starting) => state = starting;
+}
+
+final backendStartingProvider = NotifierProvider<BackendStarting, bool>(
+  BackendStarting.new,
+);
 
 /// Web builds get the values from --dart-define (Cloudflare build variables),
 /// so they never depend on serving a dotfile. Values are NOT in the repo.

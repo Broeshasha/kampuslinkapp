@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/errors/failure_mapper.dart';
 import '../../core/errors/result.dart';
+import '../../core/logging/startup_trace.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
@@ -599,32 +600,40 @@ class _FeedState extends ConsumerState<_Feed> {
       AsyncData(:final value) => value,
       _ => true,
     };
-    return switch (ref.watch(feedQueueProvider)) {
-      AsyncData(:final value) when value.isEmpty =>
-        ref.watch(downloadedKeyProvider).isEmpty
-            ? EmptyView(
-                icon: Icons.style_outlined,
-                title: l10n.feedEmptyTitle,
-                message: l10n.feedEmptyBody,
-                actionLabel: l10n.openModules,
-                onAction: () => context.go('/modules'),
-              )
-            : const _FeedDone(),
-      AsyncData(:final value) => PageView.builder(
-        controller: _pages,
-        scrollDirection: Axis.vertical,
-        itemCount: value.length + 1,
-        onPageChanged: (i) => ref.read(feedQueueProvider.notifier).shown(i),
-        itemBuilder: (context, i) => i == value.length
-            ? const _FeedDone()
-            : _post(context, value[i], lang, caseProgress, hintSeen, meta),
-      ),
-      AsyncError(:final error) => ErrorView(
-        failure: mapError(error),
-        onRetry: () => ref.invalidate(feedQueueProvider),
-      ),
-      _ => const LoadingView(),
-    };
+    // Stale-while-revalidate: while the queue rebuilds, keep showing the
+    // posts already on screen (never a spinner over cached content).
+    final queue = ref.watch(feedQueueProvider);
+    if (!queue.hasValue) {
+      if (queue.hasError) {
+        return ErrorView(
+          failure: mapError(queue.error!),
+          onRetry: () => ref.invalidate(feedQueueProvider),
+        );
+      }
+      return const LoadingView();
+    }
+    final value = queue.requireValue;
+    startupTrace.mark('home feed ready', '${value.length} posts');
+    if (value.isEmpty) {
+      return ref.watch(downloadedKeyProvider).isEmpty
+          ? EmptyView(
+              icon: Icons.style_outlined,
+              title: l10n.feedEmptyTitle,
+              message: l10n.feedEmptyBody,
+              actionLabel: l10n.openModules,
+              onAction: () => context.go('/modules'),
+            )
+          : const _FeedDone();
+    }
+    return PageView.builder(
+      controller: _pages,
+      scrollDirection: Axis.vertical,
+      itemCount: value.length + 1,
+      onPageChanged: (i) => ref.read(feedQueueProvider.notifier).shown(i),
+      itemBuilder: (context, i) => i == value.length
+          ? const _FeedDone()
+          : _post(context, value[i], lang, caseProgress, hintSeen, meta),
+    );
   }
 }
 
