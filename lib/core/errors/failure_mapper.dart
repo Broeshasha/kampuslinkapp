@@ -1,9 +1,7 @@
-import 'dart:async';
-
-import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_failure.dart';
+import 'network_errors.dart';
 
 /// Codes raised by our database functions (BACKEND_CONTRACT "ERROR CODES").
 const _notFoundCodes = {
@@ -14,11 +12,10 @@ const _notFoundCodes = {
 };
 
 /// The ONE place that turns any thrown object into an [AppFailure].
+/// Network trouble (even inside a token refresh) is offline, not "session".
 AppFailure mapError(Object error) {
   if (error is AppFailure) return error;
-  if (error is TimeoutException || error is http.ClientException) {
-    return const OfflineFailure();
-  }
+  if (isNetworkError(error)) return const OfflineFailure();
   if (error is AuthException) return const UnauthenticatedFailure();
   if (error is PostgrestException) return _mapPostgrest(error);
   return UnknownFailure(error);
