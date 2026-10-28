@@ -983,4 +983,63 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get caseDone => 'Enquête résolue';
+
+  @override
+  String get reminderStepTitle => 'Quand veux-tu réviser ?';
+
+  @override
+  String get reminderStepBody =>
+      'Choisis une heure et tes jours. On t\'envoie un petit rappel à ce moment-là : 10 minutes suffisent. Appuie sur Plus tard si tu es occupé ; si tu en sautes plusieurs, on fait une pause tout seuls.';
+
+  @override
+  String get reminderTimeLabel => 'Heure de révision';
+
+  @override
+  String get reminderDaysLabel => 'Jours';
+
+  @override
+  String get reminderAllow => 'Autoriser les notifications';
+
+  @override
+  String get reminderSkip => 'Passer';
+
+  @override
+  String get remindersTitle => 'Rappels de révision';
+
+  @override
+  String get remindersOff => 'Désactivés';
+
+  @override
+  String get remindersStoppedNote =>
+      'Arrêtés après plusieurs rappels ignorés. Réactive-les pour recommencer.';
+
+  @override
+  String get remindersPausedNote =>
+      'En pause quelques jours après deux rappels ignorés.';
+
+  @override
+  String get remindersDeniedHint =>
+      'Les notifications de KampusLink sont bloquées. Pour recevoir les rappels, ouvre Paramètres > Applications > KampusLink > Notifications et active-les.';
+
+  @override
+  String get reviewTitle => 'Révision de 10 minutes';
+
+  @override
+  String reviewTimeLeft(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get reviewDoneTitle => 'Séance terminée !';
+
+  @override
+  String reviewDoneBody(int count) {
+    return '$count cartes révisées. À la prochaine !';
+  }
+
+  @override
+  String get reviewEmpty => 'Rien à réviser pour le moment.';
+
+  @override
+  String get reviewBackHome => 'Retour à l\'accueil';
 }

@@ -127,7 +127,8 @@ class ReminderController extends Notifier<ReminderState?> {
     fired.removeWhere((f) => f.at == at);
     fired.add((at: at, answered: true));
     await _writeFired(fired);
-    await _save(current.respond(response, now));
+    // The reminder's own time, like the 'at' sent to the server.
+    await _save(current.respond(response, at));
     await _queue(response, at);
     if (plan) {
       await refreshPlan();

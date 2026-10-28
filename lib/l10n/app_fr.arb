@@ -280,5 +280,22 @@
   "guessRight": "Bien vu !",
   "guessWrong": "Pas cette fois. Voici pourquoi :",
   "swipeHint": "Glisse pour voir la r\u00e9ponse",
-  "caseDone": "Enqu\u00eate r\u00e9solue"
+  "caseDone": "Enqu\u00eate r\u00e9solue",
+"reminderStepTitle": "Quand veux-tu r\u00e9viser ?",
+  "reminderStepBody": "Choisis une heure et tes jours. On t'envoie un petit rappel \u00e0 ce moment-l\u00e0 : 10 minutes suffisent. Appuie sur Plus tard si tu es occup\u00e9 ; si tu en sautes plusieurs, on fait une pause tout seuls.",
+  "reminderTimeLabel": "Heure de r\u00e9vision",
+  "reminderDaysLabel": "Jours",
+  "reminderAllow": "Autoriser les notifications",
+  "reminderSkip": "Passer",
+  "remindersTitle": "Rappels de r\u00e9vision",
+  "remindersOff": "D\u00e9sactiv\u00e9s",
+  "remindersStoppedNote": "Arr\u00eat\u00e9s apr\u00e8s plusieurs rappels ignor\u00e9s. R\u00e9active-les pour recommencer.",
+  "remindersPausedNote": "En pause quelques jours apr\u00e8s deux rappels ignor\u00e9s.",
+  "remindersDeniedHint": "Les notifications de KampusLink sont bloqu\u00e9es. Pour recevoir les rappels, ouvre Param\u00e8tres > Applications > KampusLink > Notifications et active-les.",
+  "reviewTitle": "R\u00e9vision de 10 minutes",
+  "reviewTimeLeft": "{minutes} min",
+  "reviewDoneTitle": "S\u00e9ance termin\u00e9e !",
+  "reviewDoneBody": "{count} cartes r\u00e9vis\u00e9es. \u00c0 la prochaine !",
+  "reviewEmpty": "Rien \u00e0 r\u00e9viser pour le moment.",
+  "reviewBackHome": "Retour \u00e0 l'accueil"
 }

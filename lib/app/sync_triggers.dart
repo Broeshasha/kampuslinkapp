@@ -9,6 +9,7 @@ import '../core/supabase/supabase_bootstrap.dart';
 import '../data/learning/feed_queue_provider.dart';
 import '../data/reminders/reminder_controller.dart';
 import '../data/sync/sync_controller.dart';
+import 'router.dart';
 
 /// MASTER_PLAN 7.4: sync at start, on resume, when the network comes back,
 /// right after sign-in, when Supabase is ready (it starts in the
@@ -107,6 +108,12 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
         unawaited(
           ref.read(reminderControllerProvider.notifier).syncWithServer(),
         );
+      }
+    });
+    // A tap on a study reminder (or Start): the 10-minute review session.
+    ref.listen<int>(reminderLaunchProvider, (previous, next) {
+      if (next > (previous ?? 0)) {
+        ref.read(routerProvider).push('/review');
       }
     });
     ref.listen(supabaseClientProvider, (previous, next) {

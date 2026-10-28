@@ -1785,6 +1785,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Case solved'**
   String get caseDone;
+
+  /// No description provided for @reminderStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you want to study?'**
+  String get reminderStepTitle;
+
+  /// No description provided for @reminderStepBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time and your days. We send one short reminder then: 10 minutes is enough. Tap Not now when you are busy; if you skip a few, we pause by ourselves.'**
+  String get reminderStepBody;
+
+  /// No description provided for @reminderTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Study time'**
+  String get reminderTimeLabel;
+
+  /// No description provided for @reminderDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get reminderDaysLabel;
+
+  /// No description provided for @reminderAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get reminderAllow;
+
+  /// No description provided for @reminderSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get reminderSkip;
+
+  /// No description provided for @remindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Study reminders'**
+  String get remindersTitle;
+
+  /// No description provided for @remindersOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get remindersOff;
+
+  /// No description provided for @remindersStoppedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped after several skipped reminders. Turn them on again to restart.'**
+  String get remindersStoppedNote;
+
+  /// No description provided for @remindersPausedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused for a few days after two skipped reminders.'**
+  String get remindersPausedNote;
+
+  /// No description provided for @remindersDeniedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked for KampusLink. To get reminders, open your phone Settings > Apps > KampusLink > Notifications and turn them on.'**
+  String get remindersDeniedHint;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'10-minute review'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewTimeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String reviewTimeLeft(int minutes);
+
+  /// No description provided for @reviewDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session done!'**
+  String get reviewDoneTitle;
+
+  /// No description provided for @reviewDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cards reviewed. See you next time.'**
+  String reviewDoneBody(int count);
+
+  /// No description provided for @reviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to review right now.'**
+  String get reviewEmpty;
+
+  /// No description provided for @reviewBackHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Home'**
+  String get reviewBackHome;
 }
 
 class _AppLocalizationsDelegate

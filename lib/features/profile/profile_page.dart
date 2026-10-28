@@ -6,8 +6,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/auth_repository.dart';
-import '../../core/connectivity/connectivity.dart';
-import '../../core/errors/result.dart';
 import '../../core/logging/logger.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode_controller.dart';
@@ -21,6 +19,7 @@ import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 import '../auth/google_sign_in_button.dart';
 import '../preview/preview_page.dart';
+import '../reminders/reminders_page.dart';
 import 'account_actions.dart';
 import 'language_picker.dart';
 import 'semester_sheet.dart';
@@ -471,64 +470,14 @@ class _SettingsCard extends ConsumerWidget {
         ),
         if (signedIn) ...[
           Divider(height: 1, color: kc.border),
-          const _RemindersSwitch(),
+          const RemindersTile(),
         ],
       ],
     );
   }
 }
 
-class _RemindersSwitch extends ConsumerStatefulWidget {
-  const _RemindersSwitch();
-
-  @override
-  ConsumerState<_RemindersSwitch> createState() => _RemindersSwitchState();
-}
-
-class _RemindersSwitchState extends ConsumerState<_RemindersSwitch> {
-  bool? _value;
-  bool _busy = false;
-
-  Future<void> _set(bool on) async {
-    final api = ref.read(kampusApiProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = AppLocalizations.of(context);
-    if (api == null || !ref.read(isOnlineProvider)) {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.errorOffline)));
-      return;
-    }
-    final before = _value;
-    setState(() {
-      _value = on;
-      _busy = true;
-    });
-    final result = await guard(() => api.setReminders(enabled: on));
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (result case Err(:final failure)) {
-      setState(() => _value = before);
-      messenger.showSnackBar(
-        SnackBar(content: Text(failureMessage(l10n, failure))),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final stats = switch (ref.watch(serverStatsProvider)) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
-    final value = _value ?? (stats?['reminders_enabled'] == true);
-    return SwitchListTile(
-      secondary: const Icon(Icons.notifications_active_outlined),
-      title: Text(l10n.remindersLabel),
-      value: value,
-      onChanged: _busy ? null : _set,
-    );
-  }
-}
+// Study reminders: see features/reminders (RemindersTile).
 
 class _SyncRow extends ConsumerWidget {
   const _SyncRow();

@@ -970,4 +970,63 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get caseDone => 'تم حل القضية';
+
+  @override
+  String get reminderStepTitle => 'متى تريد أن تراجع؟';
+
+  @override
+  String get reminderStepBody =>
+      'اختر وقتاً وأياماً. سنرسل لك تذكيراً قصيراً في ذلك الوقت: 10 دقائق تكفي. اضغط «ليس الآن» إذا كنت مشغولاً، وإذا تجاهلت عدة تذكيرات سنتوقف من تلقاء أنفسنا.';
+
+  @override
+  String get reminderTimeLabel => 'وقت المراجعة';
+
+  @override
+  String get reminderDaysLabel => 'الأيام';
+
+  @override
+  String get reminderAllow => 'السماح بالإشعارات';
+
+  @override
+  String get reminderSkip => 'تخطي';
+
+  @override
+  String get remindersTitle => 'تذكيرات المراجعة';
+
+  @override
+  String get remindersOff => 'متوقفة';
+
+  @override
+  String get remindersStoppedNote =>
+      'توقفت بعد تجاهل عدة تذكيرات. فعّلها من جديد للبدء.';
+
+  @override
+  String get remindersPausedNote =>
+      'متوقفة مؤقتاً لبضعة أيام بعد تجاهل تذكيرين.';
+
+  @override
+  String get remindersDeniedHint =>
+      'إشعارات KampusLink محظورة. لتلقي التذكيرات افتح الإعدادات > التطبيقات > KampusLink > الإشعارات وفعّلها.';
+
+  @override
+  String get reviewTitle => 'مراجعة 10 دقائق';
+
+  @override
+  String reviewTimeLeft(int minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String get reviewDoneTitle => 'انتهت الجلسة!';
+
+  @override
+  String reviewDoneBody(int count) {
+    return 'راجعت $count بطاقة. إلى اللقاء!';
+  }
+
+  @override
+  String get reviewEmpty => 'لا شيء للمراجعة الآن.';
+
+  @override
+  String get reviewBackHome => 'العودة إلى الرئيسية';
 }
