@@ -1,11 +1,10 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart';
-
 import '../cases/case_repository.dart';
 import '../db/app_database.dart';
 import '../lessons/lesson_content.dart';
 import '../profile/study_level.dart';
+import 'content_meta.dart';
 import 'feed_queue.dart';
 import 'feed_repository.dart';
 
@@ -61,30 +60,8 @@ class FeedPoolLoader {
   final FeedRepository _feed;
   final CaseRepository _cases;
 
-  Future<Map<String, Map<String, dynamic>>> _meta() async {
-    final rows = await (_db.select(
-      _db.keyValues,
-    )..where((t) => t.name.like('meta:%'))).get();
-    final out = <String, Map<String, dynamic>>{};
-    for (final r in rows) {
-      try {
-        final v = jsonDecode(r.value);
-        if (v is! Map) continue;
-        for (final part in const ['c', 'q']) {
-          final m = v[part];
-          if (m is! Map) continue;
-          for (final e in m.entries) {
-            if (e.value is Map) {
-              out['$part:${e.key}'] = (e.value as Map).cast<String, dynamic>();
-            }
-          }
-        }
-      } on FormatException {
-        continue;
-      }
-    }
-    return out;
-  }
+  /// Same decoding as the Home cards (off the UI thread when big).
+  Future<Map<String, Map<String, dynamic>>> _meta() => loadContentMeta(_db);
 
   /// The lessons whose new cards may enter the feed: per module, the lesson
   /// the student is on (Continue, else the first unfinished one) and the
