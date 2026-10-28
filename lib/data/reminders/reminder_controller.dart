@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
+import '../catalog/catalog.dart';
 import '../db/app_database.dart';
 import '../learning/feed_repository.dart';
 import '../profile/study_level.dart';
@@ -22,6 +23,7 @@ const reminderStateKey = 'reminder_state_v1';
 const reminderPendingKey = 'reminder_settings_pending_v1';
 const reminderPlanKey = 'reminder_plan_v1';
 const reminderFiredKey = 'reminder_fired_v1';
+const reminderAppOpenKey = 'reminder_app_open_day_v1';
 
 final reminderNotifierProvider = Provider<ReminderNotifier>(
   (ref) => LocalReminderNotifier(),
@@ -95,7 +97,60 @@ class ReminderController extends Notifier<ReminderState?> {
         ref.read(reminderLaunchProvider.notifier).bump();
       }
     });
+    await appOpened();
     await refreshPlan();
+  }
+
+  ({Duration after, Duration length}) _secondChanceConfig() {
+    var after = defaultSecondChanceAfter;
+    var length = defaultSecondChanceFor;
+    try {
+      final c = ref
+          .read(catalogValueProvider)
+          ?.config['reminder_second_chance'];
+      if (c is Map) {
+        final a = c['after_days'];
+        final f = c['for_days'];
+        if (a is num && a > 0) {
+          after = Duration(days: a.toInt());
+        }
+        if (f is num && f > 0) {
+          length = Duration(days: f.toInt());
+        }
+      }
+    } catch (_) {
+      // No catalog yet: the defaults (7 days, 2 days).
+    }
+    return (after: after, length: length);
+  }
+
+  /// Once per day: sync op 'app_open' (the server decides the second
+  /// chance) and the same rule on the phone, so it also works offline.
+  Future<void> appOpened() async {
+    final now = _now();
+    final today = dayKey(now);
+    if (_prefs.getString(reminderAppOpenKey) == today) {
+      return;
+    }
+    await _prefs.setString(reminderAppOpenKey, today);
+    await guard(
+      () => ref.read(outboxRepositoryProvider).enqueue('app_open', {
+        'at': now.toUtc().toIso8601String(),
+      }),
+    );
+    final current = state;
+    if (current != null) {
+      final config = _secondChanceConfig();
+      final next = current.appOpened(
+        now,
+        after: config.after,
+        length: config.length,
+      );
+      if (next != current) {
+        await _save(next);
+        appLog.info('reminders: second chance until ${next.secondChanceUntil}');
+      }
+    }
   }
 
   void _onTap(String? payload, String? action) {
@@ -297,7 +352,9 @@ class ReminderController extends Notifier<ReminderState?> {
           ReminderSlot(
             id: reminderFirstId + i,
             at: plan[i],
-            body: texts.body(due.count, due.module),
+            body: current.inSecondChance
+                ? texts.secondChance
+                : texts.body(due.count, due.module),
             payload: plan[i].toIso8601String(),
           ),
         );
@@ -376,14 +433,29 @@ class ReminderController extends Notifier<ReminderState?> {
           await _save(ReminderState.fromJson(value));
         }
       }
-    } else if (current == null) {
+    } else if (!await _unsentReminderOps()) {
+      // The server applied every response we sent: its copy is the truth
+      // (new phone, second chance decided by the server, other device).
       final r = await guard(api.get);
       if (r case Ok(:final value) when value.isNotEmpty) {
-        await _save(ReminderState.fromJson(value));
-        appLog.info('reminders: settings restored from the server');
+        final server = ReminderState.fromJson(value);
+        if (server != current) {
+          await _save(server);
+          appLog.info('reminders: settings read from the server');
+        }
       }
     }
     await refreshPlan();
+  }
+
+  Future<bool> _unsentReminderOps() async {
+    final db = ref.read(appDatabaseProvider);
+    final rows =
+        await (db.select(db.outbox)..where(
+              (t) => t.kind.isIn(const ['reminder_response', 'app_open']),
+            ))
+            .get();
+    return rows.isNotEmpty;
   }
 }
 

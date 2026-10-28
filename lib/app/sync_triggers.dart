@@ -61,6 +61,9 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _sync();
+      if (mounted && ref.read(isSignedInProvider)) {
+        unawaited(ref.read(reminderControllerProvider.notifier).appOpened());
+      }
     }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {

@@ -31,8 +31,12 @@ class FakeNotifier implements ReminderNotifier {
   Future<void> cancelAll() async => scheduled = [];
 
   @override
-  Future<void> schedule(List<ReminderSlot> slots, ReminderTexts texts) async =>
-      scheduled = [...slots];
+  Future<void> schedule(List<ReminderSlot> slots, ReminderTexts texts) async {
+    scheduled = [...slots];
+    lastTexts = texts;
+  }
+
+  ReminderTexts? lastTexts;
 
   @override
   Future<String?> launchPayload() async => null;
@@ -116,6 +120,104 @@ void main() {
       expect(back, s);
       expect(normalizeTime('7:5:00'), '07:05');
       expect(normalizeTime('25:00'), defaultStudyTime);
+    });
+  });
+
+  group('lead rules (late answers, unsubscribed)', () {
+    test('a decline from before the end of the pause changes nothing', () {
+      final paused = _on.respond(_nn, t).respond(_nn, t2);
+      final late = paused.respond(_ig, t2.add(const Duration(days: 1)));
+      expect(late, paused);
+      expect(late.stopped, isFalse);
+    });
+
+    test('server json: switch = not unsubscribed, stopped kept apart', () {
+      final s = ReminderState.fromJson({
+        'enabled': false,
+        'unsubscribed': false,
+        'stopped': true,
+        'study_time': '18:30',
+        'study_days': [1, 2],
+        'stopped_at': '2026-11-01T18:00:00Z',
+      });
+      expect(s.enabled, isTrue);
+      expect(s.stopped, isTrue);
+      expect(s.active, isFalse);
+      expect(s.stoppedAt, DateTime.utc(2026, 11, 1, 18));
+      final off = ReminderState.fromJson({
+        'enabled': false,
+        'unsubscribed': true,
+      });
+      expect(off.enabled, isFalse);
+    });
+  });
+
+  group('second chance (draft: compare with the server 10 cases)', () {
+    final stoppedAt = DateTime.utc(2026, 11, 1, 18);
+    final stopped = ReminderState(
+      enabled: true,
+      stopped: true,
+      stoppedAt: stoppedAt,
+    );
+
+    test('1. before 7 days: nothing', () {
+      final s = stopped.appOpened(stoppedAt.add(const Duration(days: 6)));
+      expect(s, stopped);
+    });
+
+    test('2. after 7 days: 2 days of reminders, marked used', () {
+      final at = stoppedAt.add(const Duration(days: 8));
+      final s = stopped.appOpened(at);
+      expect(s.active, isTrue);
+      expect(s.secondChanceUntil, at.add(const Duration(days: 2)));
+      expect(s.secondChanceUsed, isTrue);
+    });
+
+    test('3. switched off by the student: no second chance', () {
+      final s = stopped.copyWith(enabled: false);
+      expect(s.appOpened(stoppedAt.add(const Duration(days: 9))), s);
+    });
+
+    test('4. already used: no third chance', () {
+      final s = stopped.copyWith(secondChanceUsed: true);
+      expect(s.appOpened(stoppedAt.add(const Duration(days: 9))), s);
+    });
+
+    test('5. Start during the second chance: back to normal', () {
+      final at = stoppedAt.add(const Duration(days: 8));
+      final s = stopped.appOpened(at).respond(_st, at);
+      expect(s.inSecondChance, isFalse);
+      expect(s.active, isTrue);
+      expect(s.secondChanceUsed, isTrue);
+    });
+
+    test('6. two declines during the second chance: stopped for good', () {
+      final at = stoppedAt.add(const Duration(days: 8));
+      final s = stopped
+          .appOpened(at)
+          .respond(_nn, at.add(const Duration(hours: 2)))
+          .respond(_ig, at.add(const Duration(days: 1)));
+      expect(s.stopped, isTrue);
+      expect(s.inSecondChance, isFalse);
+      expect(s.appOpened(at.add(const Duration(days: 30))), s);
+    });
+
+    test('7. plan: only inside the 2-day window', () {
+      final now = algiersToUtc(2026, 11, 10, 8, 0);
+      final s = stopped.appOpened(now);
+      final plan = planReminders(s, now);
+      expect(plan, [
+        algiersToUtc(2026, 11, 10, 19, 0),
+        algiersToUtc(2026, 11, 11, 19, 0),
+      ]);
+    });
+
+    test('8. json round trip keeps the second-chance fields', () {
+      final s = stopped.appOpened(stoppedAt.add(const Duration(days: 8)));
+      final back = ReminderState.fromJson(
+        jsonDecode(jsonEncode(s.toJson())) as Map<String, dynamic>,
+      );
+      expect(back, s);
     });
   });
 
@@ -236,6 +338,27 @@ void main() {
       final ops = await db.select(db.outbox).get();
       expect(ops, hasLength(1));
       expect(jsonDecode(ops.single.payloadJson)['response'], 'not_now');
+    });
+
+    test('app_open is queued once a day; second chance applied', () async {
+      final stopped = jsonEncode(
+        ReminderState(
+          enabled: true,
+          stopped: true,
+          stoppedAt: _mon(10).subtract(const Duration(days: 8)),
+        ).toJson(),
+      );
+      final c = await make({reminderStateKey: stopped});
+      final ctrl = c.read(reminderControllerProvider.notifier);
+      await ctrl.appOpened();
+      await ctrl.appOpened();
+      final ops = await db.select(db.outbox).get();
+      expect(ops.map((o) => o.kind), ['app_open']);
+      final s = c.read(reminderControllerProvider)!;
+      expect(s.inSecondChance, isTrue);
+      await ctrl.refreshPlan();
+      expect(phone.scheduled, isNotEmpty);
+      expect(phone.scheduled.first.body, phone.lastTexts!.secondChance);
     });
 
     test('settings change is saved and queued for the server', () async {
