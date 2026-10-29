@@ -1042,4 +1042,58 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reviewBackHome => 'Retour à l\'accueil';
+
+  @override
+  String get studiesSpecialityLabel => 'Spécialité';
+
+  @override
+  String get studiesChooseSpeciality => 'Choisis ta spécialité et ton année';
+
+  @override
+  String get studiesNotListed => 'Ma spécialité n\'est pas dans la liste';
+
+  @override
+  String get studiesNotOffered =>
+      'Cette spécialité ou cette année n\'est pas encore ouverte. Choisis-en une autre.';
+
+  @override
+  String get waitlistTitle => 'Quelle spécialité étudies-tu ?';
+
+  @override
+  String get waitlistOther => 'Autre (à écrire)';
+
+  @override
+  String get waitlistSpecialityText => 'Nom de la spécialité';
+
+  @override
+  String get waitlistYear => 'Année (facultatif)';
+
+  @override
+  String get waitlistJoin => 'Préviens-moi quand c\'est prêt';
+
+  @override
+  String get comingSoonTitle => 'Bientôt disponible';
+
+  @override
+  String comingSoonBody(String name) {
+    return 'On te prévient dès que $name arrive sur KampusLink.';
+  }
+
+  @override
+  String get comingSoonBodyGeneric =>
+      'On te prévient dès que ta spécialité arrive sur KampusLink.';
+
+  @override
+  String get comingSoonChange => 'Choisir une autre spécialité';
+
+  @override
+  String get myStudiesTitle => 'Mes études';
+
+  @override
+  String get myStudiesSaved =>
+      'Enregistré. Tes nouveaux modules se téléchargent.';
+
+  @override
+  String get myStudiesOffline =>
+      'Connecte-toi à internet pour changer tes études.';
 }

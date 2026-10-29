@@ -8,13 +8,20 @@ import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/catalog/catalog.dart';
+import '../../data/profile/offers.dart';
+import '../../data/profile/study_level.dart';
 import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/states.dart';
+import '../profile/account_actions.dart';
 import 'onboarding_status.dart';
 import 'step_layout.dart';
 
-/// Step 3: locked to Mining Engineering L2 for the pilot (D-004).
+/// Step 3 "Your studies": university -> speciality -> year -> semester,
+/// ALL from get_onboarding_options() (only what is offered). Not listed ->
+/// waitlist -> "Coming soon" (shown again at the next start while the
+/// speciality is still not offered).
 class StudiesStep extends ConsumerStatefulWidget {
   const StudiesStep({super.key, required this.onDone});
 
@@ -24,24 +31,30 @@ class StudiesStep extends ConsumerStatefulWidget {
   ConsumerState<StudiesStep> createState() => _StudiesStepState();
 }
 
+enum _View { form, waitlist, comingSoon }
+
 class _StudiesStepState extends ConsumerState<StudiesStep> {
-  static const _pilotSpeciality = 2;
-  static const _pilotYear = 'L2';
   static final _usernamePattern = RegExp(r'^[a-z0-9_.]{3,20}$');
 
   final _username = TextEditingController();
+  final _otherName = TextEditingController();
+  final _otherYear = TextEditingController();
   int? _universityId;
+  int? _specialityId;
+  String? _year;
+  int? _semester;
+  int? _otherId;
   int _goal = 30;
-  bool _reminders = true;
-  TimeOfDay _reminderAt = const TimeOfDay(hour: 20, minute: 0);
-  bool _notifyMe = false;
   bool _prefilled = false;
   bool _busy = false;
   String? _usernameError;
+  _View? _view;
 
   @override
   void dispose() {
     _username.dispose();
+    _otherName.dispose();
+    _otherYear.dispose();
     super.dispose();
   }
 
@@ -51,37 +64,58 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
         .first
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9_.]'), '');
-    if (name.length < 3) name = 'student$name';
+    if (name.length < 3) {
+      name = 'student$name';
+    }
     return name.length > 20 ? name.substring(0, 20) : name;
   }
 
-  void _prefill(Map<String, dynamic>? me) {
-    if (_prefilled) return;
+  void _prefill(OnboardingOffers offers, Map<String, dynamic>? me) {
+    if (_prefilled) {
+      return;
+    }
     _prefilled = true;
-    final prefs = ref.read(sharedPrefsProvider);
-    _notifyMe = prefs.getBool('notify_more_specialities') ?? false;
     final saved = me?['username']?.toString() ?? '';
-    final email = ref.read(authRepositoryProvider).session?.user.email ?? '';
+    final email = ref.read(authControllerProvider).email ?? '';
     _username.text = _usernamePattern.hasMatch(saved)
         ? saved
         : _suggestUsername(email);
     final uni = me?['university_id'];
     _universityId = uni is num ? uni.toInt() : null;
     final goal = me?['study_goal_minutes'];
-    if (goal is num && goal > 0) _goal = goal.toInt().clamp(10, 120);
-    final reminders = me?['reminders_enabled'];
-    if (reminders is bool) _reminders = reminders;
+    if (goal is num && goal > 0) {
+      _goal = goal.toInt().clamp(10, 120);
+    }
+    // Pre-select: the waitlisted speciality now offered, else the profile,
+    // else the only offered one.
+    final waitlist = readWaitlist(ref.read(sharedPrefsProvider));
+    final mine = me?['speciality_id'];
+    final wanted =
+        waitlist?.specialityId ?? (mine is num ? mine.toInt() : null);
+    final speciality =
+        offers.speciality(wanted) ??
+        (offers.specialities.length == 1 ? offers.specialities.first : null);
+    if (speciality != null) {
+      _choose(speciality, waitlist?.year ?? me?['academic_year']?.toString());
+    }
+    _universityId ??= waitlist?.universityId;
+    _view =
+        offers.waitlisted &&
+            !offers.offers(waitlist?.specialityId, waitlist?.year)
+        ? _View.comingSoon
+        : _View.form;
   }
 
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _reminderAt,
-    );
-    if (picked != null && mounted) setState(() => _reminderAt = picked);
+  void _choose(OfferedSpeciality s, [String? year]) {
+    _specialityId = s.id;
+    final level = s.level(year) ?? (s.levels.isEmpty ? null : s.levels.first);
+    _year = level?.year;
+    _semester = (level?.semesters.isNotEmpty ?? false)
+        ? level!.semesters.first
+        : null;
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(OnboardingOffers offers) async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final language = Localizations.localeOf(context).languageCode;
@@ -91,8 +125,16 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
       return;
     }
     final universityId = _universityId;
+    final specialityId = _specialityId;
+    final year = _year;
     if (universityId == null) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.chooseUniversity)));
+      return;
+    }
+    if (specialityId == null || year == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.studiesChooseSpeciality)),
+      );
       return;
     }
     final api = ref.read(kampusApiProvider);
@@ -101,24 +143,24 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
       return;
     }
     setState(() => _busy = true);
-    final prefs = ref.read(sharedPrefsProvider);
     final result = await guard<void>(() async {
       await api.completeOnboarding(
         username: username,
         universityId: universityId,
-        specialityId: _pilotSpeciality,
-        academicYear: _pilotYear,
+        specialityId: specialityId,
+        academicYear: year,
         language: language,
       );
       await api.setStudyGoal(_goal);
-      await api.setReminders(enabled: _reminders);
-      await prefs.setString(
-        'reminder_time',
-        '${_reminderAt.hour.toString().padLeft(2, '0')}:'
-            '${_reminderAt.minute.toString().padLeft(2, '0')}',
-      );
     });
-    if (!mounted) return;
+    if (result is Ok) {
+      await ref.read(studyLevelProvider.notifier).save(year, _semester);
+      await ref.read(sharedPrefsProvider).remove(waitlistKey);
+      ref.invalidate(catalogProvider);
+    }
+    if (!mounted) {
+      return;
+    }
     setState(() => _busy = false);
     switch (result) {
       case Ok():
@@ -132,6 +174,12 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
                 ? l10n.usernameTaken
                 : l10n.usernameHelp,
           );
+        } else if (failure is ValidationFailure &&
+            failure.code == 'not_offered') {
+          ref.invalidate(onboardingOptionsProvider);
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.studiesNotOffered)),
+          );
         } else {
           messenger.showSnackBar(
             SnackBar(content: Text(failureMessage(l10n, failure))),
@@ -140,89 +188,209 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
     }
   }
 
+  Future<void> _joinWaitlist(OnboardingOffers offers) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final typed = _otherName.text.trim();
+    final other = [
+      for (final o in offers.others)
+        if (o.id == _otherId) o,
+    ];
+    final name = other.isNotEmpty ? other.first.name : typed;
+    if (name.isEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.studiesChooseSpeciality)),
+      );
+      return;
+    }
+    final api = ref.read(studiesApiProvider);
+    if (api == null) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorOffline)));
+      return;
+    }
+    final year = _otherYear.text.trim();
+    final entry = WaitlistEntry(
+      specialityId: other.isNotEmpty ? other.first.id : null,
+      specialityText: other.isNotEmpty ? null : typed,
+      year: year.isEmpty ? null : year,
+      universityId: _universityId,
+      name: name,
+    );
+    setState(() => _busy = true);
+    final result = await guard(
+      () => api.joinWaitlist(
+        specialityId: entry.specialityId,
+        specialityText: entry.specialityText,
+        year: entry.year,
+        universityId: entry.universityId,
+      ),
+    );
+    if (result is Ok) {
+      await rememberWaitlist(ref, entry);
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      if (result is Ok) {
+        _view = _View.comingSoon;
+      }
+    });
+    if (result case Err(:final failure)) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(failureMessage(l10n, failure))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final options = ref.watch(onboardingOptionsProvider);
+    final offers = ref.watch(onboardingOffersProvider);
     final me = ref.watch(meProvider);
-    return switch ((options, me)) {
-      (AsyncError(:final error), _) ||
-      (_, AsyncError(:final error)) => ErrorView(
-        failure: mapError(error),
+    if (offers.hasError) {
+      return ErrorView(
+        failure: mapError(offers.error!),
         onRetry: () {
           ref.invalidate(onboardingOptionsProvider);
           ref.invalidate(meProvider);
         },
+      );
+    }
+    if (!offers.hasValue || (!me.hasValue && !me.hasError)) {
+      return const LoadingView();
+    }
+    final o = offers.requireValue;
+    _prefill(o, me.hasValue ? me.requireValue : null);
+    return switch (_view ?? _View.form) {
+      _View.form => _form(context, o),
+      _View.waitlist => _waitlist(context, o),
+      _View.comingSoon => _ComingSoon(
+        name: readWaitlist(ref.read(sharedPrefsProvider))?.name,
+        onChange: () => setState(() => _view = _View.form),
+        onSignOut: () => signOutEverywhere(ref),
       ),
-      (AsyncData(value: final opts), AsyncData(value: final meValue)) => _form(
-        context,
-        opts,
-        meValue,
-      ),
-      _ => const LoadingView(),
     };
   }
 
-  List<Map<String, dynamic>> _list(Object? v) => [
-    for (final e in (v is List ? v : const <Object?>[]))
-      if (e is Map) e.cast<String, dynamic>(),
-  ];
+  TextStyle? _title(BuildContext context) =>
+      Theme.of(context).textTheme.headlineSmall
+          ?.copyWith(fontWeight: FontWeight.w800);
 
-  Widget _form(
-    BuildContext context,
-    Map<String, dynamic> options,
-    Map<String, dynamic>? me,
-  ) {
-    _prefill(me);
+  Widget _form(BuildContext context, OnboardingOffers offers) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    final universities = _list(options['universities']);
-    final others = [
-      for (final s in _list(options['specialities']))
-        if ((s['id'] as num?)?.toInt() != _pilotSpeciality) '${s['name']}',
-    ];
-    final selected =
-        universities.any((u) => (u['id'] as num?)?.toInt() == _universityId)
-        ? _universityId
-        : null;
-    final title = Theme.of(context).textTheme.headlineSmall
-        ?.copyWith(fontWeight: FontWeight.w800);
+    final lang = Localizations.localeOf(context).languageCode;
+    final speciality = offers.speciality(_specialityId);
+    final level = speciality?.level(_year);
+    final label = TextStyle(color: kc.textSecondary);
     return OnboardingStepLayout(
       items: [
         const SizedBox(height: KSpace.md),
-        Text(l10n.onboardingStudiesTitle, style: title),
-        const SizedBox(height: KSpace.lg),
-        _PilotCard(label: l10n.studiesPilot),
-        const SizedBox(height: KSpace.sm),
-        _ComingSoonCard(
-          title: l10n.studiesComingSoon,
-          names: others.take(3).join(' \u00b7 '),
-          notifyLabel: l10n.studiesNotifyMe,
-          notify: _notifyMe,
-          onNotify: (v) {
-            setState(() => _notifyMe = v);
-            ref
-                .read(sharedPrefsProvider)
-                .setBool('notify_more_specialities', v);
-          },
-        ),
+        Text(l10n.onboardingStudiesTitle, style: _title(context)),
         const SizedBox(height: KSpace.lg),
         DropdownButtonFormField<int>(
-          initialValue: selected,
+          initialValue: offers.universities.any((u) => u.id == _universityId)
+              ? _universityId
+              : null,
           isExpanded: true,
           decoration: InputDecoration(
             labelText: l10n.universityLabel,
             hintText: l10n.chooseUniversity,
           ),
           items: [
-            for (final u in universities)
+            for (final u in offers.universities)
               DropdownMenuItem<int>(
-                value: (u['id'] as num).toInt(),
-                child: Text('${u['name']}', overflow: TextOverflow.ellipsis),
+                value: u.id,
+                child: Text(u.name, overflow: TextOverflow.ellipsis),
               ),
           ],
           onChanged: (v) => setState(() => _universityId = v),
         ),
         const SizedBox(height: KSpace.md),
+        DropdownButtonFormField<int>(
+          key: const ValueKey('speciality'),
+          initialValue: speciality?.id,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: l10n.studiesSpecialityLabel,
+            hintText: l10n.studiesChooseSpeciality,
+          ),
+          items: [
+            for (final s in offers.specialities)
+              DropdownMenuItem<int>(
+                value: s.id,
+                child: Text(s.name, overflow: TextOverflow.ellipsis),
+              ),
+          ],
+          onChanged: (v) => setState(() {
+            final s = offers.speciality(v);
+            if (s != null) {
+              _choose(s);
+            }
+          }),
+        ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton(
+            onPressed: () => setState(() => _view = _View.waitlist),
+            child: Text(l10n.studiesNotListed),
+          ),
+        ),
+        if (speciality != null) ...[
+          const SizedBox(height: KSpace.sm),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(l10n.studyLevelYear, style: label),
+          ),
+          const SizedBox(height: KSpace.sm),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Wrap(
+              spacing: KSpace.sm,
+              runSpacing: KSpace.sm,
+              children: [
+                for (final lv in speciality.levels)
+                  ChoiceChip(
+                    key: ValueKey<String>('year-${lv.year}'),
+                    label: Text(lv.labelIn(lang)),
+                    selected: _year == lv.year,
+                    onSelected: (_) => setState(() {
+                      _year = lv.year;
+                      _semester = lv.semesters.isEmpty
+                          ? null
+                          : lv.semesters.first;
+                    }),
+                  ),
+              ],
+            ),
+          ),
+        ],
+        if (level != null && level.semesters.isNotEmpty) ...[
+          const SizedBox(height: KSpace.md),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(l10n.studyLevelSemester, style: label),
+          ),
+          const SizedBox(height: KSpace.sm),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Wrap(
+              spacing: KSpace.sm,
+              runSpacing: KSpace.sm,
+              children: [
+                for (final s in level.semesters)
+                  ChoiceChip(
+                    key: ValueKey<String>('semester-$s'),
+                    label: Text(l10n.semesterLabel(s)),
+                    selected: _semester == s,
+                    onSelected: (_) => setState(() => _semester = s),
+                  ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: KSpace.lg),
         TextField(
           controller: _username,
           autocorrect: false,
@@ -234,7 +402,9 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
             prefixText: '@',
           ),
           onChanged: (_) {
-            if (_usernameError != null) setState(() => _usernameError = null);
+            if (_usernameError != null) {
+              setState(() => _usernameError = null);
+            }
           },
         ),
         const SizedBox(height: KSpace.lg),
@@ -250,136 +420,111 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
           label: '$_goal',
           onChanged: (v) => setState(() => _goal = v.round()),
         ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: _reminders,
-          onChanged: (v) => setState(() => _reminders = v),
-          title: Text(l10n.remindersLabel),
-        ),
-        if (_reminders)
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              onPressed: _pickTime,
-              icon: const Icon(Icons.schedule),
-              label: Text(l10n.reminderTime(_reminderAt.format(context))),
-            ),
-          ),
         const SizedBox(height: KSpace.lg),
-        Text(' ', style: TextStyle(color: kc.textSecondary)),
       ],
       action: FilledButton(
-        onPressed: _busy ? null : _submit,
+        onPressed: _busy ? null : () => _submit(offers),
         child: _busy
             ? const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : Text(l10n.onboardingFinishStudies),
+            : Text(l10n.onboardingNext),
       ),
     );
   }
-}
 
-class _PilotCard extends StatelessWidget {
-  const _PilotCard({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final kc = context.kc;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: kc.accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(KRadius.card),
-        border: Border.all(color: kc.accent, width: 1.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(KSpace.lg),
-        child: Row(
-          children: [
-            Icon(Icons.terrain_rounded, color: kc.accentText, size: 32),
-            const SizedBox(width: KSpace.md),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-            Icon(Icons.check_circle, color: kc.accentText),
-          ],
+  Widget _waitlist(BuildContext context, OnboardingOffers offers) {
+    final l10n = AppLocalizations.of(context);
+    return OnboardingStepLayout(
+      items: [
+        const SizedBox(height: KSpace.md),
+        Text(l10n.waitlistTitle, style: _title(context)),
+        const SizedBox(height: KSpace.lg),
+        if (offers.others.isNotEmpty)
+          DropdownButtonFormField<int>(
+            key: const ValueKey('other-speciality'),
+            initialValue: _otherId,
+            isExpanded: true,
+            decoration: InputDecoration(labelText: l10n.studiesSpecialityLabel),
+            items: [
+              for (final o in offers.others)
+                DropdownMenuItem<int>(
+                  value: o.id,
+                  child: Text(o.name, overflow: TextOverflow.ellipsis),
+                ),
+              DropdownMenuItem<int>(value: -1, child: Text(l10n.waitlistOther)),
+            ],
+            onChanged: (v) => setState(() => _otherId = v),
+          ),
+        if (offers.others.isEmpty || _otherId == -1) ...[
+          const SizedBox(height: KSpace.md),
+          TextField(
+            controller: _otherName,
+            decoration: InputDecoration(labelText: l10n.waitlistSpecialityText),
+          ),
+        ],
+        const SizedBox(height: KSpace.md),
+        TextField(
+          controller: _otherYear,
+          decoration: InputDecoration(labelText: l10n.waitlistYear),
         ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton(
+            onPressed: () => setState(() => _view = _View.form),
+            child: Text(l10n.comingSoonChange),
+          ),
+        ),
+      ],
+      action: FilledButton(
+        onPressed: _busy ? null : () => _joinWaitlist(offers),
+        child: Text(l10n.waitlistJoin),
       ),
     );
   }
 }
 
-class _ComingSoonCard extends StatelessWidget {
-  const _ComingSoonCard({
-    required this.title,
-    required this.names,
-    required this.notifyLabel,
-    required this.notify,
-    required this.onNotify,
+class _ComingSoon extends StatelessWidget {
+  const _ComingSoon({
+    required this.name,
+    required this.onChange,
+    required this.onSignOut,
   });
 
-  final String title;
-  final String names;
-  final String notifyLabel;
-  final bool notify;
-  final ValueChanged<bool> onNotify;
+  final String? name;
+  final VoidCallback onChange;
+  final VoidCallback onSignOut;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: kc.surface,
-        borderRadius: BorderRadius.circular(KRadius.card),
-        border: Border.all(color: kc.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(
-          KSpace.lg,
-          KSpace.md,
-          KSpace.sm,
-          KSpace.md,
+    final n = name;
+    return OnboardingStepLayout(
+      items: [
+        const SizedBox(height: KSpace.xxl),
+        Icon(Icons.hourglass_top_rounded, size: 72, color: kc.accentText),
+        const SizedBox(height: KSpace.xl),
+        Text(
+          l10n.comingSoonTitle,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
-        child: Row(
-          children: [
-            Icon(Icons.lock_clock_outlined, color: kc.textSecondary),
-            const SizedBox(width: KSpace.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(color: kc.textPrimary)),
-                  if (names.isNotEmpty)
-                    Text(
-                      names,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: kc.textSecondary, fontSize: 12),
-                    ),
-                ],
-              ),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Switch(value: notify, onChanged: onNotify),
-                Text(
-                  notifyLabel,
-                  style: TextStyle(color: kc.textSecondary, fontSize: 11),
-                ),
-              ],
-            ),
-          ],
+        const SizedBox(height: KSpace.md),
+        Text(
+          n == null || n.isEmpty
+              ? l10n.comingSoonBodyGeneric
+              : l10n.comingSoonBody(n),
+          textAlign: TextAlign.center,
+          style: TextStyle(color: kc.textSecondary),
         ),
-      ),
+        const SizedBox(height: KSpace.lg),
+        TextButton(onPressed: onChange, child: Text(l10n.comingSoonChange)),
+      ],
+      action: OutlinedButton(onPressed: onSignOut, child: Text(l10n.signOut)),
     );
   }
 }

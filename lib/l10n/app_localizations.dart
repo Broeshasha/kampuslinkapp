@@ -1887,6 +1887,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to Home'**
   String get reviewBackHome;
+
+  /// No description provided for @studiesSpecialityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Speciality'**
+  String get studiesSpecialityLabel;
+
+  /// No description provided for @studiesChooseSpeciality.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your speciality and year'**
+  String get studiesChooseSpeciality;
+
+  /// No description provided for @studiesNotListed.
+  ///
+  /// In en, this message translates to:
+  /// **'My speciality isn\'t listed'**
+  String get studiesNotListed;
+
+  /// No description provided for @studiesNotOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'This speciality or year isn\'t open yet. Choose another one.'**
+  String get studiesNotOffered;
+
+  /// No description provided for @waitlistTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which speciality do you study?'**
+  String get waitlistTitle;
+
+  /// No description provided for @waitlistOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other (type it)'**
+  String get waitlistOther;
+
+  /// No description provided for @waitlistSpecialityText.
+  ///
+  /// In en, this message translates to:
+  /// **'Speciality name'**
+  String get waitlistSpecialityText;
+
+  /// No description provided for @waitlistYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year (optional)'**
+  String get waitlistYear;
+
+  /// No description provided for @waitlistJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell me when it\'s ready'**
+  String get waitlistJoin;
+
+  /// No description provided for @comingSoonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoonTitle;
+
+  /// No description provided for @comingSoonBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll tell you as soon as {name} is on KampusLink.'**
+  String comingSoonBody(String name);
+
+  /// No description provided for @comingSoonBodyGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll tell you as soon as your speciality is on KampusLink.'**
+  String get comingSoonBodyGeneric;
+
+  /// No description provided for @comingSoonChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another speciality'**
+  String get comingSoonChange;
+
+  /// No description provided for @myStudiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My studies'**
+  String get myStudiesTitle;
+
+  /// No description provided for @myStudiesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Your new modules are downloading.'**
+  String get myStudiesSaved;
+
+  /// No description provided for @myStudiesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to change your studies.'**
+  String get myStudiesOffline;
 }
 
 class _AppLocalizationsDelegate

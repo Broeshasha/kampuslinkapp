@@ -1037,4 +1037,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reviewBackHome => 'Back to Home';
+
+  @override
+  String get studiesSpecialityLabel => 'Speciality';
+
+  @override
+  String get studiesChooseSpeciality => 'Choose your speciality and year';
+
+  @override
+  String get studiesNotListed => 'My speciality isn\'t listed';
+
+  @override
+  String get studiesNotOffered =>
+      'This speciality or year isn\'t open yet. Choose another one.';
+
+  @override
+  String get waitlistTitle => 'Which speciality do you study?';
+
+  @override
+  String get waitlistOther => 'Other (type it)';
+
+  @override
+  String get waitlistSpecialityText => 'Speciality name';
+
+  @override
+  String get waitlistYear => 'Year (optional)';
+
+  @override
+  String get waitlistJoin => 'Tell me when it\'s ready';
+
+  @override
+  String get comingSoonTitle => 'Coming soon';
+
+  @override
+  String comingSoonBody(String name) {
+    return 'We\'ll tell you as soon as $name is on KampusLink.';
+  }
+
+  @override
+  String get comingSoonBodyGeneric =>
+      'We\'ll tell you as soon as your speciality is on KampusLink.';
+
+  @override
+  String get comingSoonChange => 'Choose another speciality';
+
+  @override
+  String get myStudiesTitle => 'My studies';
+
+  @override
+  String get myStudiesSaved => 'Saved. Your new modules are downloading.';
+
+  @override
+  String get myStudiesOffline =>
+      'Connect to the internet to change your studies.';
 }

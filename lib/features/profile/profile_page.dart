@@ -20,6 +20,7 @@ import '../../ui/states.dart';
 import '../auth/google_sign_in_button.dart';
 import '../preview/preview_page.dart';
 import '../reminders/reminders_page.dart';
+import 'study_profile_page.dart';
 import 'account_actions.dart';
 import 'language_picker.dart';
 import 'semester_sheet.dart';
@@ -471,6 +472,8 @@ class _SettingsCard extends ConsumerWidget {
         if (signedIn) ...[
           Divider(height: 1, color: kc.border),
           const RemindersTile(),
+          Divider(height: 1, color: kc.border),
+          const StudyProfileTile(),
         ],
       ],
     );

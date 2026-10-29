@@ -1029,4 +1029,55 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reviewBackHome => 'العودة إلى الرئيسية';
+
+  @override
+  String get studiesSpecialityLabel => 'التخصص';
+
+  @override
+  String get studiesChooseSpeciality => 'اختر تخصصك وسنتك';
+
+  @override
+  String get studiesNotListed => 'تخصصي غير موجود في القائمة';
+
+  @override
+  String get studiesNotOffered =>
+      'هذا التخصص أو هذه السنة غير متاحة بعد. اختر غيرها.';
+
+  @override
+  String get waitlistTitle => 'ما التخصص الذي تدرسه؟';
+
+  @override
+  String get waitlistOther => 'آخر (اكتبه)';
+
+  @override
+  String get waitlistSpecialityText => 'اسم التخصص';
+
+  @override
+  String get waitlistYear => 'السنة (اختياري)';
+
+  @override
+  String get waitlistJoin => 'أخبرني عندما يصبح جاهزاً';
+
+  @override
+  String get comingSoonTitle => 'قريباً';
+
+  @override
+  String comingSoonBody(String name) {
+    return 'سنخبرك فور توفر $name على KampusLink.';
+  }
+
+  @override
+  String get comingSoonBodyGeneric => 'سنخبرك فور توفر تخصصك على KampusLink.';
+
+  @override
+  String get comingSoonChange => 'اختر تخصصاً آخر';
+
+  @override
+  String get myStudiesTitle => 'دراستي';
+
+  @override
+  String get myStudiesSaved => 'تم الحفظ. يتم تنزيل وحداتك الجديدة.';
+
+  @override
+  String get myStudiesOffline => 'اتصل بالإنترنت لتغيير دراستك.';
 }

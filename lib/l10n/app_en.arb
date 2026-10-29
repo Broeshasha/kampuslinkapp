@@ -349,5 +349,22 @@
   "reviewDoneBody": "{count} cards reviewed. See you next time.",
   "@reviewDoneBody": {"placeholders": {"count": {"type": "int"}}},
   "reviewEmpty": "Nothing to review right now.",
-  "reviewBackHome": "Back to Home"
+  "reviewBackHome": "Back to Home",
+"studiesSpecialityLabel": "Speciality",
+  "studiesChooseSpeciality": "Choose your speciality and year",
+  "studiesNotListed": "My speciality isn't listed",
+  "studiesNotOffered": "This speciality or year isn't open yet. Choose another one.",
+  "waitlistTitle": "Which speciality do you study?",
+  "waitlistOther": "Other (type it)",
+  "waitlistSpecialityText": "Speciality name",
+  "waitlistYear": "Year (optional)",
+  "waitlistJoin": "Tell me when it's ready",
+  "comingSoonTitle": "Coming soon",
+  "comingSoonBody": "We'll tell you as soon as {name} is on KampusLink.",
+  "@comingSoonBody": {"placeholders": {"name": {"type": "String"}}},
+  "comingSoonBodyGeneric": "We'll tell you as soon as your speciality is on KampusLink.",
+  "comingSoonChange": "Choose another speciality",
+  "myStudiesTitle": "My studies",
+  "myStudiesSaved": "Saved. Your new modules are downloading.",
+  "myStudiesOffline": "Connect to the internet to change your studies."
 }
