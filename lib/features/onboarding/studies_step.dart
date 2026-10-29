@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/catalog/catalog.dart';
 import '../../data/profile/offers.dart';
+import '../../data/profile/waitlist_check.dart';
 import '../../data/profile/study_level.dart';
 import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
@@ -156,6 +157,7 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
     if (result is Ok) {
       await ref.read(studyLevelProvider.notifier).save(year, _semester);
       await ref.read(sharedPrefsProvider).remove(waitlistKey);
+      await cancelWaitlistCheck();
       ref.invalidate(catalogProvider);
     }
     if (!mounted) {
@@ -227,6 +229,7 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
     );
     if (result is Ok) {
       await rememberWaitlist(ref, entry);
+      await scheduleWaitlistCheck();
     }
     if (!mounted) {
       return;

@@ -11,6 +11,7 @@ import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
 import '../catalog/catalog.dart';
+import '../profile/waitlist_check.dart' show waitlistPayload;
 import '../db/app_database.dart';
 import '../learning/feed_repository.dart';
 import '../profile/study_level.dart';
@@ -99,7 +100,7 @@ class ReminderController extends Notifier<ReminderState?> {
     await guard(() async {
       await _notifier.init(_onTap);
       final payload = await _notifier.launchPayload();
-      if (payload != null) {
+      if (payload != null && payload != waitlistPayload) {
         await respond(payload, ReminderResponse.started, plan: false);
         ref.read(reminderLaunchProvider.notifier).bump();
       }
@@ -161,6 +162,9 @@ class ReminderController extends Notifier<ReminderState?> {
   }
 
   void _onTap(String? payload, String? action) {
+    if (payload == waitlistPayload) {
+      return; // not a study reminder
+    }
     final response = action == reminderActionNotNow
         ? ReminderResponse.notNow
         : ReminderResponse.started;
