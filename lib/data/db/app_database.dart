@@ -39,6 +39,42 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  /// Indexes for the hot queries (feed, modules, lessons by module).
+  /// IF NOT EXISTS: added to old phones on the next open, no migration.
+  static const _indexes = [
+    'CREATE INDEX IF NOT EXISTS idx_lessons_module '
+        'ON lessons (module_id, position)',
+    'CREATE INDEX IF NOT EXISTS idx_cards_module ON cards (module_id)',
+    'CREATE INDEX IF NOT EXISTS idx_cards_lesson '
+        'ON cards (lesson_id, position)',
+    'CREATE INDEX IF NOT EXISTS idx_questions_lesson ON questions (lesson_id)',
+    'CREATE INDEX IF NOT EXISTS idx_questions_module ON questions (module_id)',
+    'CREATE INDEX IF NOT EXISTS idx_resources_module ON resources (module_id)',
+    'CREATE INDEX IF NOT EXISTS idx_glossary_module '
+        'ON glossary_entries (module_id)',
+    'CREATE INDEX IF NOT EXISTS idx_card_progress_due ON card_progress (due_at)',
+    'CREATE INDEX IF NOT EXISTS idx_reading_updated '
+        'ON reading_positions (updated_at)',
+    'CREATE INDEX IF NOT EXISTS idx_outbox_next '
+        'ON outbox (next_attempt_at, seq)',
+  ];
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    beforeOpen: (details) async {
+      for (final sql in _indexes) {
+        await customStatement(sql);
+      }
+    },
+  );
+
+  /// Opens the database (and adds the indexes) before the first screen
+  /// asks for it. Called from main(), in parallel with the first frame.
+  Future<void> warmUp() async {
+    await customSelect('SELECT 1').get();
+  }
+
   static QueryExecutor _open() => driftDatabase(
     name: 'kampuslink',
     web: DriftWebOptions(

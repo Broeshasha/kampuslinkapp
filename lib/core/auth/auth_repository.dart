@@ -4,7 +4,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../errors/app_failure.dart';
+import '../logging/logger.dart';
 import '../supabase/supabase_bootstrap.dart';
+
+export 'auth_controller.dart'
+    show AuthView, authControllerProvider, isSignedInProvider;
 
 /// Public OAuth web client id: Supabase checks Google ID tokens against it.
 const _googleServerClientId =
@@ -17,10 +21,15 @@ class AuthRepository {
   final SupabaseClient? _client;
   static bool _googleReady = false;
 
+  /// The session saved on the phone (may have an expired access token).
   Session? get session => _client?.auth.currentSession;
 
+  /// Session changes; refresh errors are dropped here (AuthController
+  /// decides what they mean).
   Stream<Session?> sessionChanges() =>
-      _client?.auth.onAuthStateChange.map((s) => s.session) ??
+      _client?.auth.onAuthStateChange
+          .map((s) => s.session)
+          .handleError((Object _) {}) ??
       const Stream<Session?>.empty();
 
   Future<void> signInWithGoogle() async {
@@ -48,9 +57,24 @@ class AuthRepository {
     );
   }
 
+  /// The student's own Sign out: works offline too (falls back to ending
+  /// the session on this phone only).
   Future<void> signOut() async {
-    if (!kIsWeb && _googleReady) await GoogleSignIn.instance.signOut();
-    await _client?.auth.signOut();
+    if (!kIsWeb && _googleReady) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (error, stack) {
+        appLog.error(error, stack, reason: 'google sign-out');
+      }
+    }
+    final auth = _client?.auth;
+    if (auth == null) return;
+    try {
+      await auth.signOut();
+    } catch (error) {
+      appLog.warn('auth: global sign-out failed ($error), local only');
+      await auth.signOut(scope: SignOutScope.local);
+    }
   }
 }
 
@@ -58,15 +82,9 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(ref.watch(supabaseClientProvider)),
 );
 
+/// Only for display (e-mail in Profile). Never errors.
 final sessionProvider = StreamProvider<Session?>((ref) async* {
   final repo = ref.watch(authRepositoryProvider);
   yield repo.session;
   yield* repo.sessionChanges();
 });
-
-final isSignedInProvider = Provider<bool>(
-  (ref) => switch (ref.watch(sessionProvider)) {
-    AsyncData(:final value) => value != null,
-    _ => false,
-  },
-);

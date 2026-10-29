@@ -1785,6 +1785,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Case solved'**
   String get caseDone;
+
+  /// No description provided for @reminderStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When do you want to study?'**
+  String get reminderStepTitle;
+
+  /// No description provided for @reminderStepBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time and your days. We send one short reminder then: 10 minutes is enough. Tap Not now when you are busy; if you skip a few, we pause by ourselves.'**
+  String get reminderStepBody;
+
+  /// No description provided for @reminderTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Study time'**
+  String get reminderTimeLabel;
+
+  /// No description provided for @reminderDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get reminderDaysLabel;
+
+  /// No description provided for @reminderAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get reminderAllow;
+
+  /// No description provided for @reminderSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get reminderSkip;
+
+  /// No description provided for @remindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Study reminders'**
+  String get remindersTitle;
+
+  /// No description provided for @remindersOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get remindersOff;
+
+  /// No description provided for @remindersStoppedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped after several skipped reminders. Turn them on again to restart.'**
+  String get remindersStoppedNote;
+
+  /// No description provided for @remindersPausedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused for a few days after two skipped reminders.'**
+  String get remindersPausedNote;
+
+  /// No description provided for @remindersDeniedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked for KampusLink. To get reminders, open your phone Settings > Apps > KampusLink > Notifications and turn them on.'**
+  String get remindersDeniedHint;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'10-minute review'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewTimeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String reviewTimeLeft(int minutes);
+
+  /// No description provided for @reviewDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session done!'**
+  String get reviewDoneTitle;
+
+  /// No description provided for @reviewDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cards reviewed. See you next time.'**
+  String reviewDoneBody(int count);
+
+  /// No description provided for @reviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to review right now.'**
+  String get reviewEmpty;
+
+  /// No description provided for @reviewBackHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Home'**
+  String get reviewBackHome;
+
+  /// No description provided for @studiesSpecialityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Speciality'**
+  String get studiesSpecialityLabel;
+
+  /// No description provided for @studiesChooseSpeciality.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your speciality and year'**
+  String get studiesChooseSpeciality;
+
+  /// No description provided for @studiesNotListed.
+  ///
+  /// In en, this message translates to:
+  /// **'My speciality isn\'t listed'**
+  String get studiesNotListed;
+
+  /// No description provided for @studiesNotOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'This speciality or year isn\'t open yet. Choose another one.'**
+  String get studiesNotOffered;
+
+  /// No description provided for @waitlistTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which speciality do you study?'**
+  String get waitlistTitle;
+
+  /// No description provided for @waitlistOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other (type it)'**
+  String get waitlistOther;
+
+  /// No description provided for @waitlistSpecialityText.
+  ///
+  /// In en, this message translates to:
+  /// **'Speciality name'**
+  String get waitlistSpecialityText;
+
+  /// No description provided for @waitlistYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year (optional)'**
+  String get waitlistYear;
+
+  /// No description provided for @waitlistJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell me when it\'s ready'**
+  String get waitlistJoin;
+
+  /// No description provided for @comingSoonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoonTitle;
+
+  /// No description provided for @comingSoonBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll tell you as soon as {name} is on KampusLink.'**
+  String comingSoonBody(String name);
+
+  /// No description provided for @comingSoonBodyGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll tell you as soon as your speciality is on KampusLink.'**
+  String get comingSoonBodyGeneric;
+
+  /// No description provided for @comingSoonChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another speciality'**
+  String get comingSoonChange;
+
+  /// No description provided for @myStudiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My studies'**
+  String get myStudiesTitle;
+
+  /// No description provided for @myStudiesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Your new modules are downloading.'**
+  String get myStudiesSaved;
+
+  /// No description provided for @myStudiesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to change your studies.'**
+  String get myStudiesOffline;
+
+  /// No description provided for @remindersNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next reminder: {when}'**
+  String remindersNext(String when);
+
+  /// No description provided for @remindersNextNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder planned right now (none on a day you already studied).'**
+  String get remindersNextNone;
+
+  /// No description provided for @remindersBatteryTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery.'**
+  String get remindersBatteryTip;
 }
 
 class _AppLocalizationsDelegate

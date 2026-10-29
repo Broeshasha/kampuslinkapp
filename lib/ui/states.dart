@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/errors/app_failure.dart';
@@ -21,14 +23,42 @@ String failureMessage(AppLocalizations l10n, AppFailure failure) =>
         '${l10n.errorUnknown} (${error.runtimeType})',
     };
 
-class LoadingView extends StatelessWidget {
+/// The spinner appears only if loading takes longer than a moment, so
+/// screens drawn from the phone never flash a loading ring.
+class LoadingView extends StatefulWidget {
   const LoadingView({super.key});
 
   @override
+  State<LoadingView> createState() => _LoadingViewState();
+}
+
+class _LoadingViewState extends State<LoadingView> {
+  Timer? _timer;
+  bool _show = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        setState(() => _show = true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Center(
-    child: CircularProgressIndicator(
-      semanticsLabel: AppLocalizations.of(context).loading,
-    ),
+    child: _show
+        ? CircularProgressIndicator(
+            semanticsLabel: AppLocalizations.of(context).loading,
+          )
+        : const SizedBox.shrink(),
   );
 }
 

@@ -983,4 +983,130 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get caseDone => 'Enquête résolue';
+
+  @override
+  String get reminderStepTitle => 'Quand veux-tu réviser ?';
+
+  @override
+  String get reminderStepBody =>
+      'Choisis une heure et tes jours. On t\'envoie un petit rappel à ce moment-là : 10 minutes suffisent. Appuie sur Plus tard si tu es occupé ; si tu en sautes plusieurs, on fait une pause tout seuls.';
+
+  @override
+  String get reminderTimeLabel => 'Heure de révision';
+
+  @override
+  String get reminderDaysLabel => 'Jours';
+
+  @override
+  String get reminderAllow => 'Autoriser les notifications';
+
+  @override
+  String get reminderSkip => 'Passer';
+
+  @override
+  String get remindersTitle => 'Rappels de révision';
+
+  @override
+  String get remindersOff => 'Désactivés';
+
+  @override
+  String get remindersStoppedNote =>
+      'Arrêtés après plusieurs rappels ignorés. Réactive-les pour recommencer.';
+
+  @override
+  String get remindersPausedNote =>
+      'En pause quelques jours après deux rappels ignorés.';
+
+  @override
+  String get remindersDeniedHint =>
+      'Les notifications de KampusLink sont bloquées. Pour recevoir les rappels, ouvre Paramètres > Applications > KampusLink > Notifications et active-les.';
+
+  @override
+  String get reviewTitle => 'Révision de 10 minutes';
+
+  @override
+  String reviewTimeLeft(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get reviewDoneTitle => 'Séance terminée !';
+
+  @override
+  String reviewDoneBody(int count) {
+    return '$count cartes révisées. À la prochaine !';
+  }
+
+  @override
+  String get reviewEmpty => 'Rien à réviser pour le moment.';
+
+  @override
+  String get reviewBackHome => 'Retour à l\'accueil';
+
+  @override
+  String get studiesSpecialityLabel => 'Spécialité';
+
+  @override
+  String get studiesChooseSpeciality => 'Choisis ta spécialité et ton année';
+
+  @override
+  String get studiesNotListed => 'Ma spécialité n\'est pas dans la liste';
+
+  @override
+  String get studiesNotOffered =>
+      'Cette spécialité ou cette année n\'est pas encore ouverte. Choisis-en une autre.';
+
+  @override
+  String get waitlistTitle => 'Quelle spécialité étudies-tu ?';
+
+  @override
+  String get waitlistOther => 'Autre (à écrire)';
+
+  @override
+  String get waitlistSpecialityText => 'Nom de la spécialité';
+
+  @override
+  String get waitlistYear => 'Année (facultatif)';
+
+  @override
+  String get waitlistJoin => 'Préviens-moi quand c\'est prêt';
+
+  @override
+  String get comingSoonTitle => 'Bientôt disponible';
+
+  @override
+  String comingSoonBody(String name) {
+    return 'On te prévient dès que $name arrive sur KampusLink.';
+  }
+
+  @override
+  String get comingSoonBodyGeneric =>
+      'On te prévient dès que ta spécialité arrive sur KampusLink.';
+
+  @override
+  String get comingSoonChange => 'Choisir une autre spécialité';
+
+  @override
+  String get myStudiesTitle => 'Mes études';
+
+  @override
+  String get myStudiesSaved =>
+      'Enregistré. Tes nouveaux modules se téléchargent.';
+
+  @override
+  String get myStudiesOffline =>
+      'Connecte-toi à internet pour changer tes études.';
+
+  @override
+  String remindersNext(String when) {
+    return 'Prochain rappel : $when';
+  }
+
+  @override
+  String get remindersNextNone =>
+      'Aucun rappel prévu pour l\'instant (pas de rappel un jour où tu as déjà révisé).';
+
+  @override
+  String get remindersBatteryTip =>
+      'Rappel en retard ou absent ? Mets KampusLink sur Sans restriction : Paramètres > Applications > KampusLink > Batterie.';
 }

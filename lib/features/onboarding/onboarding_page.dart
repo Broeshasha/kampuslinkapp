@@ -9,12 +9,14 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/brand_logo.dart';
 import '../auth/google_sign_in_button.dart';
 import '../profile/language_picker.dart';
+import '../reminders/reminder_step.dart';
 import 'download_step.dart';
 import 'onboarding_status.dart';
 import 'step_layout.dart';
 import 'studies_step.dart';
 
-/// 4 steps: welcome (+ language) -> Google -> studies -> download.
+/// 5 steps: welcome (+ language) -> Google -> studies -> study reminders
+/// -> download.
 /// Already signed in (old accounts) -> starts at studies. Back always works.
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -37,7 +39,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   void _back() => _go(_step == 2 ? 0 : _step - 1);
 
   Future<void> _finish() async {
-    final uid = ref.read(authRepositoryProvider).session?.user.id;
+    final uid = ref.read(authControllerProvider).userId;
     await markOnboardingDone(ref, uid);
     if (mounted) context.go('/home');
   }
@@ -54,9 +56,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       ),
       1 => const _SignInStep(),
       2 => StudiesStep(onDone: () => _go(3)),
+      3 => ReminderStep(onDone: () => _go(4)),
       _ => DownloadStep(onFinish: _finish),
     };
-    final canGoBack = _step == 1 || _step == 2;
+    final canGoBack = _step >= 1 && _step <= 3;
     return PopScope(
       canPop: _step == 0,
       onPopInvokedWithResult: (didPop, result) {
@@ -119,7 +122,7 @@ class _StepDots extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 5; i++)
           AnimatedContainer(
             duration: KMotion.normal,
             curve: KMotion.curve,

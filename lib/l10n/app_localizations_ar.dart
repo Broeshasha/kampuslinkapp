@@ -970,4 +970,127 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get caseDone => 'تم حل القضية';
+
+  @override
+  String get reminderStepTitle => 'متى تريد أن تراجع؟';
+
+  @override
+  String get reminderStepBody =>
+      'اختر وقتاً وأياماً. سنرسل لك تذكيراً قصيراً في ذلك الوقت: 10 دقائق تكفي. اضغط «ليس الآن» إذا كنت مشغولاً، وإذا تجاهلت عدة تذكيرات سنتوقف من تلقاء أنفسنا.';
+
+  @override
+  String get reminderTimeLabel => 'وقت المراجعة';
+
+  @override
+  String get reminderDaysLabel => 'الأيام';
+
+  @override
+  String get reminderAllow => 'السماح بالإشعارات';
+
+  @override
+  String get reminderSkip => 'تخطي';
+
+  @override
+  String get remindersTitle => 'تذكيرات المراجعة';
+
+  @override
+  String get remindersOff => 'متوقفة';
+
+  @override
+  String get remindersStoppedNote =>
+      'توقفت بعد تجاهل عدة تذكيرات. فعّلها من جديد للبدء.';
+
+  @override
+  String get remindersPausedNote =>
+      'متوقفة مؤقتاً لبضعة أيام بعد تجاهل تذكيرين.';
+
+  @override
+  String get remindersDeniedHint =>
+      'إشعارات KampusLink محظورة. لتلقي التذكيرات افتح الإعدادات > التطبيقات > KampusLink > الإشعارات وفعّلها.';
+
+  @override
+  String get reviewTitle => 'مراجعة 10 دقائق';
+
+  @override
+  String reviewTimeLeft(int minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String get reviewDoneTitle => 'انتهت الجلسة!';
+
+  @override
+  String reviewDoneBody(int count) {
+    return 'راجعت $count بطاقة. إلى اللقاء!';
+  }
+
+  @override
+  String get reviewEmpty => 'لا شيء للمراجعة الآن.';
+
+  @override
+  String get reviewBackHome => 'العودة إلى الرئيسية';
+
+  @override
+  String get studiesSpecialityLabel => 'التخصص';
+
+  @override
+  String get studiesChooseSpeciality => 'اختر تخصصك وسنتك';
+
+  @override
+  String get studiesNotListed => 'تخصصي غير موجود في القائمة';
+
+  @override
+  String get studiesNotOffered =>
+      'هذا التخصص أو هذه السنة غير متاحة بعد. اختر غيرها.';
+
+  @override
+  String get waitlistTitle => 'ما التخصص الذي تدرسه؟';
+
+  @override
+  String get waitlistOther => 'آخر (اكتبه)';
+
+  @override
+  String get waitlistSpecialityText => 'اسم التخصص';
+
+  @override
+  String get waitlistYear => 'السنة (اختياري)';
+
+  @override
+  String get waitlistJoin => 'أخبرني عندما يصبح جاهزاً';
+
+  @override
+  String get comingSoonTitle => 'قريباً';
+
+  @override
+  String comingSoonBody(String name) {
+    return 'سنخبرك فور توفر $name على KampusLink.';
+  }
+
+  @override
+  String get comingSoonBodyGeneric => 'سنخبرك فور توفر تخصصك على KampusLink.';
+
+  @override
+  String get comingSoonChange => 'اختر تخصصاً آخر';
+
+  @override
+  String get myStudiesTitle => 'دراستي';
+
+  @override
+  String get myStudiesSaved => 'تم الحفظ. يتم تنزيل وحداتك الجديدة.';
+
+  @override
+  String get myStudiesOffline => 'اتصل بالإنترنت لتغيير دراستك.';
+
+  @override
+  String remindersNext(String when) {
+    return 'التذكير القادم: $when';
+  }
+
+  @override
+  String get remindersNextNone =>
+      'لا يوجد تذكير مبرمج حالياً (لا تذكير في يوم راجعت فيه).';
+
+  @override
+  String get remindersBatteryTip =>
+      'التذكير متأخر أو لا يصل؟ اجعل KampusLink بدون قيود: الإعدادات > التطبيقات > KampusLink > البطارية.';
 }
