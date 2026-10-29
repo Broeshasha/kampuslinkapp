@@ -12,8 +12,9 @@ import 'feed_repository.dart';
 const feedSnapshotKey = 'feed_next_v1';
 
 /// The next posts, saved when the app goes to the background, so the next
-/// start shows them at once (no pool to build first). Read once: the
-/// snapshot is deleted when it is restored.
+/// start shows them at once (no pool to build first). Case sets are saved
+/// WITH their data (only the few in the snapshot), so reading it never
+/// decodes every set of every module. Read once: deleted when restored.
 class FeedSnapshotStore {
   FeedSnapshotStore(this._db, this._cases, {DateTime Function()? now})
     : _now = now ?? DateTime.now;
@@ -25,18 +26,45 @@ class FeedSnapshotStore {
   static const maxItems = 40;
   static const maxAge = Duration(days: 3);
 
+  Map<String, Object?> _item(FeedItem i) {
+    final payload = i.payload;
+    return {
+      'k': i.key,
+      'b': i.bucket.name,
+      if (payload is CaseSource)
+        's': {
+          'id': payload.id,
+          'm': payload.moduleId,
+          'l': payload.lessonId,
+          'p': payload.position,
+          'src': payload.source,
+        },
+    };
+  }
+
   Future<void> save(List<FeedItem> items, {required int? semester}) async {
     if (items.isEmpty) {
       await clear();
       return;
     }
-    final value = jsonEncode({
-      'semester': semester,
-      'at': _now().toIso8601String(),
-      'items': [
-        for (final i in items.take(maxItems)) {'k': i.key, 'b': i.bucket.name},
-      ],
-    });
+    String value;
+    try {
+      value = jsonEncode({
+        'semester': semester,
+        'at': _now().toIso8601String(),
+        'items': [for (final i in items.take(maxItems)) _item(i)],
+      });
+    } catch (_) {
+      // A set that cannot be saved: keep the keys only.
+      value = jsonEncode({
+        'semester': semester,
+        'at': _now().toIso8601String(),
+        'items': [
+          for (final i in items.take(maxItems))
+            {'k': i.key, 'b': i.bucket.name},
+        ],
+      });
+    }
     await _db
         .into(_db.keyValues)
         .insertOnConflictUpdate(
@@ -52,6 +80,8 @@ class FeedSnapshotStore {
       _db.keyValues,
     )..where((t) => t.name.equals(feedSnapshotKey))).go();
   }
+
+  static int? _int(Object? v) => v is num ? v.toInt() : int.tryParse('$v');
 
   /// The saved posts, in order, rebuilt from the local tables. Posts whose
   /// content is gone, or outside [semester], are dropped.
@@ -92,7 +122,7 @@ class FeedSnapshotStore {
       return const [];
     }
     final buckets = FeedBucket.values.asNameMap();
-    final entries = <({String key, FeedBucket bucket})>[];
+    final entries = <({String key, FeedBucket bucket, CaseSource? set})>[];
     for (final e in raw) {
       if (e is! Map) {
         continue;
@@ -101,20 +131,35 @@ class FeedSnapshotStore {
       if (key.length < 3) {
         continue;
       }
-      entries.add((key: key, bucket: buckets['${e['b']}'] ?? FeedBucket.known));
+      CaseSource? set;
+      final s = e['s'];
+      if (s is Map && s['src'] is Map) {
+        set = CaseSource(
+          id: '${s['id']}',
+          source: (s['src'] as Map).cast<String, Object?>(),
+          moduleId: _int(s['m']),
+          lessonId: _int(s['l']),
+          position: _int(s['p']) ?? 0,
+        );
+      }
+      entries.add((
+        key: key,
+        bucket: buckets['${e['b']}'] ?? FeedBucket.known,
+        set: set,
+      ));
     }
     int? idOf(String key) => int.tryParse(key.substring(2));
     final cardIds = <int>{};
     final questionIds = <int>{};
-    var hasSets = false;
+    var needSets = false;
     for (final e in entries) {
       final id = idOf(e.key);
       if (e.key.startsWith('c:') && id != null) {
         cardIds.add(id);
       } else if (e.key.startsWith('q:') && id != null) {
         questionIds.add(id);
-      } else if (e.key.startsWith('s:')) {
-        hasSets = true;
+      } else if (e.key.startsWith('s:') && e.set == null) {
+        needSets = true; // an old snapshot without the set data
       }
     }
 
@@ -158,7 +203,7 @@ class FeedSnapshotStore {
       }
     }
     final sets = <String, CaseSource>{};
-    if (hasSets) {
+    if (needSets) {
       for (final s in await _cases.sources(includeDemo: showDemoCases)) {
         sets[s.id] = s;
       }
@@ -195,12 +240,15 @@ class FeedSnapshotStore {
           ),
         );
       } else if (e.key.startsWith('s:')) {
-        final s = sets[e.key.substring(2)];
+        final s = e.set ?? sets[e.key.substring(2)];
         if (s == null || finishedSets.contains(s.id)) {
           continue;
         }
         final demo = showDemoCases && s.moduleId == null;
-        if (!demo && !inSemester(modules[s.moduleId], semester)) {
+        if (!demo &&
+            (s.moduleId == null ||
+                !modules.containsKey(s.moduleId) ||
+                !inSemester(modules[s.moduleId], semester))) {
           continue;
         }
         out.add(
