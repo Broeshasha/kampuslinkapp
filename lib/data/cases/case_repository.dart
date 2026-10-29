@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_repository.dart';
@@ -105,15 +106,12 @@ class CaseRepository {
     final rows = await (_db.select(
       _db.keyValues,
     )..where((t) => t.name.like('sets:%'))).get();
+    final decoded = await decodeSetRows([
+      for (final r in rows) (r.name, r.value),
+    ]);
     final out = <CaseSource>[];
-    for (final r in rows) {
-      final moduleId = int.tryParse(r.name.substring(5));
-      Object? list;
-      try {
-        list = jsonDecode(r.value);
-      } on FormatException {
-        continue;
-      }
+    for (final (name, list) in decoded) {
+      final moduleId = int.tryParse(name.substring(5));
       if (list is! List) continue;
       for (final s in list) {
         if (s is! Map) continue;
@@ -186,3 +184,34 @@ final caseSourcesProvider = FutureProvider<List<CaseSource>>((ref) {
 final caseHintSeenProvider = FutureProvider<bool>(
   (ref) => ref.watch(caseRepositoryProvider).hintSeen(),
 );
+
+/// Set lists above this size are decoded off the UI thread.
+const setDecodeIsolateBytes = 20000;
+
+/// key_values `sets:<module>` rows -> (name, decoded JSON or null). Big
+/// ones are decoded in a background isolate: no frozen frames at start.
+Future<List<(String, Object?)>> decodeSetRows(
+  List<(String, String)> rows,
+) async {
+  final size = rows.fold<int>(0, (n, r) => n + r.$2.length);
+  if (size < setDecodeIsolateBytes) {
+    return _decodeSetRows(rows);
+  }
+  try {
+    return await compute(_decodeSetRows, rows);
+  } catch (_) {
+    return _decodeSetRows(rows);
+  }
+}
+
+List<(String, Object?)> _decodeSetRows(List<(String, String)> rows) => [
+  for (final r in rows) (r.$1, _tryJson(r.$2)),
+];
+
+Object? _tryJson(String raw) {
+  try {
+    return jsonDecode(raw);
+  } on FormatException {
+    return null;
+  }
+}

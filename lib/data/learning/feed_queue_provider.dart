@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/errors/result.dart';
 import '../../core/logging/logger.dart';
+import '../../core/logging/startup_trace.dart';
 import '../cases/case_repository.dart';
 import '../catalog/catalog.dart';
 import '../profile/study_level.dart';
@@ -48,11 +49,17 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
   math.Random _random = math.Random();
   int _index = 0;
 
+  /// Start-up trace: how many times the queue was built (a rebuild during
+  /// start-up costs a full pool build).
+  static int _builds = 0;
+
   @override
   Future<List<FeedItem>> build() async {
     if (!ref.watch(isSignedInProvider)) {
       return const [];
     }
+    final build = ++_builds;
+    startupTrace.mark('feed build #$build');
     final ahead = ref.watch(feedAheadProvider);
     // A new semester rebuilds the whole queue at once (WP17-A).
     final semester = ref.watch(currentSemesterProvider);
@@ -65,12 +72,15 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
     _pool = const {};
     if (!ahead) {
       final restored = await _restore(semester);
+      startupTrace.mark('feed snapshot #$build', '${restored.length} posts');
       if (restored.isNotEmpty) {
         unawaited(_warmPool(ahead: ahead, first: restored.first.key));
         return restored;
       }
     }
-    return _fresh(ahead: ahead);
+    final fresh = await _fresh(ahead: ahead);
+    startupTrace.mark('feed full build #$build', '${fresh.length} posts');
+    return fresh;
   }
 
   Future<List<FeedItem>> _restore(int? semester) async {
