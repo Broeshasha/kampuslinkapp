@@ -66,7 +66,6 @@ class FeedSnapshotStore {
     if (row == null) {
       return const [];
     }
-    await clear();
     Map<String, dynamic> snap;
     try {
       final v = jsonDecode(row.value);
@@ -82,8 +81,12 @@ class FeedSnapshotStore {
     }
     final at = DateTime.tryParse('${snap['at']}');
     if (at == null || _now().difference(at) > maxAge) {
+      await clear();
       return const [];
     }
+    // Used once: gone after this read (a wrong semester above keeps it for
+    // the build that has the right one).
+    await clear();
     final raw = snap['items'];
     if (raw is! List) {
       return const [];

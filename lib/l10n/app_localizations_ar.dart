@@ -1080,4 +1080,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get myStudiesOffline => 'اتصل بالإنترنت لتغيير دراستك.';
+
+  @override
+  String remindersNext(String when) {
+    return 'التذكير القادم: $when';
+  }
+
+  @override
+  String get remindersNextNone =>
+      'لا يوجد تذكير مبرمج حالياً (لا تذكير في يوم راجعت فيه).';
+
+  @override
+  String get remindersBatteryTip =>
+      'التذكير متأخر أو لا يصل؟ اجعل KampusLink بدون قيود: الإعدادات > التطبيقات > KampusLink > البطارية.';
 }

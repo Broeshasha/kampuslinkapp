@@ -1983,6 +1983,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect to the internet to change your studies.'**
   String get myStudiesOffline;
+
+  /// No description provided for @remindersNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next reminder: {when}'**
+  String remindersNext(String when);
+
+  /// No description provided for @remindersNextNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder planned right now (none on a day you already studied).'**
+  String get remindersNextNone;
+
+  /// No description provided for @remindersBatteryTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery.'**
+  String get remindersBatteryTip;
 }
 
 class _AppLocalizationsDelegate

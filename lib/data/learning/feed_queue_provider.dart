@@ -52,6 +52,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
   /// Start-up trace: how many times the queue was built (a rebuild during
   /// start-up costs a full pool build).
   static int _builds = 0;
+  static String? _lastParams;
 
   @override
   Future<List<FeedItem>> build() async {
@@ -59,10 +60,20 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
       return const [];
     }
     final build = ++_builds;
-    startupTrace.mark('feed build #$build');
     final ahead = ref.watch(feedAheadProvider);
     // A new semester rebuilds the whole queue at once (WP17-A).
     final semester = ref.watch(currentSemesterProvider);
+    startupTrace.mark('feed build #$build', 'semester $semester');
+    // Rebuilt with the same semester (a provider woke up during start-up):
+    // keep the posts already on screen instead of starting over.
+    final params = '$semester|$ahead';
+    final previous = state.value;
+    if (_lastParams == params && previous != null && previous.isNotEmpty) {
+      startupTrace.mark('feed kept #$build', '${previous.length} posts');
+      unawaited(_warmPool(ahead: ahead, first: previous.first.key));
+      return previous;
+    }
+    _lastParams = params;
     ref.listen<String>(downloadedKeyProvider, (previous, next) {
       if (previous != next && (state.value?.isEmpty ?? false)) {
         ref.invalidateSelf();

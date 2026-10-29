@@ -366,5 +366,9 @@
   "comingSoonChange": "Choose another speciality",
   "myStudiesTitle": "My studies",
   "myStudiesSaved": "Saved. Your new modules are downloading.",
-  "myStudiesOffline": "Connect to the internet to change your studies."
+  "myStudiesOffline": "Connect to the internet to change your studies.",
+"remindersNext": "Next reminder: {when}",
+  "@remindersNext": {"placeholders": {"when": {"type": "String"}}},
+  "remindersNextNone": "No reminder planned right now (none on a day you already studied).",
+  "remindersBatteryTip": "Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery."
 }

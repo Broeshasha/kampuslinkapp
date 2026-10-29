@@ -1096,4 +1096,17 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get myStudiesOffline =>
       'Connecte-toi à internet pour changer tes études.';
+
+  @override
+  String remindersNext(String when) {
+    return 'Prochain rappel : $when';
+  }
+
+  @override
+  String get remindersNextNone =>
+      'Aucun rappel prévu pour l\'instant (pas de rappel un jour où tu as déjà révisé).';
+
+  @override
+  String get remindersBatteryTip =>
+      'Rappel en retard ou absent ? Mets KampusLink sur Sans restriction : Paramètres > Applications > KampusLink > Batterie.';
 }

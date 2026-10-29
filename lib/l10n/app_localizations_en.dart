@@ -1090,4 +1090,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get myStudiesOffline =>
       'Connect to the internet to change your studies.';
+
+  @override
+  String remindersNext(String when) {
+    return 'Next reminder: $when';
+  }
+
+  @override
+  String get remindersNextNone =>
+      'No reminder planned right now (none on a day you already studied).';
+
+  @override
+  String get remindersBatteryTip =>
+      'Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery.';
 }
