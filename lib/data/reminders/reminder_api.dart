@@ -16,6 +16,16 @@ class ReminderApi {
   Future<Map<String, dynamic>> get() async =>
       _map(await _client.rpc('get_reminder_settings').timeout(_timeout));
 
+  /// get_notification_templates(): [{id, kind, lang, title, body, weight}].
+  Future<List<Map<String, dynamic>>> templates() async {
+    final v = await _client.rpc('get_notification_templates').timeout(_timeout);
+    return [
+      if (v is List)
+        for (final e in v)
+          if (e is Map) e.cast<String, dynamic>(),
+    ];
+  }
+
   /// Turning reminders ON clears the back-off on the server.
   Future<Map<String, dynamic>> set({
     required bool enabled,

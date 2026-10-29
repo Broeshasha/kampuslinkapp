@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification icons are used by name from Dart: keep them in release. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_kampuslink,@drawable/ic_large_kampuslink" />

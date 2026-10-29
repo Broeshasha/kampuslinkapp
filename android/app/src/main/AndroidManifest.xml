@@ -48,7 +48,7 @@
         <!-- Notification icon/color, otherwise Android shows a generic fallback icon -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notification" />
+            android:resource="@drawable/ic_stat_kampuslink" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/notification_color" />

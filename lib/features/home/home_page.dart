@@ -32,10 +32,7 @@ import 'flash_card.dart';
 import 'quick_question_card.dart';
 import 'study_activity.dart';
 
-int _int(Object? v, int fallback) =>
-    v is num ? v.toInt() : int.tryParse('$v') ?? fallback;
-
-/// Home tab: streak / XP / today's goal, the Continue card and the
+/// Home tab: Continue + Shuffle above the
 /// social-media style feed (known cards, due cards, new cards in chapter
 /// order, carousel sets, quick questions). Signed out: the welcome screen.
 class HomePage extends ConsumerWidget {
@@ -67,6 +64,8 @@ class HomePage extends ConsumerWidget {
   }
 }
 
+/// Only two actions above the feed (founder): Continue where you left off
+/// and Shuffle. No streak / XP / goal chips.
 class _HomeHeader extends ConsumerWidget {
   const _HomeHeader();
 
@@ -74,24 +73,6 @@ class _HomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    final me = switch (ref.watch(serverStatsProvider)) {
-      AsyncData(:final value) => value,
-      _ => null,
-    };
-    final days = switch (ref.watch(studyDaysProvider)) {
-      AsyncData(:final value) => value,
-      _ => const <String, int>{},
-    };
-    final now = DateTime.now();
-    // Lead rule: the server streak is the truth once known; the local
-    // count is only a fallback before the first successful fetch.
-    final serverStreak = me?['current_streak'];
-    final streak = serverStreak == null
-        ? localStreak(days, now)
-        : _int(serverStreak, 0);
-    final xp = _int(me?['xp'], 0);
-    final goal = _int(me?['study_goal_minutes'], 20).clamp(1, 600);
-    final todayMinutes = (days[dayKey(now)] ?? 0) ~/ 60;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         KSpace.lg,
@@ -114,90 +95,8 @@ class _HomeHeader extends ConsumerWidget {
             const _ResumeButton(),
             IconButton(
               tooltip: l10n.shuffleFeed,
-              visualDensity: VisualDensity.compact,
               onPressed: () => ref.read(feedQueueProvider.notifier).shuffle(),
               icon: Icon(Icons.shuffle_rounded, color: kc.textSecondary),
-            ),
-            _StatChip(
-              icon: Icons.local_fire_department_rounded,
-              color: kc.streak,
-              value: '$streak',
-              tooltip: l10n.streakLabel,
-            ),
-            const SizedBox(width: KSpace.xs),
-            _StatChip(
-              icon: Icons.bolt_rounded,
-              color: kc.xp,
-              value: '$xp',
-              tooltip: l10n.xpLabel,
-            ),
-            const SizedBox(width: KSpace.sm),
-            Tooltip(
-              message: l10n.todayMinutes(todayMinutes, goal),
-              child: SizedBox(
-                width: 36,
-                height: 36,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox.expand(
-                      child: CircularProgressIndicator(
-                        value: (todayMinutes / goal).clamp(0.0, 1.0),
-                        strokeWidth: 4,
-                        color: kc.success,
-                        backgroundColor: kc.success.withValues(alpha: 0.15),
-                      ),
-                    ),
-                    Text(
-                      '$todayMinutes',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: kc.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.tooltip,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String value;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: KSpace.sm, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(KRadius.chip),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 2),
-            Text(
-              value,
-              style: TextStyle(color: color, fontWeight: FontWeight.w800),
             ),
           ],
         ),

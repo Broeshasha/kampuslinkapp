@@ -103,6 +103,8 @@ const _statsKeys = [
   // Contract 11 / WP17-A
   'current_semester',
   'is_admin',
+  // Personal notifications ({name})
+  'first_name',
 ];
 
 /// Keeps the parts of get_me() the app shows (cached for offline starts).

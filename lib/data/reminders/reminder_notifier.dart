@@ -39,13 +39,20 @@ class ReminderSlot {
     required this.at,
     required this.body,
     required this.payload,
+    this.title = reminderTitle,
   });
 
   final int id;
   final DateTime at;
+  final String title;
   final String body;
   final String payload;
 }
+
+/// White one-colour silhouette of the logo (never the colour launcher
+/// icon, which Android shows as a grey square) + the colour logo.
+const reminderSmallIcon = 'ic_stat_kampuslink';
+const reminderLargeIcon = 'ic_large_kampuslink';
 
 /// The phone side of reminders (a fake in tests).
 abstract interface class ReminderNotifier {
@@ -83,7 +90,7 @@ class LocalReminderNotifier implements ReminderNotifier {
     _algiers = tz.getLocation('Africa/Algiers');
     await _plugin.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@drawable/ic_notification'),
+        android: AndroidInitializationSettings('@drawable/$reminderSmallIcon'),
       ),
       onDidReceiveNotificationResponse: (r) => onTap(r.payload, r.actionId),
       onDidReceiveBackgroundNotificationResponse: reminderBackgroundTap,
@@ -130,7 +137,8 @@ class LocalReminderNotifier implements ReminderNotifier {
         channelDescription: texts.channelDescription,
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
-        icon: 'ic_notification',
+        icon: reminderSmallIcon,
+        largeIcon: const DrawableResourceAndroidBitmap(reminderLargeIcon),
         color: const Color(0xFF3E7BFA),
         actions: [
           AndroidNotificationAction(
@@ -149,7 +157,7 @@ class LocalReminderNotifier implements ReminderNotifier {
     for (final s in slots) {
       await _plugin.zonedSchedule(
         s.id,
-        reminderTitle,
+        s.title,
         s.body,
         tz.TZDateTime.from(s.at, algiers),
         details,

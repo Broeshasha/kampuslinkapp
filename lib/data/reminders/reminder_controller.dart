@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:drift/drift.dart';
@@ -14,6 +15,7 @@ import '../db/app_database.dart';
 import '../learning/feed_repository.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
+import 'notification_templates.dart';
 import 'reminder_api.dart';
 import 'reminder_notifier.dart';
 import 'reminder_state.dart';
@@ -24,6 +26,11 @@ const reminderPendingKey = 'reminder_settings_pending_v1';
 const reminderPlanKey = 'reminder_plan_v1';
 const reminderFiredKey = 'reminder_fired_v1';
 const reminderAppOpenKey = 'reminder_app_open_day_v1';
+const reminderTemplatesKey = 'notif_templates_v1';
+const reminderPlanBodiesKey = 'reminder_plan_bodies_v1';
+
+/// Minutes promised in the reminder ({minutes}).
+const reminderSessionMinutes = 10;
 
 final reminderNotifierProvider = Provider<ReminderNotifier>(
   (ref) => LocalReminderNotifier(),
@@ -325,6 +332,78 @@ class ReminderController extends Notifier<ReminderState?> {
     }
   }
 
+  Map<String, dynamic> _stats() {
+    try {
+      final v = jsonDecode(_prefs.getString('server_stats') ?? '');
+      return v is Map ? v.cast<String, dynamic>() : const {};
+    } on FormatException {
+      return const {};
+    }
+  }
+
+  /// A lesson of a current-semester module never opened: its module name.
+  Future<String?> _unreadLessonModule() async {
+    final db = ref.read(appDatabaseProvider);
+    final semester = _semester();
+    final query =
+        db.select(db.lessons).join([
+            innerJoin(db.modules, db.modules.id.equalsExp(db.lessons.moduleId)),
+            leftOuterJoin(
+              db.readingPositions,
+              db.readingPositions.lessonId.equalsExp(db.lessons.id),
+            ),
+            leftOuterJoin(
+              db.lessonProgress,
+              db.lessonProgress.lessonId.equalsExp(db.lessons.id),
+            ),
+          ])
+          ..where(
+            db.readingPositions.lessonId.isNull() &
+                db.lessonProgress.lessonId.isNull(),
+          )
+          ..orderBy([
+            OrderingTerm.asc(db.lessons.moduleId),
+            OrderingTerm.asc(db.lessons.position),
+          ]);
+    for (final r in await query.get()) {
+      final m = r.readTable(db.modules);
+      if (inSemester(m, semester)) {
+        return m.name;
+      }
+    }
+    return null;
+  }
+
+  bool _examSeason(DateTime at) {
+    try {
+      final windows = ref
+          .read(catalogValueProvider)
+          ?.config['exam_season_windows'];
+      return windows is List && semesterBannerDue(algiersWall(at), windows);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// The body of the newest reminder that already fired (never repeat it).
+  String? _lastFiredBody(DateTime now) {
+    String? body;
+    DateTime? newest;
+    for (final line
+        in _prefs.getStringList(reminderPlanBodiesKey) ?? const <String>[]) {
+      final cut = line.indexOf('|');
+      final at = DateTime.tryParse(cut < 0 ? '' : line.substring(0, cut));
+      if (at == null || at.isAfter(now)) {
+        continue;
+      }
+      if (newest == null || at.isAfter(newest)) {
+        newest = at;
+        body = line.substring(cut + 1);
+      }
+    }
+    return body;
+  }
+
   /// Recomputes and reschedules the upcoming reminders (app start, app to
   /// background, settings change, a response). Never throws.
   Future<void> refreshPlan() async {
@@ -344,17 +423,53 @@ class ReminderController extends Notifier<ReminderState?> {
         studiedToday: await _studiedToday(),
         max: reminderMaxSlots,
       );
-      final texts = reminderTexts(_language());
+      final language = _language();
+      final texts = reminderTexts(language);
+      final templates = decodeTemplates(_prefs.getString(reminderTemplatesKey));
+      final stats = _stats();
+      final name = '${stats['first_name'] ?? stats['username'] ?? ''}'.trim();
+      final streakRaw = stats['current_streak'];
+      final streak = streakRaw is num ? streakRaw.toInt() : 0;
+      final unread = await _unreadLessonModule();
+      final random = math.Random(now.microsecondsSinceEpoch);
+      var lastBody = _lastFiredBody(now);
       final slots = <ReminderSlot>[];
       for (var i = 0; i < plan.length; i++) {
         final due = await _due(plan[i]);
+        final values = TemplateValues(
+          name: name.isEmpty ? null : name,
+          count: due.count > 0 ? due.count : null,
+          module: due.module,
+          streak: streak >= 2 ? streak : null,
+          minutes: reminderSessionMinutes,
+        );
+        final picked = pickTemplate(
+          templates: templates,
+          lang: language,
+          kinds: fittingKinds(
+            secondChance: current.inSecondChance,
+            dueCount: due.count,
+            unreadLesson: unread != null,
+            streak: streak,
+            examSeason: _examSeason(plan[i]),
+          ),
+          valuesFor: (kind) =>
+              kind == 'new_lesson' ? values.withModule(unread) : values,
+          random: random,
+          lastBody: lastBody,
+        );
+        final body =
+            picked?.body ??
+            (current.inSecondChance
+                ? texts.secondChance
+                : texts.body(due.count, due.module));
+        lastBody = body;
         slots.add(
           ReminderSlot(
             id: reminderFirstId + i,
             at: plan[i],
-            body: current.inSecondChance
-                ? texts.secondChance
-                : texts.body(due.count, due.module),
+            title: picked?.title ?? reminderTitle,
+            body: body,
             payload: plan[i].toIso8601String(),
           ),
         );
@@ -362,6 +477,9 @@ class ReminderController extends Notifier<ReminderState?> {
       await _notifier.schedule(slots, texts);
       await _prefs.setStringList(reminderPlanKey, [
         for (final at in plan) at.toIso8601String(),
+      ]);
+      await _prefs.setStringList(reminderPlanBodiesKey, [
+        for (final s in slots) '${s.at.toIso8601String()}|${s.body}',
       ]);
     });
   }
@@ -433,7 +551,11 @@ class ReminderController extends Notifier<ReminderState?> {
           await _save(ReminderState.fromJson(value));
         }
       }
-    } else if (!await _unsentReminderOps()) {
+    }
+    await _refreshTemplates(api);
+    final stillPending =
+        current != null && (_prefs.getBool(reminderPendingKey) ?? false);
+    if (!stillPending && !await _unsentReminderOps()) {
       // The server applied every response we sent: its copy is the truth
       // (new phone, second chance decided by the server, other device).
       final r = await guard(api.get);
@@ -446,6 +568,15 @@ class ReminderController extends Notifier<ReminderState?> {
       }
     }
     await refreshPlan();
+  }
+
+  /// get_notification_templates(), cached on the phone (refreshed after
+  /// each sync, with the catalog).
+  Future<void> _refreshTemplates(ReminderApi api) async {
+    final r = await guard(api.templates);
+    if (r case Ok(:final value) when value.isNotEmpty) {
+      await _prefs.setString(reminderTemplatesKey, jsonEncode(value));
+    }
   }
 
   Future<bool> _unsentReminderOps() async {
