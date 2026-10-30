@@ -2001,6 +2001,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery.'**
   String get remindersBatteryTip;
+
+  /// No description provided for @shareApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Share KampusLink'**
+  String get shareApp;
+
+  /// No description provided for @shareAppHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite your classmates'**
+  String get shareAppHint;
+
+  /// No description provided for @shareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'I revise my modules with KampusLink: 10 minutes a day, even offline. Join me!'**
+  String get shareMessage;
+
+  /// No description provided for @shareCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the link'**
+  String get shareCopy;
+
+  /// No description provided for @shareCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get shareCopied;
 }
 
 class _AppLocalizationsDelegate
