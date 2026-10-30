@@ -1103,4 +1103,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get remindersBatteryTip =>
       'Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery.';
+
+  @override
+  String get shareApp => 'Share KampusLink';
+
+  @override
+  String get shareAppHint => 'Invite your classmates';
+
+  @override
+  String get shareMessage =>
+      'I revise my modules with KampusLink: 10 minutes a day, even offline. Join me!';
+
+  @override
+  String get shareCopy => 'Copy the link';
+
+  @override
+  String get shareCopied => 'Link copied';
 }

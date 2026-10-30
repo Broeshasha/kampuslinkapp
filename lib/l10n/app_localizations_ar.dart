@@ -1093,4 +1093,20 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get remindersBatteryTip =>
       'التذكير متأخر أو لا يصل؟ اجعل KampusLink بدون قيود: الإعدادات > التطبيقات > KampusLink > البطارية.';
+
+  @override
+  String get shareApp => 'شارك KampusLink';
+
+  @override
+  String get shareAppHint => 'ادعُ زملاءك';
+
+  @override
+  String get shareMessage =>
+      'أراجع وحداتي مع KampusLink: 10 دقائق في اليوم، حتى بدون إنترنت. انضم إليّ!';
+
+  @override
+  String get shareCopy => 'نسخ الرابط';
+
+  @override
+  String get shareCopied => 'تم نسخ الرابط';
 }

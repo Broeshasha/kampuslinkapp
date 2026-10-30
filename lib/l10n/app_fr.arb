@@ -316,5 +316,10 @@
   "myStudiesOffline": "Connecte-toi \u00e0 internet pour changer tes \u00e9tudes.",
 "remindersNext": "Prochain rappel : {when}",
   "remindersNextNone": "Aucun rappel pr\u00e9vu pour l'instant (pas de rappel un jour o\u00f9 tu as d\u00e9j\u00e0 r\u00e9vis\u00e9).",
-  "remindersBatteryTip": "Rappel en retard ou absent ? Mets KampusLink sur Sans restriction : Param\u00e8tres > Applications > KampusLink > Batterie."
+  "remindersBatteryTip": "Rappel en retard ou absent ? Mets KampusLink sur Sans restriction : Param\u00e8tres > Applications > KampusLink > Batterie.",
+"shareApp": "Partager KampusLink",
+  "shareAppHint": "Invite tes camarades",
+  "shareMessage": "Je r\u00e9vise mes modules avec KampusLink : 10 minutes par jour, m\u00eame sans internet. Rejoins-moi !",
+"shareCopy": "Copier le lien",
+  "shareCopied": "Lien copi\u00e9"
 }

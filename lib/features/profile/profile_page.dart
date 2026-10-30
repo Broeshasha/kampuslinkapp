@@ -20,6 +20,7 @@ import '../../ui/states.dart';
 import '../auth/google_sign_in_button.dart';
 import '../preview/preview_page.dart';
 import '../reminders/reminders_page.dart';
+import 'share_app.dart';
 import 'study_profile_page.dart';
 import 'account_actions.dart';
 import 'language_picker.dart';
@@ -475,6 +476,8 @@ class _SettingsCard extends ConsumerWidget {
           Divider(height: 1, color: kc.border),
           const StudyProfileTile(),
         ],
+        Divider(height: 1, color: kc.border),
+        const ShareAppTile(),
       ],
     );
   }

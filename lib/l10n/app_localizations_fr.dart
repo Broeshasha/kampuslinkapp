@@ -1109,4 +1109,20 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get remindersBatteryTip =>
       'Rappel en retard ou absent ? Mets KampusLink sur Sans restriction : Paramètres > Applications > KampusLink > Batterie.';
+
+  @override
+  String get shareApp => 'Partager KampusLink';
+
+  @override
+  String get shareAppHint => 'Invite tes camarades';
+
+  @override
+  String get shareMessage =>
+      'Je révise mes modules avec KampusLink : 10 minutes par jour, même sans internet. Rejoins-moi !';
+
+  @override
+  String get shareCopy => 'Copier le lien';
+
+  @override
+  String get shareCopied => 'Lien copié';
 }
