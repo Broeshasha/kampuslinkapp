@@ -14,6 +14,7 @@ import '../../render/compact_figure.dart';
 import '../../render/figure_block.dart';
 import '../../render/rich_block_text.dart';
 import '../../ui/confetti.dart';
+import '../../render/math_text.dart';
 import 'case_models.dart';
 
 /// A carousel set (lead brief 2, D), Stories-like in our colours:
@@ -256,7 +257,7 @@ class _CaseSetViewState extends State<CaseSetView>
                           ],
                           const SizedBox(width: KSpace.sm),
                           Expanded(
-                            child: Text(
+                            child: MathText(
                               _set.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -621,7 +622,7 @@ class _SlideBody extends StatelessWidget {
                   const SizedBox(height: KSpace.lg),
                 ],
                 if (slide.title.isNotEmpty)
-                  Text(
+                  MathText(
                     slide.title,
                     style: Theme.of(context).textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.w900),
@@ -659,7 +660,7 @@ class _SlideBody extends StatelessWidget {
     ];
     if (slide.title.isNotEmpty) {
       children.add(
-        Text(
+        MathText(
           slide.title,
           style: Theme.of(context).textTheme.headlineSmall
               ?.copyWith(fontWeight: FontWeight.w900),

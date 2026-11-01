@@ -9,6 +9,7 @@ import '../../data/assess/assess_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../../render/math_text.dart';
 import '../cases/report_sheet.dart';
 import 'assess_widgets.dart';
 
@@ -128,7 +129,7 @@ class PracticeChapterPage extends ConsumerWidget {
                         clipBehavior: Clip.antiAlias,
                         child: ListTile(
                           leading: _RatingIcon(id: items[i].id),
-                          title: Text(
+                          title: MathText(
                             items[i].title.isEmpty
                                 ? l10n.exerciseNumber(i + 1)
                                 : items[i].title,

@@ -15,6 +15,7 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/module_look.dart';
 import '../../ui/states.dart';
+import '../../render/math_text.dart';
 import '../assess/assess_entries.dart';
 import '../preview/preview_page.dart';
 import 'download_status.dart';
@@ -248,7 +249,7 @@ class _LessonList extends StatelessWidget {
                 bottom: KSpace.sm,
                 start: KSpace.xs,
               ),
-              child: Text(
+              child: MathText(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: kc.textSecondary,
@@ -473,7 +474,7 @@ class _LessonTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    MathText(
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

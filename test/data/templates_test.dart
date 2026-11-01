@@ -120,6 +120,17 @@ void main() {
       ),
       ['second_chance'],
     );
+    expect(
+      fittingKinds(
+        secondChance: false,
+        dueCount: 3,
+        unreadLesson: true,
+        streak: 4,
+        examSeason: true,
+        studiedToday: true,
+      ),
+      ['streak', 'generic'],
+    );
   });
 
   test('weighted pick, never the same body twice, fallback to French', () {

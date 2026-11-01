@@ -19,6 +19,7 @@ import '../features/reminders/reminders_page.dart';
 import '../features/reminders/review_session_page.dart';
 import '../features/profile/download_doctor_page.dart';
 import '../features/profile/renderer_preview_page.dart';
+import '../features/profile/math_audit_page.dart';
 import '../features/profile/saved_cards_page.dart';
 import '../features/profile/states_demo_page.dart';
 import '../features/profile/study_profile_page.dart';
@@ -157,6 +158,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'renderer',
                     builder: (_, _) => const RendererPreviewPage(),
+                  ),
+                  GoRoute(
+                    path: 'math-audit',
+                    builder: (_, _) => const MathAuditPage(),
                   ),
                 ],
               ),

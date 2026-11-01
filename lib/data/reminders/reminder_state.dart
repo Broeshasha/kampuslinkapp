@@ -292,12 +292,12 @@ DateTime algiersWall(DateTime t) => t.toUtc().add(const Duration(hours: 1));
 /// phone stops by itself (pause, then stopped) even if the app is never
 /// opened. Not now = ignored for the back-off, so the plan stays right
 /// after a Not now; only Start (which opens the app) changes it.
-List<DateTime> planReminders(
-  ReminderState state,
-  DateTime now, {
-  bool studiedToday = false,
-  int max = 6,
-}) {
+///
+/// Reminders fire on the chosen days at the chosen time even when the
+/// student already studied that day (founder decision, Nov 2026); only
+/// off, paused, stopped, the second-chance window and the Android
+/// permission stop them.
+List<DateTime> planReminders(ReminderState state, DateTime now, {int max = 6}) {
   final out = <DateTime>[];
   var s = state;
   if (!s.active) {
@@ -320,9 +320,6 @@ List<DateTime> planReminders(
       continue;
     }
     if (!at.isAfter(now)) {
-      continue;
-    }
-    if (offset == 0 && studiedToday) {
       continue;
     }
     if (!s.allowsAt(at)) {

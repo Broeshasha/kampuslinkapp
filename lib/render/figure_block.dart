@@ -5,6 +5,8 @@ import '../core/logging/logger.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import 'block_style.dart';
+import 'latex_plain.dart';
+import 'math_text.dart';
 
 List<Object?> _list(Object? v) => v is List ? v : const <Object?>[];
 Map<String, dynamic> _map(Object? v) =>
@@ -55,7 +57,8 @@ final _loggedPlaceholders = <String>{};
 
 /// Replaces the theme placeholders so drawings follow light/dark. An
 /// unknown placeholder is drawn as {{fg}} and logged once.
-String themeSvg(String svg, KampusColors kc) {
+String themeSvg(String source, KampusColors kc) {
+  final svg = svgMathToPlain(source);
   final palette = svgPalette(kc);
   final colours = <String, Color>{
     'fg': kc.textPrimary,
@@ -163,14 +166,14 @@ class FigureBlock extends StatelessWidget {
         return null;
       }
       final svg = themeSvg(raw, kc);
-      final alt = _text(asset['alt']).isNotEmpty
-          ? _text(asset['alt'])
-          : caption;
+      final alt = latexToPlain(
+        _text(asset['alt']).isNotEmpty ? _text(asset['alt']) : caption,
+      );
       return GestureDetector(
         onTap: () => _zoom(
           context,
           SvgPicture.string(svg, fit: BoxFit.contain, semanticsLabel: alt),
-          caption,
+          latexToPlain(caption),
         ),
         child: SvgPicture.string(
           svg,
@@ -243,7 +246,7 @@ class FigureBlock extends StatelessWidget {
             ],
             if (caption.isNotEmpty) ...[
               const SizedBox(height: KSpace.sm),
-              Text(
+              MathText(
                 caption,
                 style: style.body.copyWith(fontWeight: FontWeight.w600),
               ),
@@ -280,7 +283,7 @@ class FigureBlock extends StatelessWidget {
                   children: [
                     Align(
                       alignment: AlignmentDirectional.centerStart,
-                      child: Text(description, style: style.body),
+                      child: MathText(description, style: style.body),
                     ),
                   ],
                 ),
@@ -314,7 +317,7 @@ class _LabelChip extends StatelessWidget {
       ),
       child: Text.rich(
         TextSpan(
-          text: style.ltr(text),
+          text: style.ltr(mayContainMath(text) ? latexToPlain(text) : text),
           style: TextStyle(
             color: kc.textPrimary,
             fontWeight: FontWeight.w600,

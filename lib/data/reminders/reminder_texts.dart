@@ -10,6 +10,7 @@ class ReminderTexts {
     required this.cards,
     required this.cardsNoModule,
     required this.secondChance,
+    this.keepGoing = '',
   });
 
   final String channelName;
@@ -22,6 +23,9 @@ class ReminderTexts {
 
   /// The one second chance after reminders stopped.
   final String secondChance;
+
+  /// Already studied today: keep it going (never "you haven't studied").
+  final String keepGoing;
 
   String body(int count, String? module) {
     if (count <= 0) {
@@ -39,6 +43,7 @@ ReminderTexts reminderTexts(String language) => switch (language) {
     channelDescription: '\u062a\u0630\u0643\u064a\u0631 \u0628\u0645\u0648\u0639\u062f \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0630\u064a \u0627\u062e\u062a\u0631\u062a\u0647',
     start: '\u0627\u0628\u062f\u0623',
     notNow: '\u0644\u064a\u0633 \u0627\u0644\u0622\u0646',
+    keepGoing: '\u0623\u062d\u0633\u0646\u062a \u0627\u0644\u064a\u0648\u0645! \u0628\u0636\u0639 \u062f\u0642\u0627\u0626\u0642 \u0623\u062e\u0631\u0649 \u0644\u062a\u062d\u0627\u0641\u0638 \u0639\u0644\u0649 \u0648\u062a\u064a\u0631\u062a\u0643\u061f',
     generic: '\u062d\u0627\u0646 \u0648\u0642\u062a \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629 \u00b7 10 \u062f\u0642\u0627\u0626\u0642\u061f',
     cards: (count, module) =>
         '\u0644\u062f\u064a\u0643 $count \u0628\u0637\u0627\u0642\u0629 \u0644\u0644\u0645\u0631\u0627\u062c\u0639\u0629 \u0641\u064a $module \u00b7 10 \u062f\u0642\u0627\u0626\u0642\u061f',
@@ -51,6 +56,7 @@ ReminderTexts reminderTexts(String language) => switch (language) {
     channelDescription: 'A reminder at the study time you chose',
     start: 'Start',
     notNow: 'Not now',
+    keepGoing: 'Nice work today! 10 more minutes to keep it going?',
     generic: 'Time to study \u00b7 10 minutes?',
     cards: (count, module) =>
         '$count cards are waiting in $module \u00b7 10 minutes?',
@@ -62,6 +68,7 @@ ReminderTexts reminderTexts(String language) => switch (language) {
     channelDescription: "Un rappel \u00e0 l'heure de r\u00e9vision choisie",
     start: 'Commencer',
     notNow: 'Plus tard',
+    keepGoing: "Bien jou\u00e9 aujourd'hui ! Encore 10 minutes pour garder le rythme ?",
     generic: "C'est l'heure de r\u00e9viser \u00b7 10 minutes ?",
     cards: (count, module) =>
         "$count cartes t'attendent en $module \u00b7 10 minutes ?",
