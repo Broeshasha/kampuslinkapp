@@ -39,6 +39,11 @@ final feedSnapshotStoreProvider = Provider<FeedSnapshotStore>(
 );
 
 const _moduleKey = 'home_feed_module';
+const _algoKey = 'feed_algo';
+
+/// Bump when the feed logic changes: the posts saved by the old logic are
+/// thrown away once instead of being shown first.
+const _feedAlgo = 2;
 
 /// The Home chip: null = All, else one module id. Remembered on the phone.
 class FeedModule extends Notifier<int?> {
@@ -129,7 +134,15 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
     _indexes.clear();
     _session.clear();
     _pool = const {};
-    if (!ahead) {
+    var oldAlgo = false;
+    try {
+      final prefs = ref.read(sharedPrefsProvider);
+      oldAlgo = prefs.getInt(_algoKey) != _feedAlgo;
+      if (oldAlgo) await prefs.setInt(_algoKey, _feedAlgo);
+    } catch (_) {
+      // No prefs (tests): keep the snapshot.
+    }
+    if (!ahead && !oldAlgo) {
       final restored = _onlyModule(await _restore(semester), _module);
       startupTrace.mark('feed snapshot #$build', '${restored.length} posts');
       if (restored.isNotEmpty) {
