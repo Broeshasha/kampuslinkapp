@@ -402,6 +402,14 @@ class _SavedCardsRow extends ConsumerWidget {
           onTap: () => context.go('/profile/saved'),
         ),
         ListTile(
+          leading: Icon(
+            Icons.download_for_offline_rounded,
+            color: kc.accentText,
+          ),
+          title: Text(l10n.downloadsTitle),
+          onTap: () => context.go('/profile/downloads'),
+        ),
+        ListTile(
           leading: Icon(Icons.troubleshoot_rounded, color: kc.textSecondary),
           title: Text(l10n.dlRunCheck),
           onTap: () => context.push('/doctor'),

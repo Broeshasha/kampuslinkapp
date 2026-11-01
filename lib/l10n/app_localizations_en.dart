@@ -317,6 +317,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get learnThis => 'Learn this';
 
   @override
+  String get downloadsTitle => 'Downloads';
+
+  @override
+  String downloadsOnPhone(String size) {
+    return 'On this phone: $size';
+  }
+
+  @override
+  String downloadsLastUpdate(String date) {
+    return 'Last update: $date';
+  }
+
+  @override
+  String get downloadsNever => 'Not updated yet';
+
+  @override
+  String get downloadNow => 'Download now';
+
+  @override
+  String get downloadPause => 'Pause';
+
+  @override
+  String get downloadsPaused => 'Paused. Tap Download now to continue.';
+
+  @override
+  String get downloadsMobileData =>
+      'Works on mobile data. Updates are checked once a day.';
+
+  @override
+  String get downloadFirstTitle => 'Download your courses';
+
+  @override
+  String downloadFirstBody(String size) {
+    return 'About $size for all your modules, once. Then everything works without internet.';
+  }
+
+  @override
+  String get downloadContinue => 'Continue';
+
+  @override
+  String get downloadLater => 'Later';
+
+  @override
   String get swipeForMore => 'Swipe to see more';
 
   @override

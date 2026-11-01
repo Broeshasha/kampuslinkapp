@@ -30,6 +30,7 @@ class ModuleSyncService {
     required this.downloader,
     required this.fetchModules,
     this.include,
+    this.shouldStop,
   });
 
   final ModuleRepository modules;
@@ -39,6 +40,9 @@ class ModuleSyncService {
   /// Which modules may be downloaded (WP17-A: current semester only);
   /// null = all.
   final bool Function(ModuleRow module)? include;
+
+  /// Pause: no new module is started once this is true.
+  final bool Function()? shouldStop;
 
   Future<ModuleSyncReport> sync(
     List<String> langs, {
@@ -60,6 +64,7 @@ class ModuleSyncService {
     var downloaded = 0;
     final failures = <int, DownloadFailure>{};
     for (final m in todo) {
+      if (shouldStop?.call() ?? false) break;
       onBusy?.call(m.id, true);
       final result = await downloader.download(
         m.id,

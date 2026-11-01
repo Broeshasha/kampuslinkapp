@@ -99,7 +99,8 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
     });
     ref.listen<bool>(isSignedInProvider, (previous, next) {
       if (previous != true && next) {
-        _sync();
+        // Right after sign-in: everything of the visible modules.
+        ref.read(syncControllerProvider.notifier).syncNow(force: true);
         _startReminders();
       }
       if (previous == true && !next) {

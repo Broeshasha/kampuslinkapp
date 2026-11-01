@@ -132,7 +132,7 @@ class StudyLevelController extends Notifier<StudyLevel> {
       return r;
     }
     if (changed) {
-      unawaited(ref.read(syncControllerProvider.notifier).syncNow());
+      unawaited(ref.read(syncControllerProvider.notifier).syncNow(force: true));
     }
     return const Ok(null);
   }

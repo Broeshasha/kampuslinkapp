@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -101,6 +102,8 @@ class ModuleDownloader {
     ],
     this.timeout = const Duration(seconds: 20),
     this.concurrency = 2,
+    this.shouldStop,
+    this.onBytes,
     Future<void> Function(Duration)? sleep,
   }) : _sleep = sleep ?? ((d) => Future<void>.delayed(d));
 
@@ -113,7 +116,25 @@ class ModuleDownloader {
   final List<Duration> delays;
   final Duration timeout;
   final int concurrency;
+
+  /// Pause: checked between two lessons (what is stored stays stored).
+  final bool Function()? shouldStop;
+
+  /// Size of each lesson / extras received (uncompressed JSON characters).
+  final void Function(int bytes)? onBytes;
   final Future<void> Function(Duration) _sleep;
+
+  bool get _stopped => shouldStop?.call() ?? false;
+
+  void _count(Object? json) {
+    final f = onBytes;
+    if (f == null) return;
+    try {
+      f(jsonEncode(json).length);
+    } catch (_) {
+      // Counting must never break a download.
+    }
+  }
 
   String _revKey(int lessonId) => 'lesson_rev:$lessonId';
   String _extrasKey(int moduleId) => 'extras_rev:$moduleId';
@@ -264,13 +285,14 @@ class ModuleDownloader {
     DownloadFailure? firstFailure;
     final queue = [...tasks];
     Future<void> worker() async {
-      while (queue.isNotEmpty) {
+      while (queue.isNotEmpty && !_stopped) {
         final task = queue.removeAt(0);
         final step = 'lesson ${task.index}/$total (id ${task.lessonId})';
         try {
           final lesson = await _retry(
             () => fetchLesson(task.lessonId, task.langs),
           );
+          _count(lesson);
           await _importer.importLesson(moduleId, lesson, merge: task.merge);
           final before = _parse(await _get(_revKey(task.lessonId)));
           await _set(
@@ -296,9 +318,10 @@ class ModuleDownloader {
         storedExtras == null ||
         storedExtras.rev != extrasRev ||
         !langs.every(storedExtras.langs.contains);
-    if (extrasMissing) {
+    if (extrasMissing && !_stopped) {
       try {
         final extras = await _retry(() => fetchExtras(moduleId, langs));
+        _count(extras);
         await _importer.importExtras(moduleId, extras);
         await _set(
           _extrasKey(moduleId),

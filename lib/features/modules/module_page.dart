@@ -129,7 +129,8 @@ class _LessonsTab extends ConsumerWidget {
     final busy = ref.watch(
       syncControllerProvider.select((s) => s.downloading.contains(module.id)),
     );
-    void download() => ref.read(syncControllerProvider.notifier).syncNow();
+    void download() =>
+        ref.read(syncControllerProvider.notifier).syncNow(force: true);
 
     // A module with some lessons stored is usable (lead brief 2, B4).
     return switch (ref.watch(lessonsProvider(module.id))) {
