@@ -76,7 +76,7 @@ class _ModulesBody extends ConsumerWidget {
     final sync = ref.watch(syncControllerProvider);
     final online = ref.watch(isOnlineProvider);
     Future<void> refresh() =>
-        ref.read(syncControllerProvider.notifier).syncNow();
+        ref.read(syncControllerProvider.notifier).syncNow(force: true);
     return modules.when(
       loading: () => const LoadingView(),
       error: (error, stack) => ErrorView(

@@ -203,6 +203,7 @@ void main() {
       final pool = await loader.load(now: now, semester: 3);
       expect(modulesIn(pool), {7});
       for (final b in FeedBucket.values) {
+        if (b == FeedBucket.known) continue; // only due cards come back
         expect(pool[b], isNotEmpty, reason: '$b should have S3 items');
       }
     });

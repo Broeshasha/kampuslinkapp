@@ -309,6 +309,55 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shuffleFeed => 'خلط المنشورات';
 
   @override
+  String get feedAllModules => 'الكل';
+
+  @override
+  String get learnThis => 'تعلّم هذا';
+
+  @override
+  String get downloadsTitle => 'التنزيلات';
+
+  @override
+  String downloadsOnPhone(String size) {
+    return 'على هذا الهاتف: $size';
+  }
+
+  @override
+  String downloadsLastUpdate(String date) {
+    return 'آخر تحديث: $date';
+  }
+
+  @override
+  String get downloadsNever => 'لم يتم التحديث بعد';
+
+  @override
+  String get downloadNow => 'نزّل الآن';
+
+  @override
+  String get downloadPause => 'إيقاف مؤقت';
+
+  @override
+  String get downloadsPaused => 'متوقف مؤقتًا. اضغط نزّل الآن للمتابعة.';
+
+  @override
+  String get downloadsMobileData =>
+      'يعمل ببيانات الهاتف. يتم التحقق من التحديثات مرة واحدة في اليوم.';
+
+  @override
+  String get downloadFirstTitle => 'نزّل دروسك';
+
+  @override
+  String downloadFirstBody(String size) {
+    return 'حوالي $size لكل وحداتك، مرة واحدة. بعدها يعمل كل شيء بدون إنترنت.';
+  }
+
+  @override
+  String get downloadContinue => 'متابعة';
+
+  @override
+  String get downloadLater => 'لاحقًا';
+
+  @override
   String get swipeForMore => 'اسحب لرؤية المزيد';
 
   @override

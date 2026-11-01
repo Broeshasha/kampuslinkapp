@@ -616,6 +616,90 @@ abstract class AppLocalizations {
   /// **'Shuffle the feed'**
   String get shuffleFeed;
 
+  /// No description provided for @feedAllModules.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get feedAllModules;
+
+  /// No description provided for @learnThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn this'**
+  String get learnThis;
+
+  /// No description provided for @downloadsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get downloadsTitle;
+
+  /// No description provided for @downloadsOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone: {size}'**
+  String downloadsOnPhone(String size);
+
+  /// No description provided for @downloadsLastUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Last update: {date}'**
+  String downloadsLastUpdate(String date);
+
+  /// No description provided for @downloadsNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not updated yet'**
+  String get downloadsNever;
+
+  /// No description provided for @downloadNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Download now'**
+  String get downloadNow;
+
+  /// No description provided for @downloadPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get downloadPause;
+
+  /// No description provided for @downloadsPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused. Tap Download now to continue.'**
+  String get downloadsPaused;
+
+  /// No description provided for @downloadsMobileData.
+  ///
+  /// In en, this message translates to:
+  /// **'Works on mobile data. Updates are checked once a day.'**
+  String get downloadsMobileData;
+
+  /// No description provided for @downloadFirstTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download your courses'**
+  String get downloadFirstTitle;
+
+  /// No description provided for @downloadFirstBody.
+  ///
+  /// In en, this message translates to:
+  /// **'About {size} for all your modules, once. Then everything works without internet.'**
+  String downloadFirstBody(String size);
+
+  /// No description provided for @downloadContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get downloadContinue;
+
+  /// No description provided for @downloadLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get downloadLater;
+
   /// No description provided for @swipeForMore.
   ///
   /// In en, this message translates to:

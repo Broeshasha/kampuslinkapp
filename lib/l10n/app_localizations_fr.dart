@@ -313,6 +313,56 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shuffleFeed => 'Mélanger le fil';
 
   @override
+  String get feedAllModules => 'Tout';
+
+  @override
+  String get learnThis => 'Voir la leçon';
+
+  @override
+  String get downloadsTitle => 'Téléchargements';
+
+  @override
+  String downloadsOnPhone(String size) {
+    return 'Sur ce téléphone : $size';
+  }
+
+  @override
+  String downloadsLastUpdate(String date) {
+    return 'Dernière mise à jour : $date';
+  }
+
+  @override
+  String get downloadsNever => 'Pas encore mis à jour';
+
+  @override
+  String get downloadNow => 'Télécharger maintenant';
+
+  @override
+  String get downloadPause => 'Pause';
+
+  @override
+  String get downloadsPaused =>
+      'En pause. Touche Télécharger maintenant pour continuer.';
+
+  @override
+  String get downloadsMobileData =>
+      'Fonctionne avec les données mobiles. Mises à jour vérifiées une fois par jour.';
+
+  @override
+  String get downloadFirstTitle => 'Télécharger tes cours';
+
+  @override
+  String downloadFirstBody(String size) {
+    return 'Environ $size pour tous tes modules, une seule fois. Ensuite tout marche sans internet.';
+  }
+
+  @override
+  String get downloadContinue => 'Continuer';
+
+  @override
+  String get downloadLater => 'Plus tard';
+
+  @override
   String get swipeForMore => 'Glisse pour voir la suite';
 
   @override

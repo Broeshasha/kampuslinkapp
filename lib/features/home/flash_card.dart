@@ -28,6 +28,7 @@ class FlashCardView extends StatefulWidget {
     this.onSave,
     this.onReport,
     this.figure,
+    this.onLearn,
   });
 
   final String front;
@@ -46,6 +47,9 @@ class FlashCardView extends StatefulWidget {
 
   /// Optional diagram on top of both faces (max 45% of the text area).
   final Map<String, dynamic>? figure;
+
+  /// "Learn this": opens the card's lesson (cards of a lesson not read yet).
+  final VoidCallback? onLearn;
 
   @override
   State<FlashCardView> createState() => _FlashCardViewState();
@@ -163,6 +167,7 @@ class _FlashCardViewState extends State<FlashCardView>
                 style: style,
                 rail: rail,
                 figure: widget.figure,
+                onLearn: widget.onLearn,
                 footer: showBack
                     ? Row(
                         children: [
@@ -212,6 +217,7 @@ class _Face extends StatelessWidget {
     required this.footer,
     required this.rail,
     this.figure,
+    this.onLearn,
   });
 
   final Color accent;
@@ -224,6 +230,7 @@ class _Face extends StatelessWidget {
   /// Like / save / report, stacked at the bottom end of the text area.
   final Widget rail;
   final Map<String, dynamic>? figure;
+  final VoidCallback? onLearn;
 
   @override
   Widget build(BuildContext context) {
@@ -251,28 +258,44 @@ class _Face extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: KSpace.sm,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(KRadius.chip),
-              ),
-              child: Text(
-                moduleName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
+          Row(
+            children: [
+              Flexible(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: KSpace.sm,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(KRadius.chip),
+                    ),
+                    child: Text(
+                      moduleName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              if (onLearn != null)
+                TextButton.icon(
+                  onPressed: onLearn,
+                  style: TextButton.styleFrom(
+                    foregroundColor: accent,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: const Icon(Icons.menu_book_outlined, size: 16),
+                  label: Text(AppLocalizations.of(context).learnThis),
+                ),
+            ],
           ),
           Expanded(
             child: Stack(

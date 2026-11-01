@@ -9,6 +9,7 @@ import '../../data/profile/study_level.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/download_issue.dart';
+import '../profile/downloads_page.dart';
 import 'step_layout.dart';
 
 /// Step 4: downloads the modules lesson by lesson (lead brief 2, B7):
@@ -31,8 +32,20 @@ class _DownloadStepState extends ConsumerState<DownloadStep> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      final sync = ref.read(syncControllerProvider.notifier);
+      if (!sync.firstDownloadAccepted) {
+        // Feed brief C: the expected size once, "Continue" pre-selected.
+        final bytes = await sync.estimateFirstDownload();
+        if (!mounted) return;
+        if (bytes > 0 && !await showFirstDownloadSheet(context, bytes)) {
+          await sync.pause();
+          if (mounted) setState(() => _started = true);
+          return;
+        }
+      }
+      if (!mounted) return;
       setState(() => _started = true);
-      await ref.read(syncControllerProvider.notifier).syncNow();
+      await sync.downloadNow();
     });
   }
 

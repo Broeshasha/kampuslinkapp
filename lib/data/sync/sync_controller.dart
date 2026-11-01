@@ -1,4 +1,3 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,9 +19,27 @@ import 'module_sync.dart';
 import 'server_merge.dart';
 
 const _lastSyncKey = 'last_synced_at';
+const _contentCheckKey = 'content_checked_at';
+const _pausedKey = 'downloads_paused';
+const _firstOkKey = 'first_download_ok';
+const _assessVersionKey = 'assess_version:';
 
 /// All the languages a lesson can have (the top-up target).
 const allContentLanguages = ['ar', 'fr', 'en'];
+
+/// The course language (BACKEND_CONTRACT B: "UI language + content
+/// language"). Pilot content is written in French.
+// TODO(lead): drop when the server falls back to the source language.
+const contentLanguage = 'fr';
+
+/// Feed brief C: at most one content update check a day (plus "Download
+/// now" / pull-to-refresh / sign-in / semester or language change).
+const contentCheckEvery = Duration(hours: 24);
+
+/// Rough size of one lesson with its cards, questions and extras, used for
+/// the size shown before the first download.
+// TODO(lead): replace with the measured average (Profile > Downloads).
+const lessonBytesEstimate = 40 * 1024;
 
 typedef LessonCount = ({int done, int total});
 
@@ -34,6 +51,8 @@ class SyncState {
     this.downloading = const <int>{},
     this.progress = const <int, LessonCount>{},
     this.failures = const <int, DownloadFailure>{},
+    this.paused = false,
+    this.downloadedBytes = 0,
   });
 
   final bool running;
@@ -47,6 +66,12 @@ class SyncState {
   /// The last download failure per module (cleared by a good retry).
   final Map<int, DownloadFailure> failures;
 
+  /// The student paused downloads (Profile > Downloads); kept on the phone.
+  final bool paused;
+
+  /// Bytes received this session (uncompressed JSON, for the report).
+  final int downloadedBytes;
+
   SyncState copyWith({
     bool? running,
     DateTime? lastSyncedAt,
@@ -55,6 +80,8 @@ class SyncState {
     Set<int>? downloading,
     Map<int, LessonCount>? progress,
     Map<int, DownloadFailure>? failures,
+    bool? paused,
+    int? downloadedBytes,
   }) => SyncState(
     running: running ?? this.running,
     lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
@@ -62,21 +89,46 @@ class SyncState {
     downloading: downloading ?? this.downloading,
     progress: progress ?? this.progress,
     failures: failures ?? this.failures,
+    paused: paused ?? this.paused,
+    downloadedBytes: downloadedBytes ?? this.downloadedBytes,
   );
 }
 
-/// One sync pass: drain the outbox (+ offline chat), refresh the module
-/// list, download what is missing (manifest diff, first {UI language, fr}),
-/// merge the server's own progress rows, then top up the other languages
-/// on Wi-Fi. Only when signed in and online. One pass at a time.
+/// One sync pass: drain the outbox (+ offline chat), then - at most once a
+/// day, or when something is missing on the phone, or when forced - refresh
+/// the module list, download what is missing or changed (manifest diff, only
+/// changed lesson revs, UI language + course language, mobile data allowed),
+/// practice / exams of the modules whose version changed, and merge the
+/// server's own progress rows. Only when signed in and online. One pass at
+/// a time; Pause stops between two lessons and resumes where it was.
 class SyncController extends Notifier<SyncState> {
+  bool _stop = false;
+
   @override
   SyncState build() {
-    final saved = ref.read(sharedPrefsProvider).getString(_lastSyncKey);
+    final prefs = ref.read(sharedPrefsProvider);
+    final saved = prefs.getString(_lastSyncKey);
+    // The student switched language: download that language now.
+    ref.listen<Locale?>(localeControllerProvider, (previous, next) {
+      if (previous?.languageCode != next?.languageCode) {
+        Future.microtask(() => syncNow(force: true));
+      }
+    });
     return SyncState(
       lastSyncedAt: saved == null ? null : DateTime.tryParse(saved),
+      paused: prefs.getBool(_pausedKey) ?? false,
     );
   }
+
+  /// Last time the content was checked against the server (null = never).
+  DateTime? get contentCheckedAt {
+    final raw = ref.read(sharedPrefsProvider).getString(_contentCheckKey);
+    return raw == null ? null : DateTime.tryParse(raw);
+  }
+
+  /// True once the student accepted the first full download.
+  bool get firstDownloadAccepted =>
+      ref.read(sharedPrefsProvider).getBool(_firstOkKey) ?? false;
 
   List<String> _firstLanguages() {
     final chosen = ref.read(localeControllerProvider)?.languageCode;
@@ -86,7 +138,7 @@ class SyncController extends Notifier<SyncState> {
           WidgetsBinding.instance.platformDispatcher.locales,
           const <Locale>[],
         ).languageCode;
-    return {ui, 'fr'}.toList();
+    return {ui, contentLanguage}.toList();
   }
 
   ModuleDownloader? _downloader() {
@@ -99,6 +151,9 @@ class SyncController extends Notifier<SyncState> {
       fetchLesson: api.getLessonBundle,
       fetchExtras: api.getModuleExtras,
       fetchBundle: api.getModuleBundle,
+      shouldStop: () => _stop,
+      onBytes: (n) =>
+          state = state.copyWith(downloadedBytes: state.downloadedBytes + n),
     );
   }
 
@@ -118,17 +173,59 @@ class SyncController extends Notifier<SyncState> {
     );
   }
 
-  Future<bool> _onWifi() async {
-    try {
-      final r = await Connectivity().checkConnectivity();
-      return r.contains(ConnectivityResult.wifi) ||
-          r.contains(ConnectivityResult.ethernet);
-    } catch (_) {
-      return false;
-    }
+  /// Visible modules not complete on the phone (local check, no network).
+  Future<bool> _missingLocally(List<String> langs) async {
+    final r = await guard(
+      () => ref.read(moduleRepositoryProvider).needingDownload(langs: langs),
+    );
+    final semester = ref.read(currentSemesterProvider);
+    return switch (r) {
+      Ok(:final value) => value.any((m) => inSemester(m, semester)),
+      Err() => false,
+    };
   }
 
-  Future<void> syncNow() async {
+  /// Pause: stops between two lessons; nothing downloads until resumed.
+  Future<void> pause() async {
+    _stop = true;
+    state = state.copyWith(paused: true);
+    await ref.read(sharedPrefsProvider).setBool(_pausedKey, true);
+  }
+
+  /// "Download now" / "Continue": resumes and checks everything at once.
+  Future<void> downloadNow() async {
+    _stop = false;
+    final prefs = ref.read(sharedPrefsProvider);
+    await prefs.setBool(_pausedKey, false);
+    await prefs.setBool(_firstOkKey, true);
+    state = state.copyWith(paused: false);
+    await syncNow(force: true);
+  }
+
+  /// Size shown before the first full download: refreshes the module list
+  /// (one small call) and estimates the lessons still missing.
+  Future<int> estimateFirstDownload() async {
+    final api = ref.read(kampusApiProvider);
+    final repo = ref.read(moduleRepositoryProvider);
+    if (api != null && ref.read(isOnlineProvider)) {
+      await guard(() async => repo.saveServerList(await api.getMyModules()));
+    }
+    final semester = ref.read(currentSemesterProvider);
+    final r = await guard(() => repo.needingDownload(langs: _firstLanguages()));
+    final lessons = switch (r) {
+      Ok(:final value) =>
+        value
+            .where((m) => inSemester(m, semester))
+            .fold<int>(0, (sum, m) => sum + m.lessonCount),
+      Err() => 0,
+    };
+    return lessons * lessonBytesEstimate;
+  }
+
+  /// [force]: pull-to-refresh, "Download now", sign-in, semester or
+  /// language change. Otherwise content is checked at most once a day,
+  /// unless something is still missing on the phone (resume).
+  Future<void> syncNow({bool force = false}) async {
     if (state.running) return;
     final api = ref.read(kampusApiProvider);
     final downloader = _downloader();
@@ -154,14 +251,36 @@ class SyncController extends Notifier<SyncState> {
         await chat.sendPending(moduleId);
       }
     });
+    final langs = _firstLanguages();
+    final last = contentCheckedAt;
+    final checkContent =
+        !state.paused &&
+        (force ||
+            last == null ||
+            DateTime.now().difference(last) >= contentCheckEvery ||
+            await _missingLocally(langs));
+    if (!checkContent) {
+      final now = DateTime.now();
+      if (firstFailure == null) {
+        await prefs.setString(_lastSyncKey, now.toIso8601String());
+      }
+      state = state.copyWith(
+        running: false,
+        lastSyncedAt: firstFailure == null ? now : null,
+        failure: firstFailure,
+      );
+      return;
+    }
+    _stop = false;
     final service = ModuleSyncService(
       modules: ref.read(moduleRepositoryProvider),
       downloader: downloader,
       fetchModules: api.getMyModules,
       include: (m) => inSemester(m, ref.read(currentSemesterProvider)),
+      shouldStop: () => _stop,
     );
     final report = await service.sync(
-      _firstLanguages(),
+      langs,
       onBusy: _busy,
       onProgress: _progress,
     );
@@ -179,17 +298,17 @@ class SyncController extends Notifier<SyncState> {
           firstFailure = failure;
       }
     }
-    // Practice + mock exams of the current semester (contract file 15).
-    if (firstFailure == null) {
-      await _syncAssess(api);
-    }
-    // Other languages: in the background, only on Wi-Fi (lead brief 2, B6).
-    if (firstFailure == null && await _onWifi()) {
-      await service.sync(allContentLanguages, onBusy: _busy);
+    // Practice + mock exams of the current semester (contract file 15),
+    // only for modules whose version changed (or when forced).
+    if (firstFailure == null && !_stop) {
+      await _syncAssess(api, langs, force: force);
     }
     final now = DateTime.now();
     if (firstFailure == null) {
       await prefs.setString(_lastSyncKey, now.toIso8601String());
+      if (!_stop) {
+        await prefs.setString(_contentCheckKey, now.toIso8601String());
+      }
     }
     state = state.copyWith(
       running: false,
@@ -198,28 +317,40 @@ class SyncController extends Notifier<SyncState> {
     );
   }
 
-  Future<void> _syncAssess(KampusApi api) async {
+  Future<void> _syncAssess(
+    KampusApi api,
+    List<String> langs, {
+    bool force = false,
+  }) async {
     final store = ref.read(assessStoreProvider);
     final db = ref.read(appDatabaseProvider);
+    final prefs = ref.read(sharedPrefsProvider);
     final semester = ref.read(currentSemesterProvider);
     final modules = [
       for (final m in await db.select(db.modules).get())
         if (inSemester(m, semester)) m,
     ];
+    final langKey = (langs.toSet().toList()..sort()).join(',');
     for (final m in modules) {
+      if (_stop) return;
+      final key = '$_assessVersionKey${m.id}';
+      final stamp = '${m.serverVersion}|$langKey';
+      if (!force && prefs.getString(key) == stamp) continue;
       final r = await guard(() async {
-        final manifest = await api.getModuleManifest(m.id, allContentLanguages);
+        final manifest = await api.getModuleManifest(m.id, langs);
         await store.applyManifest(
           m.id,
           manifest,
-          fetchPractice: (chapter) =>
-              api.getPractice(m.id, chapter, allContentLanguages),
-          fetchPaper: (id) => api.getExamPaper(id, allContentLanguages),
+          fetchPractice: (chapter) => api.getPractice(m.id, chapter, langs),
+          fetchPaper: (id) => api.getExamPaper(id, langs),
         );
         await store.mergeServerAttempts(await api.getMyExamAttempts(m.id));
       });
-      if (r case Err(:final failure)) {
-        appLog.info('practice/exams of module ${m.id}: $failure');
+      switch (r) {
+        case Ok():
+          await prefs.setString(key, stamp);
+        case Err(:final failure):
+          appLog.info('practice/exams of module ${m.id}: $failure');
       }
     }
   }
@@ -228,6 +359,7 @@ class SyncController extends Notifier<SyncState> {
   Future<void> retryModule(int moduleId) async {
     final downloader = _downloader();
     if (downloader == null || state.downloading.contains(moduleId)) return;
+    _stop = false;
     _busy(moduleId, true);
     final result = await downloader.download(
       moduleId,

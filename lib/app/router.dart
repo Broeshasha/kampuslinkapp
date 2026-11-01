@@ -19,6 +19,7 @@ import '../features/reminders/reminders_page.dart';
 import '../features/reminders/review_session_page.dart';
 import '../features/profile/download_doctor_page.dart';
 import '../features/profile/renderer_preview_page.dart';
+import '../features/profile/downloads_page.dart';
 import '../features/profile/math_audit_page.dart';
 import '../features/profile/saved_cards_page.dart';
 import '../features/profile/states_demo_page.dart';
@@ -142,6 +143,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'saved',
                     builder: (_, _) => const SavedCardsPage(),
+                  ),
+                  GoRoute(
+                    path: 'downloads',
+                    builder: (_, _) => const DownloadsPage(),
                   ),
                   GoRoute(
                     path: 'reminders',
