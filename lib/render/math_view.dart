@@ -4,6 +4,101 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import '../core/logging/logger.dart';
 import '../core/theme/tokens.dart';
 import 'block_style.dart';
+import 'code_block.dart' show codeFontFamily, codeFontFallback;
+import 'latex_plain.dart';
+
+final _loggedMath = <String>{};
+
+/// Logs a formula that could not be drawn (once per formula).
+void logMathFailure(String latex, String why) {
+  if (_loggedMath.length < 500 && _loggedMath.add(latex)) {
+    appLog.warn('math failed: $latex ($why)');
+  }
+}
+
+/// The parse error of [latex], or null when flutter_math can draw it.
+/// Used by the Math audit; never throws.
+String? latexParseError(String latex) {
+  try {
+    final m = Math.tex(normalizeLatexEscapes(latex));
+    return m.parseError?.message;
+  } catch (e) {
+    return '$e';
+  }
+}
+
+/// A formula that cannot be drawn: its readable plain text, small and
+/// monospace, never a red error.
+class MathSourceFallback extends StatelessWidget {
+  const MathSourceFallback({
+    super.key,
+    required this.latex,
+    required this.style,
+  });
+
+  final String latex;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final plain = mathToPlain(latex);
+    return Text(
+      plain.isEmpty ? latex : plain,
+      style: style.copyWith(
+        fontFamily: codeFontFamily,
+        fontFamilyFallback: codeFontFallback,
+        fontSize: (style.fontSize ?? 16) * 0.9,
+      ),
+    );
+  }
+}
+
+/// Display math inside a text (\[ ... \] or $$ ... $$): centred, LTR,
+/// scrolls sideways when wider than the screen.
+class MathDisplay extends StatelessWidget {
+  const MathDisplay({super.key, required this.latex, required this.style});
+
+  final String latex;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final src = normalizeLatexEscapes(latex).trim();
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: KSpace.xs),
+        child: LayoutBuilder(
+          builder: (context, c) => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: c.maxWidth.isFinite ? c.maxWidth : 0,
+              ),
+              child: Center(
+                child: Math.tex(
+                  src,
+                  mathStyle: MathStyle.display,
+                  textStyle: style.copyWith(
+                    fontSize: (style.fontSize ?? 16) * 1.1,
+                  ),
+                  onErrorFallback: (error) {
+                    logMathFailure(src, error.message);
+                    return MathSourceFallback(
+                      key: const ValueKey('math-fallback'),
+                      latex: src,
+                      style: style,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Inline \( ... \) math on the text baseline; raw text if it cannot parse.
 class InlineMath extends StatelessWidget {
@@ -14,15 +109,21 @@ class InlineMath extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final src = normalizeLatexEscapes(latex);
+    if (src.trim().isEmpty) return const SizedBox.shrink();
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Math.tex(
-        latex,
+        src,
         mathStyle: MathStyle.text,
         textStyle: style,
         onErrorFallback: (error) {
-          appLog.warn('inline latex failed: $latex');
-          return Text(latex, style: style);
+          logMathFailure(src, error.message);
+          return MathSourceFallback(
+            key: const ValueKey('math-fallback'),
+            latex: src,
+            style: style,
+          );
         },
       ),
     );
@@ -71,21 +172,22 @@ class MathBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kc = style.kc;
-    final fallbackText = plainText.isEmpty ? latex : plainText;
-    final Widget math = latex.trim().isEmpty
+    final src = normalizeLatexEscapes(latex);
+    final fallbackText = plainText.isEmpty ? mathToPlain(src) : plainText;
+    final Widget math = src.trim().isEmpty
         ? FormulaFallback(
             key: const ValueKey('formula-fallback'),
             text: fallbackText,
             style: style,
           )
         : Math.tex(
-            latex,
+            src,
             textStyle: TextStyle(
               fontSize: 18 * style.scale,
               color: kc.textPrimary,
             ),
             onErrorFallback: (error) {
-              appLog.warn('latex failed, showing plain text: $latex');
+              logMathFailure(src, error.message);
               return FormulaFallback(
                 key: const ValueKey('formula-fallback'),
                 text: fallbackText,

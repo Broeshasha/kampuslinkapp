@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'block_style.dart';
 import 'code_block.dart';
 import 'code_tokens.dart';
+import 'latex_plain.dart';
+import 'math_text.dart';
 import 'math_view.dart';
 import 'segments.dart';
 
@@ -27,8 +29,9 @@ class RichBlockText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parts = splitFences(text);
-    if (parts.length == 1 && !parts.first.code) return _rich(text);
+    final t = normalizeLatexEscapes(text);
+    final parts = splitFences(t);
+    if (parts.length == 1 && !parts.first.code) return _textPart(t);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -41,96 +44,43 @@ class RichBlockText extends StatelessWidget {
                     language: parts[i].language,
                     style: style,
                   )
-                : _rich(parts[i].text),
+                : _textPart(parts[i].text),
+          ),
+      ],
+    );
+  }
+
+  /// A text without fences: paragraphs plus \[ \] / $$ $$ display math.
+  Widget _textPart(String text) {
+    final chunks = splitDisplayMath(text);
+    if (chunks.length == 1 && !chunks.first.display) return _rich(text);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < chunks.length; i++)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 4),
+            child: chunks[i].display
+                ? MathDisplay(latex: chunks[i].text, style: style.body)
+                : _rich(chunks[i].text),
           ),
       ],
     );
   }
 
   Widget _rich(String text) {
-    final kc = style.kc;
     final base = style.body;
-    final iconSize = base.fontSize ?? 16;
-    final spans = <InlineSpan>[];
-    for (final s in segmentText(text, highlights)) {
-      switch (s.kind) {
-        case SegmentKind.plain:
-          spans.add(TextSpan(text: s.text));
-        case SegmentKind.term:
-          spans.add(
-            TextSpan(
-              text: s.text,
-              style: TextStyle(
-                color: kc.accentText,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          );
-        case SegmentKind.value:
-          spans.add(
-            TextSpan(
-              text: style.ltr(s.text),
-              style: TextStyle(color: kc.xp, fontWeight: FontWeight.w700),
-            ),
-          );
-        case SegmentKind.formula:
-          spans.add(
-            TextSpan(
-              text: style.ltr(s.text),
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                backgroundColor: kc.surfaceRaised,
-              ),
-            ),
-          );
-        case SegmentKind.warning:
-          spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Icon(
-                Icons.warning_amber_rounded,
-                size: iconSize,
-                color: kc.warning,
-              ),
-            ),
-          );
-          spans.add(
-            TextSpan(
-              text: ' ${s.text}',
-              style: TextStyle(color: kc.warning, fontWeight: FontWeight.w700),
-            ),
-          );
-        case SegmentKind.code:
-          spans.add(
-            TextSpan(
-              text: style.ltr(s.text),
-              style: TextStyle(
-                fontFamily: codeFontFamily,
-                fontFamilyFallback: codeFontFallback,
-                fontSize: (base.fontSize ?? 16) * 0.92,
-                color: kc.accentText,
-                backgroundColor: kc.surfaceRaised,
-              ),
-            ),
-          );
-        case SegmentKind.math:
-          spans.add(
-            shrinkMath
-                ? WidgetSpan(
-                    alignment: PlaceholderAlignment.middle,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: InlineMath(latex: s.text, style: base),
-                    ),
-                  )
-                : WidgetSpan(
-                    alignment: PlaceholderAlignment.baseline,
-                    baseline: TextBaseline.alphabetic,
-                    child: InlineMath(latex: s.text, style: base),
-                  ),
-          );
-      }
-    }
-    return Text.rich(TextSpan(style: base, children: spans));
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: buildMathSpans(
+          segmentText(text, highlights),
+          base: base,
+          kc: style.kc,
+          rtl: style.rtl,
+          shrinkMath: shrinkMath,
+        ),
+      ),
+    );
   }
 }
