@@ -23,6 +23,7 @@ import '../../render/reader_settings.dart';
 import '../../ui/confetti.dart';
 import '../../ui/download_issue.dart';
 import '../../ui/states.dart';
+import '../../render/math_text.dart';
 import '../cases/report_sheet.dart';
 import '../home/study_activity.dart';
 
@@ -211,7 +212,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: MathText(
           content.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -336,8 +337,8 @@ class _LessonHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (unit.isNotEmpty)
-            Text(
-              unit.toUpperCase(),
+            MathText(
+              unit.contains(r'\') ? unit : unit.toUpperCase(),
               style: TextStyle(
                 color: accent,
                 fontWeight: FontWeight.w800,
@@ -346,7 +347,7 @@ class _LessonHeader extends StatelessWidget {
               ),
             ),
           const SizedBox(height: KSpace.xs),
-          Text(
+          MathText(
             content.title,
             style: Theme.of(context).textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w800),

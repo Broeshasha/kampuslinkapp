@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/assess/assess_providers.dart';
 import '../../l10n/app_localizations.dart';
+import '../../render/math_text.dart';
 
 int _n(Object? v) => v is num ? v.toInt() : int.tryParse('${v ?? ''}') ?? 0;
 
@@ -89,13 +90,13 @@ class _Entry extends StatelessWidget {
             children: [
               Icon(icon, color: kc.accentText),
               const SizedBox(height: KSpace.xs),
-              Text(
+              MathText(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
-              Text(
+              MathText(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

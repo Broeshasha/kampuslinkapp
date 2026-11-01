@@ -86,6 +86,10 @@ class ProfilePage extends ConsumerWidget {
           onPressed: () => context.go('/profile/renderer'),
           child: const Text('Renderer preview (debug)'),
         ),
+        TextButton(
+          onPressed: () => context.go('/profile/math-audit'),
+          child: const Text('Math audit (debug)'),
+        ),
       ],
     ];
     return Scaffold(

@@ -7,6 +7,7 @@ import '../../data/cases/case_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../../render/math_text.dart';
 import 'case_models.dart';
 import 'case_set_view.dart';
 import 'report_sheet.dart';
@@ -45,7 +46,7 @@ class CasePage extends ConsumerWidget {
     }
     final set = CaseSet.fromSource(found.source, lang);
     return Scaffold(
-      appBar: AppBar(title: Text(set.title)),
+      appBar: AppBar(title: MathText(set.title, maxLines: 1)),
       body: SafeArea(
         child: MaxWidth(
           child: CaseSetView(

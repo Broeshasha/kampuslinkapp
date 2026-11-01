@@ -24,6 +24,7 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/coming_soon.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../../render/math_text.dart';
 import '../cases/case_models.dart';
 import '../cases/case_set_view.dart';
 import '../cases/report_sheet.dart';
@@ -258,7 +259,7 @@ class _ContinueLessonTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Text(
+                    MathText(
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -322,7 +323,7 @@ class _ContinueCaseTile extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Text(
+                    MathText(
                       set.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

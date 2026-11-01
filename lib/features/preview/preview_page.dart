@@ -18,6 +18,7 @@ import '../../l10n/app_localizations.dart';
 import '../../render/lesson_view.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../../render/math_text.dart';
 import '../cases/case_models.dart';
 import '../cases/case_set_view.dart';
 
@@ -188,7 +189,10 @@ class PreviewModulePage extends ConsumerWidget {
                   MaxWidth(
                     child: ListTile(
                       leading: const Icon(Icons.view_carousel_outlined),
-                      title: Text(CaseSet.fromSource(s, lang).title),
+                      title: MathText(
+                        CaseSet.fromSource(s, lang).title,
+                        maxLines: 2,
+                      ),
                       trailing: drafts.$2.contains('${s['id']}')
                           ? badge()
                           : null,
@@ -274,7 +278,7 @@ class _PreviewSetPageState extends State<_PreviewSetPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.set.title)),
+      appBar: AppBar(title: MathText(widget.set.title, maxLines: 1)),
       body: SafeArea(
         child: MaxWidth(
           child: CaseSetView(

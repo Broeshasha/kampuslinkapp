@@ -778,3 +778,30 @@ const _symbols = <String, String>{
   'AA': '\u00C5',
   'ohm': '\u03A9', 'micro': '\u00B5', 'celsius': '\u00B0C',
 };
+
+final _svgTextNode = RegExp(r'(<(?:text|tspan)\b[^>]*>|</tspan>)([^<]+)');
+
+/// SVG cannot draw LaTeX: every `<text>`/`<tspan>` node that looks like LaTeX
+/// is replaced by its readable plain text (x^2 -> x squared, \omega -> omega).
+String svgMathToPlain(String svg) {
+  if (!svg.contains('<text')) return svg;
+  return svg.replaceAllMapped(_svgTextNode, (m) {
+    final raw = _xmlUnescape(m.group(2) ?? '');
+    if (!looksLikeLatex(raw)) return m[0]!;
+    final plain = splitMath(raw).any((p) => p.isMath)
+        ? latexToPlain(raw)
+        : mathToPlain(raw);
+    return '${m.group(1)}${_xmlEscape(plain)}';
+  });
+}
+
+String _xmlUnescape(String s) => s
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&apos;', "'")
+    .replaceAll('&#39;', "'")
+    .replaceAll('&amp;', '&');
+
+String _xmlEscape(String s) =>
+    s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');

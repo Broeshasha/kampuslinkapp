@@ -7,6 +7,8 @@ import '../core/theme/tokens.dart';
 import '../data/lessons/figures.dart';
 import '../l10n/app_localizations.dart';
 import 'figure_block.dart';
+import 'latex_plain.dart';
+import 'math_text.dart';
 
 final _logged = <int>{};
 
@@ -36,7 +38,7 @@ void openFigureZoom(
         child: SvgPicture.string(
           themeSvg(raw, kc),
           fit: BoxFit.contain,
-          semanticsLabel: alt.isNotEmpty ? alt : caption,
+          semanticsLabel: latexToPlain(alt.isNotEmpty ? alt : caption),
         ),
       ),
     ),
@@ -82,7 +84,7 @@ class CompactFigure extends StatelessWidget {
     }
     final caption = figureText(figure['caption'], language);
     final altText = figureText(a['alt'], language);
-    final alt = altText.isNotEmpty ? altText : caption;
+    final alt = latexToPlain(altText.isNotEmpty ? altText : caption);
     final picture = SizedBox(
       height: height,
       width: double.infinity,
@@ -134,7 +136,7 @@ class CompactFigure extends StatelessWidget {
         if (showCaption && caption.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: KSpace.xs),
-            child: Text(
+            child: MathText(
               caption,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

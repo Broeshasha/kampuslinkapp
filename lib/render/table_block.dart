@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/tokens.dart';
 import 'block_style.dart';
 import 'math_view.dart';
+import 'math_text.dart';
 import 'rich_block_text.dart';
 
 List<Object?> _list(Object? v) => v is List ? v : const <Object?>[];
@@ -261,7 +262,7 @@ class TableBlock extends StatelessWidget {
         if (title.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: KSpace.sm),
-            child: Text(
+            child: MathText(
               title,
               style: style.body.copyWith(fontWeight: FontWeight.w700),
             ),

@@ -6,6 +6,7 @@ import 'block_style.dart';
 import 'code_block.dart';
 import 'figure_block.dart';
 import 'math_view.dart';
+import 'math_text.dart';
 import 'rich_block_text.dart';
 import 'table_block.dart';
 
@@ -181,7 +182,7 @@ class _Heading extends StatelessWidget {
     };
     return Padding(
       padding: const EdgeInsets.only(top: KSpace.md),
-      child: Text(
+      child: MathText(
         text,
         style: style.body.copyWith(
           fontSize: size * style.scale,
