@@ -122,9 +122,14 @@ List<String> fittingKinds({
   required bool unreadLesson,
   required int streak,
   required bool examSeason,
+  bool studiedToday = false,
 }) {
   if (secondChance) {
     return const ['second_chance'];
+  }
+  if (studiedToday) {
+    // Already studied today: "keep it going", never "you haven't studied".
+    return [if (streak >= 2) 'streak', 'generic'];
   }
   return [
     if (dueCount > 0) 'due_cards',

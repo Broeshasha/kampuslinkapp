@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kampuslink/core/l10n/locale_controller.dart';
 import 'package:kampuslink/data/db/app_database.dart';
+import 'package:kampuslink/data/learning/feed_repository.dart' show dayKey;
 import 'package:kampuslink/data/profile/study_level.dart';
 import 'package:kampuslink/data/providers.dart';
 import 'package:kampuslink/data/reminders/reminder_controller.dart';
@@ -237,11 +238,8 @@ void main() {
       ]);
     });
 
-    test('studied today, or the time already passed: not today', () {
-      expect(
-        planReminders(monWed, _mon(6), studiedToday: true).first,
-        algiersToUtc(2026, 11, 4, 7, 30),
-      );
+    test('already studied today: still today; time passed: not today', () {
+      expect(planReminders(monWed, _mon(6)).first, _mon(7, 30));
       expect(
         planReminders(monWed, _mon(8)).first,
         algiersToUtc(2026, 11, 4, 7, 30),
@@ -309,6 +307,22 @@ void main() {
       expect(phone.scheduled.first.id, reminderFirstId);
       expect(phone.scheduled.first.at, _mon(19));
       expect(phone.scheduled.first.body, 'Time to study \u00b7 10 minutes?');
+    });
+
+    test('studied today: still fires today, "keep it going" text', () async {
+      await db
+          .into(db.studyDays)
+          .insert(
+            StudyDaysCompanion.insert(
+              day: dayKey(clock),
+              seconds: const Value(900),
+            ),
+          );
+      final c = await make({reminderStateKey: saved, 'ui_language': 'en'});
+      await c.read(reminderControllerProvider.notifier).refreshPlan();
+      expect(phone.scheduled.first.at, _mon(19));
+      expect(phone.scheduled.first.body, reminderTexts('en').keepGoing);
+      expect(phone.scheduled[1].body, 'Time to study \u00b7 10 minutes?');
     });
 
     test(

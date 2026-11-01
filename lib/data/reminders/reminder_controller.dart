@@ -21,6 +21,10 @@ import 'reminder_api.dart';
 import 'reminder_notifier.dart';
 import 'reminder_state.dart';
 import 'reminder_texts.dart';
+import '../../render/latex_plain.dart' show latexToPlain, mayContainMath;
+
+/// Notifications cannot draw formulas: readable plain text instead.
+String _plain(String s) => mayContainMath(s) ? latexToPlain(s) : s;
 
 const reminderStateKey = 'reminder_state_v1';
 const reminderPendingKey = 'reminder_settings_pending_v1';
@@ -421,12 +425,17 @@ class ReminderController extends Notifier<ReminderState?> {
         return;
       }
       final now = _now();
-      final plan = planReminders(
-        current,
-        now,
-        studiedToday: await _studiedToday(),
-        max: reminderMaxSlots,
-      );
+      final plan = planReminders(current, now, max: reminderMaxSlots);
+      final studied = await _studiedToday();
+      final today = algiersWall(now);
+      bool keepGoing(int i) {
+        final d = algiersWall(plan[i]);
+        return studied &&
+            d.year == today.year &&
+            d.month == today.month &&
+            d.day == today.day;
+      }
+
       final language = _language();
       final texts = reminderTexts(language);
       final templates = decodeTemplates(_prefs.getString(reminderTemplatesKey));
@@ -456,6 +465,7 @@ class ReminderController extends Notifier<ReminderState?> {
             unreadLesson: unread != null,
             streak: streak,
             examSeason: _examSeason(plan[i]),
+            studiedToday: keepGoing(i),
           ),
           valuesFor: (kind) =>
               kind == 'new_lesson' ? values.withModule(unread) : values,
@@ -466,14 +476,16 @@ class ReminderController extends Notifier<ReminderState?> {
             picked?.body ??
             (current.inSecondChance
                 ? texts.secondChance
+                : keepGoing(i) && texts.keepGoing.isNotEmpty
+                ? texts.keepGoing
                 : texts.body(due.count, due.module));
         lastBody = body;
         slots.add(
           ReminderSlot(
             id: reminderFirstId + i,
             at: plan[i],
-            title: picked?.title ?? reminderTitle,
-            body: body,
+            title: _plain(picked?.title ?? reminderTitle),
+            body: _plain(body),
             payload: plan[i].toIso8601String(),
           ),
         );
