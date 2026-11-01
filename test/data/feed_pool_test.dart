@@ -147,7 +147,8 @@ void main() {
           ),
         );
     final pool = await loader.load(now: now);
-    expect(pool[FeedBucket.known]!.map((i) => i.key), ['c:11']);
+    // Known cards only come back when due (feed brief A).
+    expect(pool[FeedBucket.known], isEmpty);
     expect(pool[FeedBucket.due]!.map((i) => i.key), ['c:12']);
     // Lesson 1 is done: new cards come from lessons 2 and 3.
     expect(pool[FeedBucket.fresh]!.map((i) => i.lessonId).toSet(), {2, 3});

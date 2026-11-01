@@ -311,6 +311,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shuffleFeed => 'Shuffle the feed';
 
   @override
+  String get feedAllModules => 'All';
+
+  @override
+  String get learnThis => 'Learn this';
+
+  @override
   String get swipeForMore => 'Swipe to see more';
 
   @override

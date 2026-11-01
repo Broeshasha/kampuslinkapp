@@ -616,6 +616,18 @@ abstract class AppLocalizations {
   /// **'Shuffle the feed'**
   String get shuffleFeed;
 
+  /// No description provided for @feedAllModules.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get feedAllModules;
+
+  /// No description provided for @learnThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn this'**
+  String get learnThis;
+
   /// No description provided for @swipeForMore.
   ///
   /// In en, this message translates to:

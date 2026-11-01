@@ -40,6 +40,9 @@ class FeedItem {
     this.order = 0,
     this.started = false,
     this.payload,
+    this.moduleId,
+    this.weight = 1,
+    this.learn = false,
   });
 
   final String key;
@@ -55,6 +58,15 @@ class FeedItem {
   /// S: a set the student already opened and did not finish.
   final bool started;
   final Object? payload;
+
+  /// Module of the post (Home chips); null for demo sets.
+  final int? moduleId;
+
+  /// Extra pick weight inside its bucket (review: failed / due cards).
+  final double weight;
+
+  /// Card of a lesson not read yet: show "Learn this".
+  final bool learn;
 
   @override
   String toString() => key;
@@ -99,8 +111,12 @@ List<FeedItem> buildFeedQueue({
   String? lastFirst,
   List<FeedItem> before = const [],
   int size = 50,
+  Map<FeedBucket, double> shares = feedShares,
+  bool repeat = true,
+  Set<String> exclude = const {},
+  bool proportionalFill = false,
 }) {
-  final used = {for (final i in before) i.key};
+  final used = {for (final i in before) i.key, ...exclude};
   final seq = <FeedItem>[...before];
   final out = <FeedItem>[];
 
@@ -114,7 +130,7 @@ List<FeedItem> buildFeedQueue({
       for (final i in all)
         if (!used.contains(i.key)) i,
     ];
-    if (fresh.isNotEmpty) return fresh;
+    if (fresh.isNotEmpty || !repeat) return fresh;
     final r = recent();
     return [
       for (final i in all)
@@ -145,7 +161,7 @@ List<FeedItem> buildFeedQueue({
 
   double weight(FeedItem item) {
     final s = seen[item.key];
-    if (s == null) return 3.0;
+    if (s == null) return 3.0 * item.weight;
     final hours = now.difference(s.last).inMinutes / 60.0;
     var w = 0.5 + hours.clamp(0.0, 72.0) / 24.0;
     final sameDay =
@@ -153,7 +169,7 @@ List<FeedItem> buildFeedQueue({
         s.last.month == now.month &&
         s.last.day == now.day;
     if (sameDay && s.today > 3) w *= 0.2;
-    return w;
+    return w * item.weight;
   }
 
   FeedItem? weighted(List<FeedItem> items) {
@@ -213,27 +229,29 @@ List<FeedItem> buildFeedQueue({
   bool has(FeedBucket b) => available(b).isNotEmpty;
 
   // Shares, with the share of empty buckets given to K and N first.
-  final shares = <FeedBucket, double>{
-    for (final b in FeedBucket.values) b: has(b) ? feedShares[b]! : 0,
+  final live = <FeedBucket, double>{
+    for (final b in FeedBucket.values) b: has(b) ? shares[b] ?? 0 : 0,
   };
-  final lost = 1 - shares.values.fold<double>(0, (a, b) => a + b);
+  final lost = 1 - live.values.fold<double>(0, (a, b) => a + b);
   if (lost > 0) {
-    final first = [
-      for (final b in [FeedBucket.known, FeedBucket.fresh])
-        if (shares[b]! > 0) b,
-    ];
+    final first = proportionalFill
+        ? const <FeedBucket>[]
+        : [
+            for (final b in [FeedBucket.known, FeedBucket.fresh])
+              if (live[b]! > 0) b,
+          ];
     final takers = first.isNotEmpty
         ? first
         : [
             for (final b in FeedBucket.values)
-              if (shares[b]! > 0) b,
+              if (live[b]! > 0) b,
           ];
-    final base = takers.fold<double>(0, (a, b) => a + feedShares[b]!);
+    final base = takers.fold<double>(0, (a, b) => a + shares[b]!);
     for (final b in takers) {
-      shares[b] = shares[b]! + lost * feedShares[b]! / base;
+      live[b] = live[b]! + lost * shares[b]! / base;
     }
   }
-  if (shares.values.every((s) => s == 0)) return out;
+  if (live.values.every((s) => s == 0)) return out;
 
   // 1. Warm-up (first post of the session only).
   if (before.isEmpty) {
@@ -279,9 +297,9 @@ List<FeedItem> buildFeedQueue({
   // 3. The other slots: smooth weighted round robin with jitter.
   final others = [
     for (final b in FeedBucket.values)
-      if (b != FeedBucket.set && shares[b]! > 0) b,
+      if (b != FeedBucket.set && live[b]! > 0) b,
   ];
-  final otherTotal = others.fold<double>(0, (a, b) => a + shares[b]!);
+  final otherTotal = others.fold<double>(0, (a, b) => a + live[b]!);
   final credit = {for (final b in others) b: 0.0};
 
   for (var slot = out.length; slot < size; slot++) {
@@ -291,7 +309,7 @@ List<FeedItem> buildFeedQueue({
     }
     if (item == null && others.isNotEmpty) {
       for (final b in others) {
-        credit[b] = credit[b]! + shares[b]! / otherTotal;
+        credit[b] = credit[b]! + live[b]! / otherTotal;
       }
       final order = [...others]
         ..sort(

@@ -309,6 +309,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shuffleFeed => 'خلط المنشورات';
 
   @override
+  String get feedAllModules => 'الكل';
+
+  @override
+  String get learnThis => 'تعلّم هذا';
+
+  @override
   String get swipeForMore => 'اسحب لرؤية المزيد';
 
   @override

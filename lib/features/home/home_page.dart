@@ -9,6 +9,7 @@ import '../../core/logging/startup_trace.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
+import '../../data/db/app_database.dart';
 import '../../data/learning/content_meta.dart';
 import '../../data/learning/feed_pool.dart';
 import '../../data/learning/feed_queue.dart';
@@ -55,6 +56,7 @@ class HomePage extends ConsumerWidget {
           child: Column(
             children: [
               _HomeHeader(),
+              _FeedChips(),
               SemesterBanner(),
               Expanded(child: _Feed()),
             ],
@@ -462,6 +464,11 @@ class _FeedState extends ConsumerState<_Feed> {
         accent: moduleAccent(card.module.id),
         liked: card.liked,
         saved: card.saved,
+        onLearn: item.learn
+            ? () => context.go(
+                '/modules/${card.module.id}/lesson/${card.card.lessonId}',
+              )
+            : null,
         onAnswer: (knewIt) => _answer(item, card, knewIt),
         onLike: (on) => guard(() => feed.setLiked(card.card.id, on: on)),
         onSave: (on) => guard(() => feed.setSaved(card.card.id, on: on)),
@@ -572,6 +579,43 @@ class _FeedDone extends ConsumerWidget {
               ref.invalidate(feedProvider);
               ref.invalidate(feedQueueProvider);
             },
+    );
+  }
+}
+
+/// Feed brief B: "All" + one chip per visible module (French name). The
+/// choice is remembered on the phone; switching shows a pre-built queue.
+class _FeedChips extends ConsumerWidget {
+  const _FeedChips();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final modules = switch (ref.watch(visibleModulesProvider)) {
+      AsyncData(:final value) => value,
+      _ => const <ModuleRow>[],
+    };
+    if (modules.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final picked = ref.watch(feedModuleProvider);
+    final selected = modules.any((m) => m.id == picked) ? picked : null;
+    Widget chip(int? id, String label) => Padding(
+      padding: const EdgeInsetsDirectional.only(end: KSpace.sm),
+      child: ChoiceChip(
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        selected: selected == id,
+        onSelected: (_) => ref.read(feedQueueProvider.notifier).select(id),
+      ),
+    );
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: KSpace.lg),
+        children: [
+          chip(null, l10n.feedAllModules),
+          for (final m in modules) chip(m.id, m.name),
+        ],
+      ),
     );
   }
 }

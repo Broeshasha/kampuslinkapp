@@ -313,6 +313,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shuffleFeed => 'Mélanger le fil';
 
   @override
+  String get feedAllModules => 'Tout';
+
+  @override
+  String get learnThis => 'Voir la leçon';
+
+  @override
   String get swipeForMore => 'Glisse pour voir la suite';
 
   @override
