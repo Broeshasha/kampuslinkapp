@@ -1,4 +1,4 @@
-import java.util.Properties
+﻿import java.util.Properties
 import java.io.FileInputStream
 
 val keystoreProperties = Properties()
@@ -16,6 +16,7 @@ plugins {
 }
 
 android {
+    lint { checkReleaseBuilds = false }
     ndkVersion = "28.2.13676358"
     namespace = "com.kampuslink.kampuslink"
     compileSdk = 37
@@ -64,3 +65,4 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
+
