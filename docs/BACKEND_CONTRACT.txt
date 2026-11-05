@@ -172,3 +172,52 @@ G. WHAT THE APP MUST NEVER DO
   - call the Kampus Store functions (admin_*, ks_*, advertiser/partner functions, get_my_profile())
     or touch Store tables: the Store is a separate product
 ================================================================================
+
+--------------------------------------------------------------------------------
+H. COINS, SHOP, STORIES  (file 33, Phase 1)
+--------------------------------------------------------------------------------
+  RULE: the server decides every coin. The phone never writes coins; it only shows what the server returns.
+  Coins are paid INSIDE sync_progress (never by direct RPCs like review_card). Amounts, daily caps, prices = rows
+  (kl_coin_rules, kl_shop_items, app_config), never an app release. Day = Algiers day, decided by the server at sync time
+  (an offline replay pays on the day it is synced). Daily cap on study coins: app_config coins_daily_cap (100).
+  Streak milestones (3/7/30/100) are outside the cap. Idempotent: the same event never pays twice (ledger unique ref).
+
+  sync_progress: result per op gets one extra key  "coins": int  (coins paid by THIS op, 0 if none) -> animate "+N".
+  New op kinds:
+    story_answer  {story_key, choice(int>=0)}   story_key from get_my_stories ('qotd:YYYY-MM-DD' or 'ed:<uuid>')
+                  right = coins (rule story_question_right), wrong = 0. Answering twice = applied, 0 coins.
+                  A question-of-the-day answer also counts as a quiz answer (XP, streak day, wrong -> cards return).
+                  rejected messages: invalid_story | invalid_choice | story_not_found | story_expired | not_a_question
+    story_view    {story_key}                   marks the story as seen (grey ring). Idempotent.
+  Coins paid automatically by existing kinds: review (card reaches box 5, once per card), lesson_done (once per lesson),
+    study_time (daily goal reached, once per day), exam_attempt (finished + self-scored, once per paper), any study op
+    (streak milestone). Off for now: card_got_it (Phase 2), report_confirmed, invite_* (Phase 3).
+
+  get_wallet() -> jsonb
+     { balance, today_earned, daily_cap, cap_remaining, max_freezes,
+       streak:{ current, best, freezes, protected(bool: a freeze will save a missed day), studied_today,
+                freeze_used_today, freeze_days_covered },
+       inventory:[{item_id, kind, equipped}] }
+  buy_item(p_item text) -> { item_id, balance, freezes }
+     errors: item_not_found | item_inactive | insufficient_coins | already_owned | freeze_limit
+  equip_item(p_item text, p_on bool = true) -> { item_id, equipped }      error: not_owned  (one equipped item per kind)
+  Shop list: direct read of kl_shop_items (active rows): { id, kind, price, name_i18n, desc_i18n, payload, sort }.
+  Streak freeze: bought with coins (max app_config coins_max_freezes), used AUTOMATICALLY by the server when the student
+     comes back after 1..freeze_max_gap_days missed days and owns enough freezes (1 freeze = 1 day). Streak itself = study_stats.
+
+  get_my_stories() -> jsonb     (call with the daily sync; cache it; works offline afterwards)
+     { day, generated_at, language, balance, templates:{ type:{name,cta,icon,colors,duration_ms,interactive} },
+       stories:[{ key, source:'auto'|'editorial', template, payload, expires_at, seen(bool),
+                  answered:null|{choice,is_correct} }] }
+     Order: question of the day, plan, streak, then editorial (newest first). Stories live at most 24 h.
+     template 'question' payload: { story_key, question_id, lesson_id, module{id,name_i18n,icon,color}, correct_index, figure,
+                  option_figures, i18n:{lang:{prompt,options[],explanation}}, yesterday?:{question_id,answers,pct_correct} }
+        'yesterday' exists ONLY when >= app_config story_min_sample (30) real answers. Never show a number that is not here.
+     template 'plan' payload: { story_key, module, due_cards, lesson_id|null, lesson_title_i18n, lesson_minutes, est_minutes (ESTIMATE) }
+     template 'streak' payload: { story_key, current, best, freezes, protected, studied_today, next_milestone, days_to_next, next_reward }
+     editorial payload: free i18n JSON by template; interactive question stories carry correct_index.
+     errors: not_authenticated | profile_missing
+  Templates (kl_story_templates, readable): question, trap, plan, streak, recap, explainer, news, fun.
+  Notifications: new template kind 'story_qotd' ({name} {module}) in kl_notification_templates = the ONE daily push.
+  New error codes (buy_item / equip_item): item_not_found, item_inactive, insufficient_coins, already_owned, freeze_limit, not_owned.
+
