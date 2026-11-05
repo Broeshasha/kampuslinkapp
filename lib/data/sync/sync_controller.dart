@@ -10,6 +10,7 @@ import '../../core/logging/logger.dart';
 import '../assess/assess_providers.dart';
 import '../catalog/catalog.dart';
 import '../chat/chat_providers.dart';
+import '../coins/coins_providers.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
 import '../remote/kampus_api.dart';
@@ -242,6 +243,9 @@ class SyncController extends Notifier<SyncState> {
     if (outboxSync != null) {
       firstFailure = (await outboxSync.flush()).failure;
     }
+    // Coins + today's stories: two small calls, cached for offline use.
+    await ref.read(walletControllerProvider.notifier).refresh();
+    await ref.read(storiesControllerProvider.notifier).refresh();
     // The catalog (years, modules, settings) first: it decides what shows.
     await ref.read(catalogProvider.notifier).refresh();
     // Chat messages typed offline go out with the sync too (MASTER_PLAN 7.8).

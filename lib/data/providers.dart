@@ -8,6 +8,7 @@ import 'modules/module_repository.dart';
 import 'remote/kampus_api.dart';
 import 'sync/outbox_repository.dart';
 import 'sync/outbox_sync.dart';
+import 'sync/sync_results.dart';
 
 /// One database for the whole app (opened lazily on first query).
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
@@ -49,7 +50,12 @@ final kampusApiProvider = Provider<KampusApi?>((ref) {
 final outboxSyncProvider = Provider<OutboxSync?>((ref) {
   final api = ref.watch(kampusApiProvider);
   if (api == null) return null;
-  return OutboxSync(ref.watch(outboxRepositoryProvider), api.syncProgress);
+  final bus = ref.watch(syncResultsProvider);
+  return OutboxSync(ref.watch(outboxRepositoryProvider), (ops) async {
+    final results = await api.syncProgress(ops);
+    bus.publish(results);
+    return results;
+  });
 });
 
 /// "n waiting to sync" (shown quietly in Profile later).

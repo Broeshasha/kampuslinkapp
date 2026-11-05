@@ -32,6 +32,8 @@ import '../cases/report_sheet.dart';
 import '../profile/semester_sheet.dart';
 import 'flash_card.dart';
 import 'quick_question_card.dart';
+import '../stories/coin_chip.dart';
+import '../stories/stories_bar.dart';
 import 'study_activity.dart';
 
 /// Home tab: Continue + Shuffle above the
@@ -56,6 +58,7 @@ class HomePage extends ConsumerWidget {
           child: Column(
             children: [
               _HomeHeader(),
+              StoriesBar(),
               _FeedChips(),
               SemesterBanner(),
               Expanded(child: _Feed()),
@@ -95,6 +98,7 @@ class _HomeHeader extends ConsumerWidget {
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
+            const CoinChip(),
             const _ResumeButton(),
             IconButton(
               tooltip: l10n.shuffleFeed,

@@ -279,6 +279,40 @@ class KampusApi {
     return _map(bundle);
   }
 
+  // ---- coins, shop, stories (BACKEND_CONTRACT H, file 33) ----
+  Future<Map<String, dynamic>> getWallet() async =>
+      _map(await _client.rpc('get_wallet').timeout(_timeout));
+
+  Future<Map<String, dynamic>> getMyStories() async =>
+      _map(await _client.rpc('get_my_stories').timeout(_timeout));
+
+  /// Errors: item_not_found, item_inactive, insufficient_coins,
+  /// already_owned, freeze_limit.
+  Future<Map<String, dynamic>> buyItem(String itemId) async => _map(
+    await _client.rpc('buy_item', params: {'p_item': itemId}).timeout(_timeout),
+  );
+
+  /// Error: not_owned.
+  Future<Map<String, dynamic>> equipItem(
+    String itemId, {
+    bool on = true,
+  }) async => _map(
+    await _client
+        .rpc('equip_item', params: {'p_item': itemId, 'p_on': on})
+        .timeout(_timeout),
+  );
+
+  /// The active shop rows (readable by every signed-in student).
+  Future<List<Map<String, dynamic>>> getShopItems() async {
+    final rows = await _client
+        .from('kl_shop_items')
+        .select('id, kind, price, name_i18n, desc_i18n, payload, sort')
+        .eq('active', true)
+        .order('sort')
+        .timeout(_timeout);
+    return [for (final r in rows) (r as Map).cast<String, dynamic>()];
+  }
+
   Future<List<dynamic>> syncProgress(List<Map<String, Object?>> ops) async {
     final results = await _client
         .rpc('sync_progress', params: {'p_ops': ops})

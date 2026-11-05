@@ -15,6 +15,7 @@ import '../features/preview/preview_page.dart';
 import '../features/onboarding/onboarding_status.dart';
 import '../features/profile/profile_page.dart';
 import '../features/quiz/quiz_page.dart';
+import '../features/shop/shop_page.dart';
 import '../features/reminders/reminders_page.dart';
 import '../features/reminders/review_session_page.dart';
 import '../features/profile/download_doctor_page.dart';
@@ -57,6 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingPage()),
       GoRoute(path: '/doctor', builder: (_, _) => const DownloadDoctorPage()),
       GoRoute(path: '/review', builder: (_, _) => const ReviewSessionPage()),
+      GoRoute(path: '/shop', builder: (_, _) => const ShopPage()),
       GoRoute(
         path: '/preview/:moduleId',
         builder: (_, state) =>

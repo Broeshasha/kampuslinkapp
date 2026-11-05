@@ -5,6 +5,7 @@ import '../core/config/app_config.dart';
 import '../core/l10n/locale_controller.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode_controller.dart';
+import '../data/coins/coins_providers.dart';
 import '../l10n/app_localizations.dart';
 import 'router.dart';
 import 'sync_triggers.dart';
@@ -15,12 +16,13 @@ class KampusLinkApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeControllerProvider);
+    final accent = ref.watch(themeAccentProvider);
     return MaterialApp.router(
       routerConfig: ref.watch(routerProvider),
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.lightWith(accent),
+      darkTheme: AppTheme.darkWith(accent),
       themeMode: ref.watch(themeModeProvider),
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,

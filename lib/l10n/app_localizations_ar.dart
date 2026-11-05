@@ -1158,4 +1158,109 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shareCopied => 'تم نسخ الرابط';
+
+  @override
+  String get storiesToday => 'اليوم';
+
+  @override
+  String get storiesClose => 'إغلاق';
+
+  @override
+  String coinsBalance(int count) {
+    return '$count عملة';
+  }
+
+  @override
+  String get storyCoinsPending => 'ستصلك عملاتك عند عودتك للاتصال.';
+
+  @override
+  String storyYesterday(int pct) {
+    return 'أمس، $pct% أجابوا على هذا السؤال بشكل صحيح';
+  }
+
+  @override
+  String storyPlanDue(int count) {
+    return 'راجع $count بطاقة';
+  }
+
+  @override
+  String storyPlanLesson(String title) {
+    return 'الحلقة التالية: $title';
+  }
+
+  @override
+  String storyPlanMinutes(int minutes) {
+    return 'حوالي $minutes دقيقة في المجموع';
+  }
+
+  @override
+  String get storyPlanDone => 'لقد أنهيت كل شيء. أحسنت!';
+
+  @override
+  String storyStreakDays(int count) {
+    return '$count أيام متتالية';
+  }
+
+  @override
+  String storyStreakBest(int count) {
+    return 'رقمك القياسي: $count';
+  }
+
+  @override
+  String storyStreakNext(int days, int milestone, int coins) {
+    return '$days أيام إضافية لشارة $milestone يوماً: +$coins عملة';
+  }
+
+  @override
+  String storyStreakFreezes(int count) {
+    return '$count تجميد جاهز للسلسلة';
+  }
+
+  @override
+  String get storyStreakProtected => 'سيحمي التجميد سلسلتك اليوم.';
+
+  @override
+  String storyStreakShare(int count) {
+    return 'أنا في سلسلة $count أيام متتالية على KampusLink!';
+  }
+
+  @override
+  String get shopTitle => 'المتجر';
+
+  @override
+  String get shopHint => 'اربح العملات بالدراسة. لا شيء هنا يُشترى بالمال.';
+
+  @override
+  String shopToday(int earned, int cap) {
+    return 'عملات اليوم: $earned / $cap';
+  }
+
+  @override
+  String get shopBuy => 'شراء';
+
+  @override
+  String get shopUse => 'استخدام';
+
+  @override
+  String get shopInUse => 'قيد الاستخدام';
+
+  @override
+  String shopHave(int count, int max) {
+    return 'لديك $count من $max';
+  }
+
+  @override
+  String get shopMax => 'بلغت الحد الأقصى';
+
+  @override
+  String get shopNotEnough => 'ليس لديك عملات كافية بعد';
+
+  @override
+  String get shopEmpty => 'المتجر فارغ حالياً.';
+
+  @override
+  String get shopOffline => 'اتصل بالإنترنت لاستخدام المتجر.';
+
+  @override
+  String get shopBought => 'تم!';
 }

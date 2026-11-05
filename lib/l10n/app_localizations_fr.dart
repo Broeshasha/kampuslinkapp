@@ -1175,4 +1175,111 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shareCopied => 'Lien copié';
+
+  @override
+  String get storiesToday => 'Aujourd’hui';
+
+  @override
+  String get storiesClose => 'Fermer';
+
+  @override
+  String coinsBalance(int count) {
+    return '$count pièces';
+  }
+
+  @override
+  String get storyCoinsPending => 'Tes pièces arrivent dès que tu es en ligne.';
+
+  @override
+  String storyYesterday(int pct) {
+    return 'Hier, $pct % ont réussi cette question';
+  }
+
+  @override
+  String storyPlanDue(int count) {
+    return 'Revoir $count cartes';
+  }
+
+  @override
+  String storyPlanLesson(String title) {
+    return 'Prochain épisode : $title';
+  }
+
+  @override
+  String storyPlanMinutes(int minutes) {
+    return 'Environ $minutes min au total';
+  }
+
+  @override
+  String get storyPlanDone => 'Tu es à jour. Bravo !';
+
+  @override
+  String storyStreakDays(int count) {
+    return '$count jours d’affilée';
+  }
+
+  @override
+  String storyStreakBest(int count) {
+    return 'Ton record : $count';
+  }
+
+  @override
+  String storyStreakNext(int days, int milestone, int coins) {
+    return 'Encore $days jours pour le badge de $milestone jours : +$coins pièces';
+  }
+
+  @override
+  String storyStreakFreezes(int count) {
+    return '$count gels de série prêts';
+  }
+
+  @override
+  String get storyStreakProtected => 'Un gel sauvera ta série aujourd’hui.';
+
+  @override
+  String storyStreakShare(int count) {
+    return 'Je suis à $count jours d’affilée sur KampusLink !';
+  }
+
+  @override
+  String get shopTitle => 'Boutique';
+
+  @override
+  String get shopHint =>
+      'Gagne des pièces en étudiant. Rien ici ne s’achète avec de l’argent.';
+
+  @override
+  String shopToday(int earned, int cap) {
+    return 'Pièces gagnées aujourd’hui : $earned / $cap';
+  }
+
+  @override
+  String get shopBuy => 'Acheter';
+
+  @override
+  String get shopUse => 'Utiliser';
+
+  @override
+  String get shopInUse => 'Utilisé';
+
+  @override
+  String shopHave(int count, int max) {
+    return 'Tu en as $count sur $max';
+  }
+
+  @override
+  String get shopMax => 'Maximum atteint';
+
+  @override
+  String get shopNotEnough => 'Pas encore assez de pièces';
+
+  @override
+  String get shopEmpty => 'La boutique est vide pour le moment.';
+
+  @override
+  String get shopOffline =>
+      'Connecte-toi à internet pour utiliser la boutique.';
+
+  @override
+  String get shopBought => 'C’est fait !';
 }
