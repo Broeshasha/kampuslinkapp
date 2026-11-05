@@ -221,3 +221,53 @@ H. COINS, SHOP, STORIES  (file 33, Phase 1)
   Notifications: new template kind 'story_qotd' ({name} {module}) in kl_notification_templates = the ONE daily push.
   New error codes (buy_item / equip_item): item_not_found, item_inactive, insufficient_coins, already_owned, freeze_limit, not_owned.
 
+
+--------------------------------------------------------------------------------
+I. ACHIEVEMENT POSTS + BIGGER SHOP  (file 35)
+--------------------------------------------------------------------------------
+  Achievements = real study events recorded by the server inside sync_progress (even when the coin cap is reached):
+    lesson_done {lesson_id, module, lesson_title_i18n} | exam {paper_id, score_20, paper_title, module} |
+    daily_goal {minutes} | streak {days}  (streak days list: app_config achievement_streaks)
+  A student can post an achievement ONCE, within post_window_hours (48), max posts_per_day (5); exams only from
+  post_exam_min_20 (10/20). No text, no pictures, no comments. Posts live 24 h. Visible to: same speciality + year
+  (posts_scope 'university' = also same university). Blocked users never see each other. post_reports_hide (3) hides.
+
+  get_my_stories() adds:
+    me: { id, username, title (i18n of the equipped title | null), frame ([colour, colour] | null) }
+    postable: [{ achievement_id, kind, payload, created_at }]       -> the "Post to my story" list
+    stories with template 'achievement': source 'mine' (own, first) or 'post' (classmates);
+      payload = achievement payload + { story_key, kind, post_id, author:{id, username, title, frame} }
+      key 'post:<uuid>'  (story_view works as for other stories)
+  get_my_achievements() -> same list as postable
+  post_achievement(p_achievement bigint) -> { post_id, story_key }
+     errors: not_found | already_posted | not_postable | daily_limit | posts_disabled
+  delete_my_post(p_post uuid) -> { deleted }          error: not_found
+  report_post(p_post uuid) -> { reported }            error: not_found (own post or unknown)
+  Shop: new kinds in use: frame (payload.colors [2 hex] = ring around the story circle / avatar),
+        title (name_i18n shown under the username). One equipped per kind (equip_item).
+
+
+--------------------------------------------------------------------------------
+I. ACHIEVEMENT POSTS + BIGGER SHOP  (file 35)
+--------------------------------------------------------------------------------
+  Achievements = real study events recorded by the server inside sync_progress (even when the coin cap is reached):
+    lesson_done {lesson_id, module, lesson_title_i18n} | exam {paper_id, score_20, paper_title, module} |
+    daily_goal {minutes} | streak {days}  (streak days list: app_config achievement_streaks)
+  A student can post an achievement ONCE, within post_window_hours (48), max posts_per_day (5); exams only from
+  post_exam_min_20 (10/20). No text, no pictures, no comments. Posts live 24 h. Visible to: same speciality + year
+  (posts_scope 'university' = also same university). Blocked users never see each other. post_reports_hide (3) hides.
+
+  get_my_stories() adds:
+    me: { id, username, title (i18n of the equipped title | null), frame ([colour, colour] | null) }
+    postable: [{ achievement_id, kind, payload, created_at }]       -> the "Post to my story" list
+    stories with template 'achievement': source 'mine' (own, first) or 'post' (classmates);
+      payload = achievement payload + { story_key, kind, post_id, author:{id, username, title, frame} }
+      key 'post:<uuid>'  (story_view works as for other stories)
+  get_my_achievements() -> same list as postable
+  post_achievement(p_achievement bigint) -> { post_id, story_key }
+     errors: not_found | already_posted | not_postable | daily_limit | posts_disabled
+  delete_my_post(p_post uuid) -> { deleted }          error: not_found
+  report_post(p_post uuid) -> { reported }            error: not_found (own post or unknown)
+  Shop: new kinds in use: frame (payload.colors [2 hex] = ring around the story circle / avatar),
+        title (name_i18n shown under the username). One equipped per kind (equip_item).
+
