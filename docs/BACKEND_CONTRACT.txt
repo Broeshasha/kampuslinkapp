@@ -248,26 +248,20 @@ I. ACHIEVEMENT POSTS + BIGGER SHOP  (file 35)
 
 
 --------------------------------------------------------------------------------
-I. ACHIEVEMENT POSTS + BIGGER SHOP  (file 35)
+J. SHOP V2  (file 37)
 --------------------------------------------------------------------------------
-  Achievements = real study events recorded by the server inside sync_progress (even when the coin cap is reached):
-    lesson_done {lesson_id, module, lesson_title_i18n} | exam {paper_id, score_20, paper_title, module} |
-    daily_goal {minutes} | streak {days}  (streak days list: app_config achievement_streaks)
-  A student can post an achievement ONCE, within post_window_hours (48), max posts_per_day (5); exams only from
-  post_exam_min_20 (10/20). No text, no pictures, no comments. Posts live 24 h. Visible to: same speciality + year
-  (posts_scope 'university' = also same university). Blocked users never see each other. post_reports_hide (3) hides.
-
-  get_my_stories() adds:
-    me: { id, username, title (i18n of the equipped title | null), frame ([colour, colour] | null) }
-    postable: [{ achievement_id, kind, payload, created_at }]       -> the "Post to my story" list
-    stories with template 'achievement': source 'mine' (own, first) or 'post' (classmates);
-      payload = achievement payload + { story_key, kind, post_id, author:{id, username, title, frame} }
-      key 'post:<uuid>'  (story_view works as for other stories)
-  get_my_achievements() -> same list as postable
-  post_achievement(p_achievement bigint) -> { post_id, story_key }
-     errors: not_found | already_posted | not_postable | daily_limit | posts_disabled
-  delete_my_post(p_post uuid) -> { deleted }          error: not_found
-  report_post(p_post uuid) -> { reported }            error: not_found (own post or unknown)
-  Shop: new kinds in use: frame (payload.colors [2 hex] = ring around the story circle / avatar),
-        title (name_i18n shown under the username). One equipped per kind (equip_item).
+  kl_shop_items: + buyable (false = earned only, error not_for_sale), + unlock ({"streak":30} | {"exam_20":18} | {"invites":3}).
+  New kinds: card_skin (payload {bg:[2 hex], fg}), celebration (payload {style: confetti|stars|fireworks}),
+    helper (payload {helper: fifty_fifty|hint, uses}), streak_repair, header_text.
+  Earned items are granted by the server when the achievement is recorded (30-day streak, mock exam >= 18/20).
+  buy_item errors: + not_for_sale, nothing_to_repair, repair_cooldown (streak_repair_cooldown_days = 30).
+    streak_repair works only when the student missed exactly yesterday (last study day = 2 days ago).
+    helper packs stack (no already_owned).
+  set_header_text(p_text text) -> { header_text }   (empty = back to KampusLink)
+     errors: not_owned (buy custom_header first) | invalid_text (2..20 chars, letters/digits/space . _ ' ! -) | blocked_text
+     Shown ONLY on the owner's phone and on the share images the owner creates (never to classmates in the app).
+     Blocked words: table kl_blocked_words (lowercase rows, "contains" check).
+  sync_progress new kind: helper_use {helper: fifty_fifty|hint}  -> rejected 'no_helper' when none left.
+     Helpers work in practice only, never in mock exams (app rule).
+  get_wallet adds: helpers {fifty_fifty: n, hint: n}, header_text, inventory[].payload (the item's look).
 
