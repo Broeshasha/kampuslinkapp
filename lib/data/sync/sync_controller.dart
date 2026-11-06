@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -175,11 +177,46 @@ class SyncController extends Notifier<SyncState> {
   }
 
   /// Visible modules not complete on the phone (local check, no network).
+  int? _lastSemester;
+
+  /// The current semester. On some starts reading it hits a provider loop
+  /// (CircularDependencyError): then the last known value, or the one saved
+  /// on the phone, is used so the sync and the downloads never die.
+  int? _semesterNow() {
+    return _lastSemester = _savedSemester() ?? _lastSemester;
+  }
+
+  int? _savedSemester() {
+    final prefs = ref.read(sharedPrefsProvider);
+    // A semester chosen offline (not on the server yet) wins.
+    final pending = prefs.getString('study_level_pending');
+    if (pending != null) {
+      try {
+        final p = jsonDecode(pending);
+        if (p is Map && p.containsKey('semester')) {
+          final s = p['semester'];
+          return s is num ? s.toInt() : int.tryParse('${s ?? ''}');
+        }
+      } on FormatException {
+        // fall back to the server copy below
+      }
+    }
+    final raw = prefs.getString('server_stats');
+    if (raw == null) return null;
+    try {
+      final v = jsonDecode(raw);
+      final s = v is Map ? v['current_semester'] : null;
+      return s is num ? s.toInt() : int.tryParse('${s ?? ''}');
+    } on FormatException {
+      return null;
+    }
+  }
+
   Future<bool> _missingLocally(List<String> langs) async {
     final r = await guard(
       () => ref.read(moduleRepositoryProvider).needingDownload(langs: langs),
     );
-    final semester = ref.read(currentSemesterProvider);
+    final semester = _semesterNow();
     return switch (r) {
       Ok(:final value) => value.any((m) => inSemester(m, semester)),
       Err() => false,
@@ -211,7 +248,7 @@ class SyncController extends Notifier<SyncState> {
     if (api != null && ref.read(isOnlineProvider)) {
       await guard(() async => repo.saveServerList(await api.getMyModules()));
     }
-    final semester = ref.read(currentSemesterProvider);
+    final semester = _semesterNow();
     final r = await guard(() => repo.needingDownload(langs: _firstLanguages()));
     final lessons = switch (r) {
       Ok(:final value) =>
@@ -290,7 +327,7 @@ class SyncController extends Notifier<SyncState> {
       modules: ref.read(moduleRepositoryProvider),
       downloader: downloader,
       fetchModules: api.getMyModules,
-      include: (m) => inSemester(m, ref.read(currentSemesterProvider)),
+      include: (m) => inSemester(m, _semesterNow()),
       shouldStop: () => _stop,
     );
     final report = await service.sync(
@@ -339,7 +376,7 @@ class SyncController extends Notifier<SyncState> {
     final store = ref.read(assessStoreProvider);
     final db = ref.read(appDatabaseProvider);
     final prefs = ref.read(sharedPrefsProvider);
-    final semester = ref.read(currentSemesterProvider);
+    final semester = _semesterNow();
     final modules = [
       for (final m in await db.select(db.modules).get())
         if (inSemester(m, semester)) m,

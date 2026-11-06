@@ -431,5 +431,7 @@
   "shopNotEnough": "Not enough coins yet",
   "shopEmpty": "The shop is empty for now.",
   "shopOffline": "Connect to the internet to use the shop.",
-  "shopBought": "Done!"
+  "shopBought": "Done!",
+  "feedShare": "Share",
+  "feedMore": "More"
 }

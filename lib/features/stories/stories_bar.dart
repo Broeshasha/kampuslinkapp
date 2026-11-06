@@ -7,7 +7,6 @@ import '../../data/catalog/catalog.dart' show localized;
 import '../../data/coins/coins_providers.dart';
 import '../../data/coins/stories_models.dart';
 import '../../l10n/app_localizations.dart';
-import 'stories_reveal.dart';
 import 'story_style.dart';
 import 'story_viewer_page.dart';
 
@@ -23,19 +22,6 @@ class StoriesBar extends ConsumerWidget {
     if (data == null) return const SizedBox.shrink();
     final groups = groupStories(data.stories);
     if (groups.isEmpty) return const SizedBox.shrink();
-    final visible = ref.watch(storiesBarVisibleProvider);
-    final reduce = MediaQuery.disableAnimationsOf(context);
-    return AnimatedSize(
-      duration: reduce ? Duration.zero : KMotion.normal,
-      curve: KMotion.curve,
-      alignment: Alignment.topCenter,
-      child: visible
-          ? _bar(context, groups, data)
-          : const SizedBox(width: double.infinity, height: 0),
-    );
-  }
-
-  Widget _bar(BuildContext context, List<StoryGroup> groups, StoriesData data) {
     return SizedBox(
       height: 100,
       child: ListView.separated(

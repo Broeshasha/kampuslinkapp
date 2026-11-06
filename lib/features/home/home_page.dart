@@ -1,14 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_repository.dart';
+import '../../core/connectivity/connectivity.dart';
 import '../../core/errors/failure_mapper.dart';
 import '../../core/errors/result.dart';
 import '../../core/logging/startup_trace.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
+import '../../data/coins/coins_models.dart' show parseHexColor;
+import '../../data/coins/coins_providers.dart';
 import '../../data/db/app_database.dart';
 import '../../data/learning/content_meta.dart';
 import '../../data/learning/feed_pool.dart';
@@ -25,16 +31,19 @@ import '../../l10n/app_localizations.dart';
 import '../../ui/coming_soon.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
+import '../../render/latex_plain.dart';
 import '../../render/math_text.dart';
+import '../../ui/celebration_burst.dart';
 import '../cases/case_models.dart';
 import '../cases/case_set_view.dart';
 import '../cases/report_sheet.dart';
 import '../profile/semester_sheet.dart';
-import 'flash_card.dart';
-import 'quick_question_card.dart';
+import '../profile/share_app.dart';
 import '../stories/coin_chip.dart';
 import '../stories/stories_bar.dart';
-import '../stories/stories_reveal.dart';
+import 'feed_rail.dart';
+import 'flash_card.dart';
+import 'quick_question_card.dart';
 import 'study_activity.dart';
 
 /// Home tab: Continue + Shuffle above the
@@ -62,7 +71,7 @@ class HomePage extends ConsumerWidget {
               StoriesBar(),
               _FeedChips(),
               SemesterBanner(),
-              Expanded(child: StoriesScrollWatcher(child: _Feed())),
+              Expanded(child: _Feed()),
             ],
           ),
         ),
@@ -357,10 +366,171 @@ class _Feed extends ConsumerStatefulWidget {
 class _FeedState extends ConsumerState<_Feed> {
   final _pages = PageController();
 
+  /// The post on screen: the fixed rail acts on it.
+  int _index = 0;
+
+  /// Likes / saves changed in this session (card id -> on).
+  final Map<int, bool> _liked = <int, bool>{};
+  final Map<int, bool> _saved = <int, bool>{};
+  int _heartId = 0;
+  bool _heart = false;
+  int _burstId = 0;
+  String? _burst;
+  String? _fxStyle;
+  Timer? _flushTimer;
+
   @override
   void dispose() {
+    _flushTimer?.cancel();
     _pages.dispose();
     super.dispose();
+  }
+
+  bool _isLiked(FeedCard c) => _liked[c.card.id] ?? c.liked;
+  bool _isSaved(FeedCard c) => _saved[c.card.id] ?? c.saved;
+
+  void _setLike(FeedCard c, bool on) {
+    setState(() => _liked[c.card.id] = on);
+    if (on) HapticFeedback.lightImpact();
+    guard(() => ref.read(feedRepositoryProvider).setLiked(c.card.id, on: on));
+  }
+
+  void _setSave(FeedCard c, bool on) {
+    setState(() => _saved[c.card.id] = on);
+    guard(() => ref.read(feedRepositoryProvider).setSaved(c.card.id, on: on));
+  }
+
+  /// Double-tap a card = like, with a big heart in the middle.
+  void _doubleLike(FeedCard c) {
+    HapticFeedback.mediumImpact();
+    if (!_isLiked(c)) _setLike(c, true);
+    setState(() {
+      _heart = true;
+      _heartId++;
+    });
+  }
+
+  /// Answers go out a few seconds later (one batch), so coins paid by the
+  /// server pop up while the student is still swiping.
+  void _flushSoon() {
+    _flushTimer?.cancel();
+    _flushTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted || !ref.read(isOnlineProvider)) return;
+      final sync = ref.read(outboxSyncProvider);
+      if (sync != null) unawaited(sync.flush());
+    });
+  }
+
+  String _plain(String text) {
+    final t = latexToPlain(text).trim();
+    return t.length > 240 ? '${t.substring(0, 240)}...' : t;
+  }
+
+  void _more(
+    BuildContext context, {
+    required String targetType,
+    required String targetId,
+    int? lessonId,
+    int? moduleId,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final router = GoRouter.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (lessonId != null && moduleId != null)
+              ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: Text(l10n.learnThis),
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  router.go('/modules/$moduleId/lesson/$lessonId');
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: Text(l10n.reportMistake),
+              onTap: () {
+                Navigator.of(sheet).pop();
+                showReportMistake(
+                  context,
+                  ref,
+                  targetType: targetType,
+                  targetId: targetId,
+                  lessonId: lessonId,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _rail(BuildContext context, FeedItem item, String lang) {
+    final payload = item.payload;
+    if (payload is FeedCard) {
+      final card = payload;
+      return FeedRail(
+        moduleName: card.module.name,
+        accent: moduleAccent(card.module.id),
+        onModule: () => context.go('/modules/${card.module.id}'),
+        liked: _isLiked(card),
+        onLike: () => _setLike(card, !_isLiked(card)),
+        saved: _isSaved(card),
+        onSave: () => _setSave(card, !_isSaved(card)),
+        onShare: () => showShareSheet(
+          context,
+          shareMessage(_plain(card.text(lang).front)),
+        ),
+        onMore: () => _more(
+          context,
+          targetType: 'card',
+          targetId: '${card.card.id}',
+          lessonId: card.card.lessonId,
+          moduleId: card.module.id,
+        ),
+      );
+    }
+    if (payload is FeedQuestion) {
+      return FeedRail(
+        moduleName: payload.module.name,
+        accent: moduleAccent(payload.module.id),
+        onModule: () => context.go('/modules/${payload.module.id}'),
+        onShare: () => showShareSheet(
+          context,
+          shareMessage(_plain(payload.text(lang).prompt)),
+        ),
+        onMore: () => _more(
+          context,
+          targetType: 'question',
+          targetId: '${payload.question.id}',
+          lessonId: payload.question.lessonId,
+          moduleId: payload.module.id,
+        ),
+      );
+    }
+    final source = payload as CaseSource;
+    final set = CaseSet.fromSource(source.source, lang);
+    final moduleId = source.moduleId;
+    return FeedRail(
+      moduleName: '',
+      accent: moduleId == null ? context.kc.accent : moduleAccent(moduleId),
+      onModule: moduleId == null
+          ? null
+          : () => context.go('/modules/$moduleId'),
+      onMore: () => _more(
+        context,
+        targetType: 'set',
+        targetId: set.id,
+        lessonId: set.lessonId,
+        moduleId: moduleId,
+      ),
+    );
   }
 
   Future<void> _next() async {
@@ -369,6 +539,14 @@ class _FeedState extends ConsumerState<_Feed> {
   }
 
   Future<void> _answer(FeedItem item, FeedCard card, bool knewIt) async {
+    final fx = _fxStyle;
+    if (knewIt && fx != null) {
+      setState(() {
+        _burst = fx;
+        _burstId++;
+      });
+    }
+    _flushSoon();
     await guard(
       () => ref
           .read(progressRepositoryProvider)
@@ -454,35 +632,50 @@ class _FeedState extends ConsumerState<_Feed> {
     }
     final card = payload as FeedCard;
     final text = card.text(lang);
+    final skin = ref
+        .read(walletControllerProvider)
+        ?.equippedPayload('card_skin');
+    final skinBg = skin?['bg'];
+    final skinColors = skinBg is List
+        ? [for (final c in skinBg) ?parseHexColor(c)]
+        : null;
     final figure = pickFigure(
       text: langText(card.card.i18nJson, text.language),
       shared: meta['c:${card.card.id}']?['figure'],
     );
     return MaxWidth(
-      child: FlashCardView(
-        key: ValueKey<String>(item.key),
-        front: text.front,
-        back: text.back,
-        language: text.language,
-        figure: figure,
-        moduleName: card.module.name,
-        accent: moduleAccent(card.module.id),
-        liked: card.liked,
-        saved: card.saved,
-        onLearn: item.learn
-            ? () => context.go(
-                '/modules/${card.module.id}/lesson/${card.card.lessonId}',
-              )
-            : null,
-        onAnswer: (knewIt) => _answer(item, card, knewIt),
-        onLike: (on) => guard(() => feed.setLiked(card.card.id, on: on)),
-        onSave: (on) => guard(() => feed.setSaved(card.card.id, on: on)),
-        onReport: () => showReportMistake(
-          context,
-          ref,
-          targetType: 'card',
-          targetId: '${card.card.id}',
-          lessonId: card.card.lessonId,
+      child: GestureDetector(
+        onDoubleTap: () => _doubleLike(card),
+        child: FlashCardView(
+          key: ValueKey<String>(item.key),
+          showRail: false,
+          skinColors: skinColors != null && skinColors.length >= 2
+              ? skinColors
+              : null,
+          skinText: parseHexColor(skin?['fg']),
+          front: text.front,
+          back: text.back,
+          language: text.language,
+          figure: figure,
+          moduleName: card.module.name,
+          accent: moduleAccent(card.module.id),
+          liked: _isLiked(card),
+          saved: _isSaved(card),
+          onLearn: item.learn
+              ? () => context.go(
+                  '/modules/${card.module.id}/lesson/${card.card.lessonId}',
+                )
+              : null,
+          onAnswer: (knewIt) => _answer(item, card, knewIt),
+          onLike: (on) => guard(() => feed.setLiked(card.card.id, on: on)),
+          onSave: (on) => guard(() => feed.setSaved(card.card.id, on: on)),
+          onReport: () => showReportMistake(
+            context,
+            ref,
+            targetType: 'card',
+            targetId: '${card.card.id}',
+            lessonId: card.card.lessonId,
+          ),
         ),
       ),
     );
@@ -498,6 +691,7 @@ class _FeedState extends ConsumerState<_Feed> {
       if (b == null || !_pages.hasClients) return;
       if (a == null || a.isEmpty || b.isEmpty || a.first.key != b.first.key) {
         _pages.jumpToPage(0);
+        if (_index != 0) setState(() => _index = 0);
       }
     });
     final caseProgress = switch (ref.watch(caseProgressProvider)) {
@@ -537,14 +731,79 @@ class _FeedState extends ConsumerState<_Feed> {
             )
           : const _FeedDone();
     }
-    return PageView.builder(
-      controller: _pages,
-      scrollDirection: Axis.vertical,
-      itemCount: value.length + 1,
-      onPageChanged: (i) => ref.read(feedQueueProvider.notifier).shown(i),
-      itemBuilder: (context, i) => i == value.length
-          ? const _FeedDone()
-          : _post(context, value[i], lang, caseProgress, hintSeen, meta),
+    final fx = ref
+        .watch(walletControllerProvider)
+        ?.equippedPayload('celebration')?['style'];
+    _fxStyle = fx is String ? fx : null;
+    final current = _index < value.length ? value[_index] : null;
+    // Only the cards move; the rail, the heart and the coin bubble stay.
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: PageView.builder(
+            controller: _pages,
+            scrollDirection: Axis.vertical,
+            itemCount: value.length + 1,
+            onPageChanged: (i) {
+              setState(() => _index = i);
+              ref.read(feedQueueProvider.notifier).shown(i);
+            },
+            itemBuilder: (context, i) => i == value.length
+                ? const _FeedDone()
+                : Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      end: FeedRail.width - KSpace.sm,
+                    ),
+                    child: _post(
+                      context,
+                      value[i],
+                      lang,
+                      caseProgress,
+                      hintSeen,
+                      meta,
+                    ),
+                  ),
+          ),
+        ),
+        if (current != null)
+          PositionedDirectional(
+            end: 0,
+            bottom: KSpace.xl,
+            child: AnimatedSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : KMotion.normal,
+              child: KeyedSubtree(
+                key: ValueKey<String>(current.key),
+                child: _rail(context, current, lang),
+              ),
+            ),
+          ),
+        if (_heart)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Center(
+                child: BigHeart(
+                  key: ValueKey<int>(_heartId),
+                  onDone: () {
+                    if (mounted) setState(() => _heart = false);
+                  },
+                ),
+              ),
+            ),
+          ),
+        if (_burst case final style?)
+          Positioned.fill(
+            child: CelebrationBurst(
+              key: ValueKey<int>(_burstId),
+              style: style,
+              onDone: () {
+                if (mounted) setState(() => _burst = null);
+              },
+            ),
+          ),
+        const Positioned.fill(child: CoinBurstLayer()),
+      ],
     );
   }
 }

@@ -95,6 +95,27 @@ class KampusColors extends ThemeExtension<KampusColors> {
   @override
   KampusColors copyWith() => this;
 
+  /// The same palette with another text colour (an equipped card skin).
+  KampusColors withText(Color fg) => KampusColors(
+    background: background,
+    surface: surface,
+    surfaceRaised: surfaceRaised,
+    border: border,
+    accent: accent,
+    onAccent: onAccent,
+    accentText: accentText,
+    accentAlt: accentAlt,
+    textPrimary: fg,
+    textSecondary: fg.withValues(alpha: 0.75),
+    official: official,
+    community: community,
+    danger: danger,
+    success: success,
+    warning: warning,
+    xp: xp,
+    streak: streak,
+  );
+
   /// The same palette with another accent (an equipped Shop theme).
   KampusColors withAccent(Color a, {required bool dark}) => KampusColors(
     background: background,

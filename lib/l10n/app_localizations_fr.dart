@@ -1282,4 +1282,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shopBought => 'C’est fait !';
+
+  @override
+  String get feedShare => 'Partager';
+
+  @override
+  String get feedMore => 'Plus';
 }

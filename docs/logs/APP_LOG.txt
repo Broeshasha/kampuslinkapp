@@ -155,3 +155,6 @@ TESTED: assess_test (Ondes 840 canonical, Chimie 842 converted with text marking
 [2026-11-05] LANE: D5 | AI/Person: founder + Claude | WP: Phase 1 coins + stories (backend file 33)
 DID: lib/data/coins (wallet, stories, shop providers, models), sync results bus, KampusApi get_wallet / get_my_stories / buy_item / equip_item / shop rows, features/stories (bar, viewer, question / plan / streak / editorial templates), features/shop (route /shop), Home stories bar + coin chip, Shop theme accent, 27 new keys en/fr/ar.
 TESTED: stories_coins_test (models, grouping, question detection, colours, results bus).
+
+[2026-11-06] LANE: D5 | AI/Person: founder + Claude | WP: Phase 2 step 1 (feed)
+DID: Home feed reels style: only the card moves, fixed side rail (module, like, save, share, more; mirrored in Arabic), double-tap like with big heart, pop/bounce buttons, card skins + celebrations from the shop, coin bubble when the server pays, answers flushed 3 s later; stories bar no longer hides; sync reads the semester saved on the phone (Riverpod loop removed).

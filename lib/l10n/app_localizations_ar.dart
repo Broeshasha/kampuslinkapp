@@ -1263,4 +1263,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shopBought => 'تم!';
+
+  @override
+  String get feedShare => 'مشاركة';
+
+  @override
+  String get feedMore => 'المزيد';
 }

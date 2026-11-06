@@ -374,5 +374,7 @@
   "shopNotEnough": "Pas encore assez de pi\u00e8ces",
   "shopEmpty": "La boutique est vide pour le moment.",
   "shopOffline": "Connecte-toi \u00e0 internet pour utiliser la boutique.",
-  "shopBought": "C\u2019est fait !"
+  "shopBought": "C\u2019est fait !",
+  "feedShare": "Partager",
+  "feedMore": "Plus"
 }

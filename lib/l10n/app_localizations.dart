@@ -2277,6 +2277,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done!'**
   String get shopBought;
+
+  /// No description provided for @feedShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get feedShare;
+
+  /// No description provided for @feedMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get feedMore;
 }
 
 class _AppLocalizationsDelegate

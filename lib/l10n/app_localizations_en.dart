@@ -1274,4 +1274,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopBought => 'Done!';
+
+  @override
+  String get feedShare => 'Share';
+
+  @override
+  String get feedMore => 'More';
 }

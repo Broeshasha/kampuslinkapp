@@ -19,11 +19,15 @@ class InventoryItem {
     required this.itemId,
     required this.kind,
     required this.equipped,
+    this.payload = const <String, dynamic>{},
   });
 
   final String itemId;
   final String kind;
   final bool equipped;
+
+  /// The look of the item (colours, style...), straight from the shop row.
+  final Map<String, dynamic> payload;
 }
 
 /// get_wallet(): everything is decided by the server; the phone only shows it.
@@ -64,6 +68,7 @@ class Wallet {
               itemId: '${e['item_id']}',
               kind: '${e['kind']}',
               equipped: e['equipped'] == true,
+              payload: asMap(e['payload']),
             ),
       ],
     );
@@ -77,6 +82,14 @@ class Wallet {
   bool owns(String itemId) => inventory.any((i) => i.itemId == itemId);
   bool isEquipped(String itemId) =>
       inventory.any((i) => i.itemId == itemId && i.equipped);
+
+  /// The payload of the equipped item of [kind] (null = none equipped).
+  Map<String, dynamic>? equippedPayload(String kind) {
+    for (final i in inventory) {
+      if (i.kind == kind && i.equipped) return i.payload;
+    }
+    return null;
+  }
 
   String? equippedOfKind(String kind) {
     for (final i in inventory) {
