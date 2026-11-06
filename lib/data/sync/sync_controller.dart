@@ -227,6 +227,16 @@ class SyncController extends Notifier<SyncState> {
   /// language change. Otherwise content is checked at most once a day,
   /// unless something is still missing on the phone (resume).
   Future<void> syncNow({bool force = false}) async {
+    try {
+      await _syncNow(force: force);
+    } catch (error, stack) {
+      // Never leave the sync stuck as "running": nothing would download again.
+      appLog.error(error, stack, reason: 'syncNow crashed');
+      state = state.copyWith(running: false, failure: UnknownFailure(error));
+    }
+  }
+
+  Future<void> _syncNow({bool force = false}) async {
     if (state.running) return;
     final api = ref.read(kampusApiProvider);
     final downloader = _downloader();

@@ -34,6 +34,7 @@ import 'flash_card.dart';
 import 'quick_question_card.dart';
 import '../stories/coin_chip.dart';
 import '../stories/stories_bar.dart';
+import '../stories/stories_reveal.dart';
 import 'study_activity.dart';
 
 /// Home tab: Continue + Shuffle above the
@@ -61,7 +62,7 @@ class HomePage extends ConsumerWidget {
               StoriesBar(),
               _FeedChips(),
               SemesterBanner(),
-              Expanded(child: _Feed()),
+              Expanded(child: StoriesScrollWatcher(child: _Feed())),
             ],
           ),
         ),
