@@ -1,11 +1,11 @@
-﻿{
+{
     "name": "KampusLink",
     "short_name": "KampusLink",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#3E7BFA",
     "theme_color": "#3E7BFA",
-    "description": "KampusLink connects international and African students in Algeria with translated university news, a student community, and a marketplace.",
+    "description": "L'appli de révision des étudiants algériens : leçons courtes, flashcards intelligentes, pièges d'examen, exercices corrigés.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
