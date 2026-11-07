@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr" dir="ltr">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,7 +18,58 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="KampusLink connects international and African students in Algeria with translated university news, a student community, and a marketplace -- all in one free app.">
+  <meta name="description" content="KampusLink, l'appli de révision des étudiants algériens : leçons courtes, flashcards intelligentes, quiz sur les pièges d'examen, exercices corrigés. L1 ST.">
+
+  <!-- SEO & link previews (Facebook, WhatsApp, Instagram, X) -->
+  <link rel="canonical" href="https://kampus-link.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KampusLink">
+  <meta property="og:url" content="https://kampus-link.com/">
+  <meta property="og:title" content="KampusLink – Révise mieux, retiens plus longtemps">
+  <meta property="og:description" content="L'appli de révision des étudiants algériens : leçons de 3 à 8 min, flashcards intelligentes, pièges d'examen, exercices corrigés. FR · AR · EN.">
+  <meta property="og:locale" content="fr_DZ">
+  <meta property="og:locale:alternate" content="ar_DZ">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:image" content="https://kampus-link.com/icons/Icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="KampusLink – Révise mieux, retiens plus longtemps">
+  <meta name="twitter:description" content="L'appli de révision des étudiants algériens : leçons courtes, flashcards intelligentes, pièges d'examen, exercices corrigés.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://kampus-link.com/#org",
+        "name": "KampusLink",
+        "url": "https://kampus-link.com/",
+        "logo": "https://kampus-link.com/icons/Icon-512.png"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://kampus-link.com/#website",
+        "url": "https://kampus-link.com/",
+        "name": "KampusLink",
+        "inLanguage": ["fr", "ar", "en"],
+        "publisher": { "@id": "https://kampus-link.com/#org" }
+      },
+      {
+        "@type": "MobileApplication",
+        "name": "KampusLink",
+        "operatingSystem": "Android",
+        "applicationCategory": "EducationalApplication",
+        "url": "https://play.google.com/store/apps/details?id=com.kampuslink.kampuslink",
+        "inLanguage": ["fr", "ar", "en"],
+        "description": "L'appli de révision des étudiants algériens : leçons courtes, flashcards intelligentes (méthode Leitner), quiz sur les pièges d'examen, exercices corrigés pas à pas, examens blancs, mode hors-ligne.",
+        "audience": { "@type": "EducationalAudience", "educationalRole": "student" },
+        "publisher": { "@id": "https://kampus-link.com/#org" }
+      }
+    ]
+  }
+  </script>
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -29,7 +80,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>KampusLink</title>
+  <title>KampusLink – Révision L1 ST : cours, flashcards, exercices corrigés</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -54,4 +105,3 @@
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
-
