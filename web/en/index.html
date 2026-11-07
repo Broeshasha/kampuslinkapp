@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KampusLink – The study app for Algerian university students</title>
+  <meta name="description" content="Short lessons, smart flashcards, quizzes built on real exam traps and step-by-step solved exercises. For L1 Sciences et Technologies students in Algeria.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://kampus-link.com/en/">
+  <link rel="alternate" hreflang="fr" href="https://kampus-link.com/">
+  <link rel="alternate" hreflang="ar" href="https://kampus-link.com/ar/">
+  <link rel="alternate" hreflang="en" href="https://kampus-link.com/en/">
+  <link rel="alternate" hreflang="x-default" href="https://kampus-link.com/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KampusLink">
+  <meta property="og:url" content="https://kampus-link.com/en/">
+  <meta property="og:title" content="KampusLink – Study smarter, remember longer">
+  <meta property="og:description" content="The study app for Algerian university students: 3–8 min lessons, smart flashcards, exam traps, solved exercises.">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="fr_DZ">
+  <meta property="og:locale:alternate" content="ar_DZ">
+  <meta property="og:image" content="https://kampus-link.com/icons/Icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  line-height: 1.6;
+}
+html[dir="rtl"] body { font-family: 'Noto Kufi Arabic', 'Inter', system-ui, sans-serif; line-height: 1.8; }
+
+a { color: #2563eb; }
+.container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+/* Header */
+header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding-bottom: 24px; }
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.logo-box { width: 44px; height: 44px; background: #2563eb; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; }
+.logo-text { font-size: 20px; font-weight: 700; }
+nav { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+nav a { text-decoration: none; color: #334155; font-weight: 500; }
+nav a:hover { color: #2563eb; }
+.lang { display: flex; gap: 6px; }
+.lang a { padding: 4px 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; color: #334155; text-decoration: none; }
+.lang a[aria-current="page"] { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+/* Hero */
+.hero { text-align: center; padding: 64px 0 48px; }
+.tag { display: inline-block; background: #dbeafe; color: #1e40af; font-weight: 600; font-size: 14px; padding: 6px 14px; border-radius: 999px; margin-bottom: 20px; }
+.hero h1 { font-size: 46px; line-height: 1.15; font-weight: 800; margin-bottom: 20px; }
+.hero p { font-size: 19px; color: #475569; max-width: 640px; margin: 0 auto 32px; }
+.cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 14px 26px; border-radius: 12px; text-decoration: none; font-weight: 600; transition: .2s ease; }
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1e40af; }
+.btn-secondary { background: #fff; color: #1e293b; border: 1px solid #cbd5e1; }
+.btn-secondary:hover { border-color: #2563eb; color: #2563eb; }
+.hero small { display: block; margin-top: 18px; color: #64748b; font-size: 14px; }
+
+/* Sections */
+section { padding: 56px 0; }
+h2 { font-size: 32px; line-height: 1.25; margin-bottom: 14px; text-align: center; }
+.lead { text-align: center; color: #475569; max-width: 680px; margin: 0 auto 36px; font-size: 17px; }
+
+.pain { background: #0f172a; color: #e2e8f0; border-radius: 20px; padding: 40px 28px; text-align: center; }
+.pain h2 { color: #fff; }
+.pain p { max-width: 640px; margin: 0 auto; font-size: 18px; }
+
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.step { background: #fff; border-radius: 16px; padding: 26px; box-shadow: 0 8px 20px rgba(0,0,0,.05); }
+.step b { display: inline-flex; width: 34px; height: 34px; border-radius: 50%; background: #2563eb; color: #fff; align-items: center; justify-content: center; margin-bottom: 12px; }
+.step h3 { font-size: 18px; margin-bottom: 8px; }
+.step p { color: #475569; font-size: 15px; }
+
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+.feature-card { background: #fff; padding: 26px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.05); }
+.feature-card h3 { margin-bottom: 8px; font-size: 18px; }
+.feature-card p { color: #475569; font-size: 15px; }
+
+.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.module-box { background: #fff; border-radius: 16px; padding: 26px; box-shadow: 0 8px 20px rgba(0,0,0,.05); }
+.module-box h3 { margin-bottom: 12px; }
+.module-box ul { padding-inline-start: 20px; color: #334155; }
+.module-box li { margin-bottom: 4px; }
+.soon { color: #64748b; font-size: 13px; }
+
+.bac { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; border-radius: 20px; padding: 44px 28px; text-align: center; }
+.bac h2 { color: #fff; }
+.bac p { max-width: 640px; margin: 0 auto; font-size: 17px; color: #dbeafe; }
+
+.faq { max-width: 760px; margin: 0 auto; }
+.faq details { background: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.04); }
+.faq summary { font-weight: 600; cursor: pointer; }
+.faq details p { margin-top: 10px; color: #475569; }
+
+.final { text-align: center; }
+
+footer { margin-top: 40px; padding: 32px 0; border-top: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 14px; }
+footer nav { justify-content: center; margin: 12px 0; }
+footer a { color: #2563eb; text-decoration: none; }
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 34px; }
+  h2 { font-size: 26px; }
+  header nav.main { display: none; }
+}
+</style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "KampusLink",
+    "operatingSystem": "Android",
+    "applicationCategory": "EducationalApplication",
+    "url": "https://play.google.com/store/apps/details?id=com.kampuslink.kampuslink",
+    "inLanguage": "en",
+    "description": "The study app for Algerian university students: short lessons, smart flashcards (Leitner system), quizzes built on real exam traps, step-by-step solved exercises, timed mock exams, works offline.",
+    "publisher": { "@id": "https://kampus-link.com/#org" }
+  }
+  </script>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <a class="logo" href="/en/">
+        <div class="logo-box">KL</div>
+        <div class="logo-text">KampusLink</div>
+      </a>
+      <nav class="main">
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="lang">
+        <a href="/" hreflang="fr">FR</a>
+        <a href="/ar/" hreflang="ar">العربية</a>
+        <a href="/en/" aria-current="page" hreflang="en">EN</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <span class="tag">For L1 Sciences et Technologies students</span>
+      <h1>Study smarter,<br>remember longer.</h1>
+      <p>The study app for Algerian university students: 3–8 minute lessons, smart flashcards and quizzes built on real exam traps.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.kampuslink.kampuslink&hl=en">Get it on Google Play</a>
+        <a class="btn btn-secondary" href="https://kampus-link.com/">Web version (iPhone)</a>
+      </div>
+      <small>Android · Web · Arabic, French, English · Works offline</small>
+    </section>
+
+    <section>
+      <div class="pain">
+        <h2>You reread your notes… and on exam day it's all gone?</h2>
+        <p>Rereading isn't remembering. KampusLink makes you <strong>practise</strong>: learn in short lessons, memorise with flashcards that come back at the right time, and train on the traps that really show up in exams.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+      <p class="lead">Three steps, a few minutes a day.</p>
+      <div class="steps">
+        <div class="step"><b>1</b><h3>Learn</h3><p>A short 3–8 minute lesson, clear and focused on your syllabus.</p></div>
+        <div class="step"><b>2</b><h3>Remember</h3><p>Smart flashcards: hard cards come back often, easy ones rarely.</p></div>
+        <div class="step"><b>3</b><h3>Practise</h3><p>Exam-trap quizzes, step-by-step solved exercises and timed mock exams.</p></div>
+      </div>
+    </section>
+
+    <section id="features">
+      <h2>Everything you need to revise</h2>
+      <p class="lead">Built for an Algerian student's life: on the bus, in the residence, when the internet cuts out.</p>
+      <div class="features">
+        <div class="feature-card"><h3>Short lessons</h3><p>3 to 8 minutes each. Perfect between classes or on the way.</p></div>
+        <div class="feature-card"><h3>Smart flashcards</h3><p>Leitner system: you review each card just before you forget it.</p></div>
+        <div class="feature-card"><h3>Exam traps</h3><p>Quizzes built on the mistakes students really make on exam day.</p></div>
+        <div class="feature-card"><h3>Solved exercises</h3><p>Every step explained, so you learn the method, not just the answer.</p></div>
+        <div class="feature-card"><h3>Mock exams</h3><p>Timed, so you practise in real exam conditions.</p></div>
+        <div class="feature-card"><h3>Offline, 3 languages</h3><p>Works without internet. In Arabic, French and English.</p></div>
+      </div>
+    </section>
+
+    <section id="modules">
+      <h2>Available today</h2>
+      <p class="lead">Sciences et Technologies common core (all 22 ST specialities) and L2 Génie minier (mining engineering).</p>
+      <div class="modules">
+        <div class="module-box">
+          <h3>L1 ST – Semester 1</h3>
+          <ul>
+            <li>Analyse 1</li>
+            <li>Algèbre 1</li>
+            <li>Structure de la matière</li>
+            <li>Éléments de mécanique</li>
+            <li>Structure des ordinateurs <span class="soon">(in progress)</span></li>
+            <li>Métiers en ST</li>
+            <li>Éthique</li>
+            <li>TP Mécanique · TP Chimie</li>
+          </ul>
+        </div>
+        <div class="module-box">
+          <h3>L2 Génie minier</h3>
+          <p>Second-year mining engineering modules, with the same method: lessons, flashcards, quizzes and solved exercises.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="bac">
+        <h2>Coming soon: KampusLink Bac</h2>
+        <p>For 3AS students, in Arabic. Starting with Experimental Sciences: biology, physics, maths and shared subjects. Short videos, flashcards, questions and mock bac exams.</p>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <details><summary>What is KampusLink?</summary><p>A study app for Algerian university students: short lessons, smart flashcards, exam-trap quizzes, solved exercises and mock exams.</p></details>
+        <details><summary>Who is it for?</summary><p>Right now, L1 Sciences et Technologies students (common core, all ST specialities) and L2 Génie minier students. Bac is coming soon.</p></details>
+        <details><summary>Does it work on iPhone?</summary><p>Yes, through the web version: open kampus-link.com in your browser. On Android, get the app on Google Play.</p></details>
+        <details><summary>Can I study offline?</summary><p>Yes. Once content is loaded, the app works without internet.</p></details>
+        <details><summary>Is it linked to my university?</summary><p>No. KampusLink is an independent study tool, not affiliated with any university.</p></details>
+        <details><summary>How do the flashcards work?</summary><p>With the Leitner system (spaced repetition): a card you miss comes back soon, a card you know comes back later. You review at the right time and waste none.</p></details>
+      </div>
+    </section>
+
+    <section class="final">
+      <h2>Ready for exams?</h2>
+      <p class="lead">Start with one chapter today.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.kampuslink.kampuslink&hl=en">Get it on Google Play</a>
+        <a class="btn btn-secondary" href="https://kampus-link.com/">Web version</a>
+      </div>
+    </section>
+
+    <footer>
+      <p>KampusLink is an independent study tool, not affiliated with any university.</p>
+      <nav>
+        <a href="https://site.kampus-link.com/terms.html">Terms</a>
+        <a href="https://site.kampus-link.com/privacy.html">Privacy</a>
+        <a href="https://site.kampus-link.com/community-guidelines.html">Community guidelines</a>
+        <a href="mailto:kampuslink.team@kampus-link.com">Contact</a>
+      </nav>
+      <p>© 2026 KampusLink</p>
+    </footer>
+
+  </div>
+</body>
+</html>
