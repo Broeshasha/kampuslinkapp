@@ -352,6 +352,7 @@ class _CaseSetViewState extends State<CaseSetView>
                               onReport: widget.onReport == null
                                   ? null
                                   : () => widget.onReport!(slide.id),
+                              bare: widget.fullBleed,
                               cover: slide.role == SlideRole.hook
                                   ? slide.figure ?? _cover
                                   : null,
@@ -549,6 +550,7 @@ class _SlideBody extends StatelessWidget {
     this.onNext,
     this.onReport,
     this.cover,
+    this.bare = false,
   });
 
   final CaseSlide slide;
@@ -569,6 +571,9 @@ class _SlideBody extends StatelessWidget {
 
   /// Hook slide only: the set's first figure, shown as a cover.
   final Map<String, dynamic>? cover;
+
+  /// Home feed: no panel of its own, the post's backdrop shows through.
+  final bool bare;
 
   String _roleLabel(AppLocalizations l10n) => switch (slide.role) {
     SlideRole.hook => l10n.roleHook,
@@ -613,13 +618,15 @@ class _SlideBody extends StatelessWidget {
   Widget _hook(BuildContext context, AppLocalizations l10n) {
     final kc = context.kc;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          colors: [accent.withValues(alpha: 0.55), kc.background],
-        ),
-      ),
+      decoration: bare
+          ? const BoxDecoration()
+          : BoxDecoration(
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
+                colors: [accent.withValues(alpha: 0.55), kc.background],
+              ),
+            ),
       child: Stack(
         children: [
           PositionedDirectional(

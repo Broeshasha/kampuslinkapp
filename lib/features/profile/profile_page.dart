@@ -26,8 +26,9 @@ import 'account_actions.dart';
 import 'language_picker.dart';
 import 'semester_sheet.dart';
 
-/// Where "Send feedback" writes to. Change it here only.
-const feedbackEmail = 'chidafarai06@gmail.com';
+/// Where feedback goes. Change it here only.
+const feedbackEmail = 'kampuslink.team@kampus-link.com';
+const feedbackTelegram = 'Shasha23prof';
 
 final appVersionProvider = FutureProvider<String>((ref) async {
   try {
@@ -545,6 +546,7 @@ class _AboutCard extends ConsumerWidget {
         ListTile(
           leading: Icon(Icons.mail_outline_rounded, color: kc.accentText),
           title: Text(l10n.sendFeedback),
+          subtitle: const Text(feedbackEmail),
           onTap: () => launchUrl(
             Uri(
               scheme: 'mailto',
@@ -552,6 +554,16 @@ class _AboutCard extends ConsumerWidget {
               query:
                   'subject=${Uri.encodeComponent('KampusLink feedback $version')}',
             ),
+          ),
+        ),
+        Divider(height: 1, color: kc.border),
+        ListTile(
+          leading: Icon(Icons.send_rounded, color: kc.accentText),
+          title: const Text('Telegram'),
+          subtitle: const Text('@$feedbackTelegram'),
+          onTap: () => launchUrl(
+            Uri.parse('https://t.me/$feedbackTelegram'),
+            mode: LaunchMode.externalApplication,
           ),
         ),
         Divider(height: 1, color: kc.border),
