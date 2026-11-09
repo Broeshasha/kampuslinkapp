@@ -37,6 +37,9 @@ class CaseSetView extends StatefulWidget {
     this.onReport,
     this.badge,
     this.endInset = 0,
+    this.fullBleed = false,
+    this.topInset = 0,
+    this.bottomInset = 0,
   });
 
   final CaseSet set;
@@ -60,6 +63,12 @@ class CaseSetView extends StatefulWidget {
 
   /// Home feed: extra room at the end for the side rail.
   final double endInset;
+
+  /// Home feed: edge to edge, with room kept free at the top and bottom
+  /// (glass bars floating over the card).
+  final bool fullBleed;
+  final double topInset;
+  final double bottomInset;
 
   @override
   State<CaseSetView> createState() => _CaseSetViewState();
@@ -210,28 +219,43 @@ class _CaseSetViewState extends State<CaseSetView>
     return Directionality(
       textDirection: style.direction,
       child: Padding(
-        padding: EdgeInsetsDirectional.fromSTEB(
-          KSpace.md,
-          KSpace.xs,
-          KSpace.md + widget.endInset,
-          KSpace.md,
-        ),
+        padding: widget.fullBleed
+            ? EdgeInsets.zero
+            : EdgeInsetsDirectional.fromSTEB(
+                KSpace.md,
+                KSpace.xs,
+                KSpace.md + widget.endInset,
+                KSpace.md,
+              ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(KRadius.sheet),
-            color: kc.surface,
-            border: Border.all(color: accent.withValues(alpha: 0.45)),
+            borderRadius: widget.fullBleed
+                ? BorderRadius.zero
+                : BorderRadius.circular(KRadius.sheet),
+            color: widget.fullBleed ? null : kc.surface,
+            gradient: widget.fullBleed
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [accent.withValues(alpha: 0.30), kc.surface],
+                  )
+                : null,
+            border: widget.fullBleed
+                ? null
+                : Border.all(color: accent.withValues(alpha: 0.45)),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(KRadius.sheet),
+            borderRadius: widget.fullBleed
+                ? BorderRadius.zero
+                : BorderRadius.circular(KRadius.sheet),
             child: Stack(
               children: [
                 Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         KSpace.md,
-                        KSpace.md,
+                        KSpace.md + widget.topInset,
                         KSpace.md,
                         0,
                       ),
@@ -295,57 +319,63 @@ class _CaseSetViewState extends State<CaseSetView>
                       ),
                     ),
                     Expanded(
-                      child: PageView.builder(
-                        controller: _pages,
-                        onPageChanged: _onPage,
-                        itemCount: count,
-                        itemBuilder: (context, i) {
-                          final slide = _set.slides[i];
-                          var n = 0;
-                          var total = 0;
-                          for (var j = 0; j < count; j++) {
-                            if (_set.slides[j].role != slide.role) continue;
-                            total++;
-                            if (j <= i) n++;
-                          }
-                          final body = _SlideBody(
-                            key: ValueKey<String>(slide.id),
-                            slide: slide,
-                            roleIndex: n,
-                            roleTotal: total,
-                            active: i == _page,
-                            style: style,
-                            accent: accent,
-                            choice: _choice,
-                            progress: _p,
-                            commitSlide: _set.commitSlide,
-                            onChoose: (c) => setState(() => _choice = c),
-                            onLock: _lock,
-                            onAnswer: (c) => _answer(slide, c),
-                            onSave: _toggleSave,
-                            onNext: widget.onNext,
-                            onReport: widget.onReport == null
-                                ? null
-                                : () => widget.onReport!(slide.id),
-                            cover: slide.role == SlideRole.hook
-                                ? slide.figure ?? _cover
-                                : null,
-                          );
-                          if (slide.role != SlideRole.commit) return body;
-                          return AnimatedBuilder(
-                            animation: _shake,
-                            builder: (context, child) => Transform.translate(
-                              offset: Offset(
-                                math.sin(_shake.value * math.pi * 6) *
-                                    10 *
-                                    (1 - _shake.value),
-                                0,
+                      child: Padding(
+                        padding: EdgeInsetsDirectional.only(
+                          end: widget.fullBleed ? widget.endInset : 0,
+                          bottom: widget.bottomInset,
+                        ),
+                        child: PageView.builder(
+                          controller: _pages,
+                          onPageChanged: _onPage,
+                          itemCount: count,
+                          itemBuilder: (context, i) {
+                            final slide = _set.slides[i];
+                            var n = 0;
+                            var total = 0;
+                            for (var j = 0; j < count; j++) {
+                              if (_set.slides[j].role != slide.role) continue;
+                              total++;
+                              if (j <= i) n++;
+                            }
+                            final body = _SlideBody(
+                              key: ValueKey<String>(slide.id),
+                              slide: slide,
+                              roleIndex: n,
+                              roleTotal: total,
+                              active: i == _page,
+                              style: style,
+                              accent: accent,
+                              choice: _choice,
+                              progress: _p,
+                              commitSlide: _set.commitSlide,
+                              onChoose: (c) => setState(() => _choice = c),
+                              onLock: _lock,
+                              onAnswer: (c) => _answer(slide, c),
+                              onSave: _toggleSave,
+                              onNext: widget.onNext,
+                              onReport: widget.onReport == null
+                                  ? null
+                                  : () => widget.onReport!(slide.id),
+                              cover: slide.role == SlideRole.hook
+                                  ? slide.figure ?? _cover
+                                  : null,
+                            );
+                            if (slide.role != SlideRole.commit) return body;
+                            return AnimatedBuilder(
+                              animation: _shake,
+                              builder: (context, child) => Transform.translate(
+                                offset: Offset(
+                                  math.sin(_shake.value * math.pi * 6) *
+                                      10 *
+                                      (1 - _shake.value),
+                                  0,
+                                ),
+                                child: child,
                               ),
-                              child: child,
-                            ),
-                            child: body,
-                          );
-                        },
+                              child: body,
+                            );
+                          },
+                        ),
                       ),
                     ),
                     if (_needGuess)

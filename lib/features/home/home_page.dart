@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:flutter/services.dart'
+    show HapticFeedback, SystemUiOverlayStyle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -39,9 +41,8 @@ import '../cases/case_set_view.dart';
 import '../cases/report_sheet.dart';
 import '../profile/semester_sheet.dart';
 import '../profile/share_app.dart';
-import '../stories/coin_chip.dart';
-import '../stories/stories_bar.dart';
 import 'feed_rail.dart';
+import 'home_accent.dart';
 import 'flash_card.dart';
 import 'quick_question_card.dart';
 import 'study_activity.dart';
@@ -61,17 +62,24 @@ class HomePage extends ConsumerWidget {
         body: ComingSoon(icon: Icons.auto_awesome, title: l10n.splashTagline),
       );
     }
-    return const Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: StudyActivity(
-          child: Column(
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+      ),
+      child: const Scaffold(
+        body: StudyActivity(
+          child: Stack(
             children: [
-              _HomeHeader(),
-              StoriesBar(),
-              _FeedChips(),
-              SemesterBanner(),
-              Expanded(child: _Feed()),
+              Positioned.fill(child: _Feed()),
+              PositionedDirectional(
+                top: 0,
+                start: 0,
+                end: 0,
+                child: _HomeTop(),
+              ),
             ],
           ),
         ),
@@ -80,43 +88,66 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-/// Only two actions above the feed (founder): Continue where you left off
-/// and Shuffle. No streak / XP / goal chips.
-class _HomeHeader extends ConsumerWidget {
-  const _HomeHeader();
+/// Height of the glass bar floating over the top of the feed.
+const double kHomeTopBar = 60;
+
+/// Floating glass bar over the card: module chips, Continue and Shuffle.
+/// No title: the card colour runs to the top of the screen.
+class _HomeTop extends ConsumerWidget {
+  const _HomeTop();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        KSpace.lg,
-        KSpace.sm,
-        KSpace.md,
-        KSpace.xs,
-      ),
-      child: MaxWidth(
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.appTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w800),
+    final radius = BorderRadius.circular(KRadius.sheet);
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              KSpace.md,
+              KSpace.xs,
+              KSpace.md,
+              0,
+            ),
+            child: MaxWidth(
+              child: ClipRRect(
+                borderRadius: radius,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: kc.surface.withValues(alpha: 0.38),
+                      borderRadius: radius,
+                      border: Border.all(
+                        color: kc.border.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(child: _FeedChips()),
+                        const _ResumeButton(),
+                        IconButton(
+                          tooltip: l10n.shuffleFeed,
+                          onPressed: () =>
+                              ref.read(feedQueueProvider.notifier).shuffle(),
+                          icon: Icon(
+                            Icons.shuffle_rounded,
+                            color: kc.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-            const CoinChip(),
-            const _ResumeButton(),
-            IconButton(
-              tooltip: l10n.shuffleFeed,
-              onPressed: () => ref.read(feedQueueProvider.notifier).shuffle(),
-              icon: Icon(Icons.shuffle_rounded, color: kc.textSecondary),
-            ),
-          ],
-        ),
+          ),
+          const SemesterBanner(),
+        ],
       ),
     );
   }
@@ -369,6 +400,9 @@ class _FeedState extends ConsumerState<_Feed> {
   /// The post on screen: the fixed rail acts on it.
   int _index = 0;
 
+  /// Key of the post whose colour the navigation bar already shows.
+  String? _accentKey;
+
   /// Likes / saves changed in this session (card id -> on).
   final Map<int, bool> _liked = <int, bool>{};
   final Map<int, bool> _saved = <int, bool>{};
@@ -471,6 +505,17 @@ class _FeedState extends ConsumerState<_Feed> {
     );
   }
 
+  /// The colour of the post: tints the glass navigation bar.
+  Color _accentOf(BuildContext context, FeedItem item) {
+    final payload = item.payload;
+    if (payload is FeedCard) return moduleAccent(payload.module.id);
+    if (payload is FeedQuestion) return moduleAccent(payload.module.id);
+    if (payload is CaseSource && payload.moduleId != null) {
+      return moduleAccent(payload.moduleId!);
+    }
+    return context.kc.accent;
+  }
+
   Widget _rail(BuildContext context, FeedItem item, String lang) {
     final payload = item.payload;
     if (payload is FeedCard) {
@@ -567,13 +612,19 @@ class _FeedState extends ConsumerState<_Feed> {
     Map<String, Map<String, dynamic>> meta,
   ) {
     final feed = ref.read(feedRepositoryProvider);
+    final pad = MediaQuery.paddingOf(context);
+    final topInset = pad.top + kHomeTopBar;
+    final bottomInset = pad.bottom;
     final payload = item.payload;
     if (payload is CaseSource) {
       final set = CaseSet.fromSource(payload.source, lang);
       return MaxWidth(
         child: CaseSetView(
           key: ValueKey<String>(item.key),
-          endInset: FeedRail.width - KSpace.sm,
+          fullBleed: true,
+          endInset: FeedRail.width,
+          topInset: topInset,
+          bottomInset: bottomInset,
           set: set,
           demo: payload.moduleId == null,
           accent: payload.moduleId == null
@@ -607,6 +658,8 @@ class _FeedState extends ConsumerState<_Feed> {
           key: ValueKey<String>(item.key),
           fullBleed: true,
           endInset: FeedRail.width,
+          topInset: topInset,
+          bottomInset: bottomInset,
           prompt: text.prompt,
           options: text.options,
           correctIndex: payload.question.correctIndex,
@@ -654,6 +707,8 @@ class _FeedState extends ConsumerState<_Feed> {
           showRail: false,
           fullBleed: true,
           endInset: FeedRail.width,
+          topInset: topInset,
+          bottomInset: bottomInset,
           skinColors: skinColors != null && skinColors.length >= 2
               ? skinColors
               : null,
@@ -741,6 +796,13 @@ class _FeedState extends ConsumerState<_Feed> {
         ?.equippedPayload('celebration')?['style'];
     _fxStyle = fx is String ? fx : null;
     final current = _index < value.length ? value[_index] : null;
+    if (current != null && _accentKey != current.key) {
+      _accentKey = current.key;
+      final accent = _accentOf(context, current);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(homeAccentProvider.notifier).set(accent);
+      });
+    }
     // Only the cards move; the rail, the heart and the coin bubble stay.
     return Stack(
       children: [
@@ -772,7 +834,7 @@ class _FeedState extends ConsumerState<_Feed> {
         if (current != null)
           PositionedDirectional(
             end: 0,
-            bottom: KSpace.xl,
+            bottom: KSpace.xl + MediaQuery.paddingOf(context).bottom,
             child: AnimatedSwitcher(
               duration: MediaQuery.disableAnimationsOf(context)
                   ? Duration.zero

@@ -35,6 +35,8 @@ class FlashCardView extends StatefulWidget {
     this.skinText,
     this.fullBleed = false,
     this.endInset = 0,
+    this.topInset = 0,
+    this.bottomInset = 0,
   });
 
   final String front;
@@ -68,6 +70,10 @@ class FlashCardView extends StatefulWidget {
   /// rounded corners); [endInset] keeps the text clear of the side rail.
   final bool fullBleed;
   final double endInset;
+
+  /// Room kept free at the top / bottom (glass bars floating over the card).
+  final double topInset;
+  final double bottomInset;
 
   @override
   State<FlashCardView> createState() => _FlashCardViewState();
@@ -197,6 +203,8 @@ class _FlashCardViewState extends State<FlashCardView>
                   rail: rail,
                   bleed: widget.fullBleed,
                   endInset: widget.endInset,
+                  topInset: widget.topInset,
+                  bottomInset: widget.bottomInset,
                   skin: widget.skinColors,
                   figure: widget.figure,
                   onLearn: widget.onLearn,
@@ -254,6 +262,8 @@ class _Face extends StatelessWidget {
     this.onLearn,
     this.bleed = false,
     this.endInset = 0,
+    this.topInset = 0,
+    this.bottomInset = 0,
   });
 
   final Color accent;
@@ -270,6 +280,8 @@ class _Face extends StatelessWidget {
   final VoidCallback? onLearn;
   final bool bleed;
   final double endInset;
+  final double topInset;
+  final double bottomInset;
 
   @override
   Widget build(BuildContext context) {
@@ -305,9 +317,9 @@ class _Face extends StatelessWidget {
       ),
       padding: EdgeInsetsDirectional.fromSTEB(
         KSpace.lg,
-        KSpace.lg,
+        KSpace.lg + topInset,
         KSpace.lg + endInset,
-        KSpace.lg,
+        KSpace.lg + bottomInset,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

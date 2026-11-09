@@ -2,11 +2,13 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/app_config.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
+import '../features/home/home_accent.dart';
 import '../l10n/app_localizations.dart';
 import '../ui/offline_banner.dart';
 import '../ui/storage_banner.dart';
@@ -43,6 +45,8 @@ class AppShell extends StatelessWidget {
         final width = constraints.maxWidth;
         if (width < KBreakpoints.medium) {
           return Scaffold(
+            // Home: the card colour runs behind the glass navigation bar.
+            extendBody: navigationShell.currentIndex == 0,
             body: navigationShell,
             bottomNavigationBar: _FloatingNavBar(
               tabs: tabs,
@@ -101,7 +105,7 @@ class AppShell extends StatelessWidget {
 }
 
 /// Floating, frosted-glass pill with a soft brand glow.
-class _FloatingNavBar extends StatelessWidget {
+class _FloatingNavBar extends ConsumerWidget {
   const _FloatingNavBar({
     required this.tabs,
     required this.selectedIndex,
@@ -113,9 +117,10 @@ class _FloatingNavBar extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final kc = context.kc;
     final radius = BorderRadius.circular(KRadius.sheet);
+    final tint = selectedIndex == 0 ? ref.watch(homeAccentProvider) : null;
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.only(bottom: KSpace.md),
@@ -151,7 +156,12 @@ class _FloatingNavBar extends StatelessWidget {
                     filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: kc.surface.withValues(alpha: 0.88),
+                        color: tint == null
+                            ? kc.surface.withValues(alpha: 0.88)
+                            : Color.alphaBlend(
+                                tint.withValues(alpha: 0.35),
+                                kc.surface.withValues(alpha: 0.5),
+                              ),
                         borderRadius: radius,
                         border: Border.all(color: kc.border),
                       ),

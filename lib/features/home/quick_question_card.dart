@@ -27,6 +27,8 @@ class QuickQuestionCard extends StatefulWidget {
     this.optionFigures = const [],
     this.fullBleed = false,
     this.endInset = 0,
+    this.topInset = 0,
+    this.bottomInset = 0,
   });
 
   final String prompt;
@@ -46,6 +48,8 @@ class QuickQuestionCard extends StatefulWidget {
   /// Home feed: edge to edge; [endInset] keeps content clear of the rail.
   final bool fullBleed;
   final double endInset;
+  final double topInset;
+  final double bottomInset;
 
   @override
   State<QuickQuestionCard> createState() => _QuickQuestionCardState();
@@ -100,9 +104,9 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
           child: SingleChildScrollView(
             padding: EdgeInsetsDirectional.fromSTEB(
               KSpace.lg,
-              KSpace.lg,
+              KSpace.lg + widget.topInset,
               KSpace.lg + widget.endInset,
-              KSpace.lg,
+              KSpace.lg + widget.bottomInset,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
