@@ -8,6 +8,7 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../home/post_backdrop.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
@@ -233,13 +234,6 @@ class _CaseSetViewState extends State<CaseSetView>
                 ? BorderRadius.zero
                 : BorderRadius.circular(KRadius.sheet),
             color: widget.fullBleed ? null : kc.surface,
-            gradient: widget.fullBleed
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [accent.withValues(alpha: 0.30), kc.surface],
-                  )
-                : null,
             border: widget.fullBleed
                 ? null
                 : Border.all(color: accent.withValues(alpha: 0.45)),
@@ -250,6 +244,8 @@ class _CaseSetViewState extends State<CaseSetView>
                 : BorderRadius.circular(KRadius.sheet),
             child: Stack(
               children: [
+                if (widget.fullBleed)
+                  Positioned.fill(child: PostBackdrop(accent: accent)),
                 Column(
                   children: [
                     Padding(

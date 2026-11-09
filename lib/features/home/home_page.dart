@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
@@ -42,7 +41,6 @@ import '../cases/report_sheet.dart';
 import '../profile/semester_sheet.dart';
 import '../profile/share_app.dart';
 import 'feed_rail.dart';
-import 'home_accent.dart';
 import 'flash_card.dart';
 import 'quick_question_card.dart';
 import 'study_activity.dart';
@@ -91,8 +89,8 @@ class HomePage extends ConsumerWidget {
 /// Height of the glass bar floating over the top of the feed.
 const double kHomeTopBar = 60;
 
-/// Floating glass bar over the card: module chips, Continue and Shuffle.
-/// No title: the card colour runs to the top of the screen.
+/// Module chips, Continue and Shuffle, floating over the card (no bar,
+/// no blur: the post's colour runs to the top of the screen).
 class _HomeTop extends ConsumerWidget {
   const _HomeTop();
 
@@ -100,49 +98,29 @@ class _HomeTop extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
-    final radius = BorderRadius.circular(KRadius.sheet);
     return SafeArea(
       bottom: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              KSpace.md,
-              KSpace.xs,
-              KSpace.md,
-              0,
+            padding: const EdgeInsetsDirectional.only(
+              start: KSpace.xs,
+              end: KSpace.xs,
+              top: KSpace.xs,
             ),
             child: MaxWidth(
-              child: ClipRRect(
-                borderRadius: radius,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: kc.surface.withValues(alpha: 0.38),
-                      borderRadius: radius,
-                      border: Border.all(
-                        color: kc.border.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Expanded(child: _FeedChips()),
-                        const _ResumeButton(),
-                        IconButton(
-                          tooltip: l10n.shuffleFeed,
-                          onPressed: () =>
-                              ref.read(feedQueueProvider.notifier).shuffle(),
-                          icon: Icon(
-                            Icons.shuffle_rounded,
-                            color: kc.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
+              child: Row(
+                children: [
+                  const Expanded(child: _FeedChips()),
+                  const _ResumeButton(),
+                  IconButton(
+                    tooltip: l10n.shuffleFeed,
+                    onPressed: () =>
+                        ref.read(feedQueueProvider.notifier).shuffle(),
+                    icon: Icon(Icons.shuffle_rounded, color: kc.textPrimary),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -400,9 +378,6 @@ class _FeedState extends ConsumerState<_Feed> {
   /// The post on screen: the fixed rail acts on it.
   int _index = 0;
 
-  /// Key of the post whose colour the navigation bar already shows.
-  String? _accentKey;
-
   /// Likes / saves changed in this session (card id -> on).
   final Map<int, bool> _liked = <int, bool>{};
   final Map<int, bool> _saved = <int, bool>{};
@@ -503,17 +478,6 @@ class _FeedState extends ConsumerState<_Feed> {
         ),
       ),
     );
-  }
-
-  /// The colour of the post: tints the glass navigation bar.
-  Color _accentOf(BuildContext context, FeedItem item) {
-    final payload = item.payload;
-    if (payload is FeedCard) return moduleAccent(payload.module.id);
-    if (payload is FeedQuestion) return moduleAccent(payload.module.id);
-    if (payload is CaseSource && payload.moduleId != null) {
-      return moduleAccent(payload.moduleId!);
-    }
-    return context.kc.accent;
   }
 
   Widget _rail(BuildContext context, FeedItem item, String lang) {
@@ -796,13 +760,6 @@ class _FeedState extends ConsumerState<_Feed> {
         ?.equippedPayload('celebration')?['style'];
     _fxStyle = fx is String ? fx : null;
     final current = _index < value.length ? value[_index] : null;
-    if (current != null && _accentKey != current.key) {
-      _accentKey = current.key;
-      final accent = _accentOf(context, current);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) ref.read(homeAccentProvider.notifier).set(accent);
-      });
-    }
     // Only the cards move; the rail, the heart and the coin bubble stay.
     return Stack(
       children: [
@@ -928,19 +885,49 @@ class _FeedChips extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final picked = ref.watch(feedModuleProvider);
     final selected = modules.any((m) => m.id == picked) ? picked : null;
-    Widget chip(int? id, String label) => Padding(
-      padding: const EdgeInsetsDirectional.only(end: KSpace.sm),
-      child: ChoiceChip(
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        selected: selected == id,
-        onSelected: (_) => ref.read(feedQueueProvider.notifier).select(id),
-      ),
-    );
+    final kc = context.kc;
+    Widget chip(int? id, String label) {
+      final on = selected == id;
+      return Semantics(
+        button: true,
+        selected: on,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => ref.read(feedQueueProvider.notifier).select(id),
+          child: SizedBox(
+            height: 44,
+            child: Center(
+              child: Container(
+                height: 34,
+                alignment: Alignment.center,
+                margin: const EdgeInsetsDirectional.only(end: KSpace.xs),
+                padding: const EdgeInsets.symmetric(horizontal: 13),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(17),
+                  color: on ? kc.textPrimary.withValues(alpha: 0.16) : null,
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: on ? FontWeight.w800 : FontWeight.w600,
+                    color: on ? kc.textPrimary : kc.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 44,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: KSpace.lg),
+        padding: const EdgeInsets.symmetric(horizontal: KSpace.sm),
         children: [
           chip(null, l10n.feedAllModules),
           for (final m in modules) chip(m.id, m.name),

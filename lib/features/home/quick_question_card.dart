@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
+import 'post_backdrop.dart';
 
 /// Feed post Q: one MCQ about something the student knows. One tap answers
 /// it; the right option and the explanation show at once.
@@ -93,7 +94,7 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
               ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: kc.surface,
+            color: widget.fullBleed ? null : kc.surface,
             borderRadius: widget.fullBleed
                 ? BorderRadius.zero
                 : BorderRadius.circular(KRadius.sheet),
@@ -101,89 +102,99 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
                 ? null
                 : Border.all(color: widget.accent.withValues(alpha: 0.45)),
           ),
-          child: SingleChildScrollView(
-            padding: EdgeInsetsDirectional.fromSTEB(
-              KSpace.lg,
-              KSpace.lg + widget.topInset,
-              KSpace.lg + widget.endInset,
-              KSpace.lg + widget.bottomInset,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+          child: Stack(
+            children: [
+              if (widget.fullBleed)
+                Positioned.fill(child: PostBackdrop(accent: widget.accent)),
+              SingleChildScrollView(
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  KSpace.lg,
+                  KSpace.lg + widget.topInset,
+                  KSpace.lg + widget.endInset,
+                  KSpace.lg + widget.bottomInset,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.bolt_rounded, color: widget.accent, size: 18),
-                    const SizedBox(width: KSpace.xs),
-                    Expanded(
-                      child: Text(
-                        '${l10n.roleQuiz.toUpperCase()} \u00b7 ${widget.moduleName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.bolt_rounded,
                           color: widget.accent,
-                          fontSize: 12,
+                          size: 18,
+                        ),
+                        const SizedBox(width: KSpace.xs),
+                        Expanded(
+                          child: Text(
+                            '${l10n.roleQuiz.toUpperCase()} \u00b7 ${widget.moduleName}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: widget.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (widget.onReport != null)
+                          IconButton(
+                            tooltip: l10n.reportMistake,
+                            visualDensity: VisualDensity.compact,
+                            onPressed: widget.onReport,
+                            icon: Icon(
+                              Icons.flag_outlined,
+                              color: kc.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: KSpace.md),
+                    RichBlockText(
+                      text: widget.prompt,
+                      style: BlockStyle(
+                        language: style.language,
+                        scale: style.scale * 1.1,
+                        kc: kc,
+                        labels: style.labels,
+                        base: style.base.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    if (widget.figure case final fig?) ...[
+                      const SizedBox(height: KSpace.md),
+                      CompactFigure(
+                        figure: fig,
+                        language: style.language,
+                        height: 160,
+                      ),
+                    ],
+                    const SizedBox(height: KSpace.md),
+                    OptionGrid(
+                      count: widget.options.length,
+                      withFigures: widget.optionFigures.isNotEmpty,
+                      itemBuilder: (context, i) =>
+                          _option(context, i, answer, style),
+                    ),
+                    if (answer != null) ...[
+                      Text(
+                        answer == widget.correctIndex
+                            ? l10n.quickRight
+                            : l10n.quickWrong,
+                        style: TextStyle(
+                          color: answer == widget.correctIndex
+                              ? kc.success
+                              : kc.accentText,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                    if (widget.onReport != null)
-                      IconButton(
-                        tooltip: l10n.reportMistake,
-                        visualDensity: VisualDensity.compact,
-                        onPressed: widget.onReport,
-                        icon: Icon(
-                          Icons.flag_outlined,
-                          color: kc.textSecondary,
-                        ),
-                      ),
+                      if (widget.explanation.isNotEmpty) ...[
+                        const SizedBox(height: KSpace.xs),
+                        RichBlockText(text: widget.explanation, style: style),
+                      ],
+                    ],
                   ],
                 ),
-                const SizedBox(height: KSpace.md),
-                RichBlockText(
-                  text: widget.prompt,
-                  style: BlockStyle(
-                    language: style.language,
-                    scale: style.scale * 1.1,
-                    kc: kc,
-                    labels: style.labels,
-                    base: style.base.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ),
-                if (widget.figure case final fig?) ...[
-                  const SizedBox(height: KSpace.md),
-                  CompactFigure(
-                    figure: fig,
-                    language: style.language,
-                    height: 160,
-                  ),
-                ],
-                const SizedBox(height: KSpace.md),
-                OptionGrid(
-                  count: widget.options.length,
-                  withFigures: widget.optionFigures.isNotEmpty,
-                  itemBuilder: (context, i) =>
-                      _option(context, i, answer, style),
-                ),
-                if (answer != null) ...[
-                  Text(
-                    answer == widget.correctIndex
-                        ? l10n.quickRight
-                        : l10n.quickWrong,
-                    style: TextStyle(
-                      color: answer == widget.correctIndex
-                          ? kc.success
-                          : kc.accentText,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (widget.explanation.isNotEmpty) ...[
-                    const SizedBox(height: KSpace.xs),
-                    RichBlockText(text: widget.explanation, style: style),
-                  ],
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -204,7 +215,7 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
       key: ValueKey<String>('option-$i'),
       color: answer != null && (right || i == answer)
           ? color.withValues(alpha: 0.14)
-          : kc.surface,
+          : kc.surface.withValues(alpha: widget.fullBleed ? 0.55 : 1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(KRadius.button),
         side: BorderSide(color: color, width: 1.5),

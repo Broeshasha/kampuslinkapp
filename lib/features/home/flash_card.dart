@@ -11,6 +11,7 @@ import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
 import 'fit_or_scroll.dart';
+import 'post_backdrop.dart';
 
 /// One flashcard, reels style: tap = soft 3D flip; the back shows the
 /// answer and "Again / I knew it"; like and save sit on the side.
@@ -122,7 +123,7 @@ class _FlashCardViewState extends State<FlashCardView>
         : fallbackLanguageCode;
     final style = BlockStyle(
       language: lang,
-      scale: 1.25,
+      scale: widget.fullBleed ? 1.4 : 1.25,
       kc: kc,
       labels: lookupAppLocalizations(Locale(lang)),
       base: Theme.of(context).textTheme.bodyLarge ?? const TextStyle(),
@@ -232,6 +233,8 @@ class _FlashCardViewState extends State<FlashCardView>
                             ),
                           ],
                         )
+                      : widget.fullBleed
+                      ? _FlipHint(label: l10n.tapToFlip, color: kc.textPrimary)
                       : Text(
                           l10n.tapToFlip,
                           textAlign: TextAlign.center,
@@ -286,35 +289,40 @@ class _Face extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kc = context.kc;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: bleed
-            ? BorderRadius.zero
-            : BorderRadius.circular(KRadius.sheet),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: switch (skin) {
-            final s? when s.length >= 2 => back ? [s[1], s[0]] : s,
-            _ =>
-              back
-                  ? [kc.surfaceRaised, kc.surface]
-                  : [accent.withValues(alpha: 0.30), kc.surface],
-          },
-        ),
-        border: bleed
-            ? null
-            : Border.all(color: accent.withValues(alpha: back ? 0.25 : 0.5)),
-        boxShadow: bleed
-            ? null
-            : [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.18),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-      ),
+    final skinList = skin;
+    final face = Container(
+      decoration: bleed
+          ? null
+          : BoxDecoration(
+              borderRadius: bleed
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(KRadius.sheet),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: switch (skin) {
+                  final s? when s.length >= 2 => back ? [s[1], s[0]] : s,
+                  _ =>
+                    back
+                        ? [kc.surfaceRaised, kc.surface]
+                        : [accent.withValues(alpha: 0.30), kc.surface],
+                },
+              ),
+              border: bleed
+                  ? null
+                  : Border.all(
+                      color: accent.withValues(alpha: back ? 0.25 : 0.5),
+                    ),
+              boxShadow: bleed
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+            ),
       padding: EdgeInsetsDirectional.fromSTEB(
         KSpace.lg,
         KSpace.lg + topInset,
@@ -329,26 +337,28 @@ class _Face extends StatelessWidget {
               Flexible(
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: KSpace.sm,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(KRadius.chip),
-                    ),
-                    child: Text(
-                      moduleName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: accent,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                  child: bleed
+                      ? _Eyebrow(accent: accent, name: moduleName)
+                      : Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: KSpace.sm,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(KRadius.chip),
+                          ),
+                          child: Text(
+                            moduleName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: accent,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
                 ),
               ),
               if (onLearn != null)
@@ -414,7 +424,95 @@ class _Face extends StatelessWidget {
         ],
       ),
     );
+    if (!bleed) return face;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PostBackdrop(
+          accent: accent,
+          strength: back ? 0.22 : 0.38,
+          colors: switch (skinList) {
+            final s? when s.length >= 2 => back ? [s[1], s[0]] : s,
+            _ => null,
+          },
+        ),
+        face,
+      ],
+    );
   }
+}
+
+/// Module name with a small badge, above the text of a full-screen card.
+class _Eyebrow extends StatelessWidget {
+  const _Eyebrow({required this.accent, required this.name});
+
+  final Color accent;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Icon(Icons.layers_outlined, color: accent, size: 20),
+      ),
+      const SizedBox(width: 10),
+      Flexible(
+        child: Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: accent,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// "Tap to flip" as a quiet pill under the text.
+class _FlipHint extends StatelessWidget {
+  const _FlipHint({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: color.withValues(alpha: 0.06),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.touch_app_outlined, size: 16, color: color),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ActionRail extends StatelessWidget {
