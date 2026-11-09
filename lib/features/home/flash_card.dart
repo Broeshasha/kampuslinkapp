@@ -33,6 +33,8 @@ class FlashCardView extends StatefulWidget {
     this.showRail = true,
     this.skinColors,
     this.skinText,
+    this.fullBleed = false,
+    this.endInset = 0,
   });
 
   final String front;
@@ -61,6 +63,11 @@ class FlashCardView extends StatefulWidget {
   /// An equipped Shop card skin: background gradient + text colour.
   final List<Color>? skinColors;
   final Color? skinText;
+
+  /// Home feed: the card fills the screen edge to edge (no margin, no
+  /// rounded corners); [endInset] keeps the text clear of the side rail.
+  final bool fullBleed;
+  final double endInset;
 
   @override
   State<FlashCardView> createState() => _FlashCardViewState();
@@ -153,12 +160,14 @@ class _FlashCardViewState extends State<FlashCardView>
             ],
           );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        KSpace.md,
-        KSpace.xs,
-        KSpace.md,
-        KSpace.md,
-      ),
+      padding: widget.fullBleed
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(
+              KSpace.md,
+              KSpace.xs,
+              KSpace.md,
+              KSpace.md,
+            ),
       child: Theme(
         data: Theme.of(context).copyWith(extensions: [kc]),
         child: GestureDetector(
@@ -186,6 +195,8 @@ class _FlashCardViewState extends State<FlashCardView>
                   text: showBack ? widget.back : widget.front,
                   style: style,
                   rail: rail,
+                  bleed: widget.fullBleed,
+                  endInset: widget.endInset,
                   skin: widget.skinColors,
                   figure: widget.figure,
                   onLearn: widget.onLearn,
@@ -241,6 +252,8 @@ class _Face extends StatelessWidget {
     this.skin,
     this.figure,
     this.onLearn,
+    this.bleed = false,
+    this.endInset = 0,
   });
 
   final Color accent;
@@ -255,13 +268,17 @@ class _Face extends StatelessWidget {
   final List<Color>? skin;
   final Map<String, dynamic>? figure;
   final VoidCallback? onLearn;
+  final bool bleed;
+  final double endInset;
 
   @override
   Widget build(BuildContext context) {
     final kc = context.kc;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(KRadius.sheet),
+        borderRadius: bleed
+            ? BorderRadius.zero
+            : BorderRadius.circular(KRadius.sheet),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -273,16 +290,25 @@ class _Face extends StatelessWidget {
                   : [accent.withValues(alpha: 0.30), kc.surface],
           },
         ),
-        border: Border.all(color: accent.withValues(alpha: back ? 0.25 : 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: bleed
+            ? null
+            : Border.all(color: accent.withValues(alpha: back ? 0.25 : 0.5)),
+        boxShadow: bleed
+            ? null
+            : [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.18),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
       ),
-      padding: const EdgeInsets.all(KSpace.lg),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        KSpace.lg,
+        KSpace.lg,
+        KSpace.lg + endInset,
+        KSpace.lg,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

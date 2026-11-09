@@ -25,6 +25,8 @@ class QuickQuestionCard extends StatefulWidget {
     this.onReport,
     this.figure,
     this.optionFigures = const [],
+    this.fullBleed = false,
+    this.endInset = 0,
   });
 
   final String prompt;
@@ -40,6 +42,10 @@ class QuickQuestionCard extends StatefulWidget {
   /// Optional diagram under the prompt, and one per option (WP16 B).
   final Map<String, dynamic>? figure;
   final List<Map<String, dynamic>?> optionFigures;
+
+  /// Home feed: edge to edge; [endInset] keeps content clear of the rail.
+  final bool fullBleed;
+  final double endInset;
 
   @override
   State<QuickQuestionCard> createState() => _QuickQuestionCardState();
@@ -73,20 +79,31 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
     return Directionality(
       textDirection: style.direction,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          KSpace.md,
-          KSpace.xs,
-          KSpace.md,
-          KSpace.md,
-        ),
+        padding: widget.fullBleed
+            ? EdgeInsets.zero
+            : const EdgeInsets.fromLTRB(
+                KSpace.md,
+                KSpace.xs,
+                KSpace.md,
+                KSpace.md,
+              ),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: kc.surface,
-            borderRadius: BorderRadius.circular(KRadius.sheet),
-            border: Border.all(color: widget.accent.withValues(alpha: 0.45)),
+            borderRadius: widget.fullBleed
+                ? BorderRadius.zero
+                : BorderRadius.circular(KRadius.sheet),
+            border: widget.fullBleed
+                ? null
+                : Border.all(color: widget.accent.withValues(alpha: 0.45)),
           ),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(KSpace.lg),
+            padding: EdgeInsetsDirectional.fromSTEB(
+              KSpace.lg,
+              KSpace.lg,
+              KSpace.lg + widget.endInset,
+              KSpace.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

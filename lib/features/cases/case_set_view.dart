@@ -36,6 +36,7 @@ class CaseSetView extends StatefulWidget {
     this.onNext,
     this.onReport,
     this.badge,
+    this.endInset = 0,
   });
 
   final CaseSet set;
@@ -56,6 +57,9 @@ class CaseSetView extends StatefulWidget {
 
   /// An extra label next to the kind (e.g. DRAFT in the admin preview).
   final String? badge;
+
+  /// Home feed: extra room at the end for the side rail.
+  final double endInset;
 
   @override
   State<CaseSetView> createState() => _CaseSetViewState();
@@ -206,10 +210,10 @@ class _CaseSetViewState extends State<CaseSetView>
     return Directionality(
       textDirection: style.direction,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsetsDirectional.fromSTEB(
           KSpace.md,
           KSpace.xs,
-          KSpace.md,
+          KSpace.md + widget.endInset,
           KSpace.md,
         ),
         child: DecoratedBox(

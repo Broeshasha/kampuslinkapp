@@ -204,7 +204,7 @@ class _PopButtonState extends State<_PopButton>
       child: ScaleTransition(
         scale: _scale,
         child: Material(
-          color: kc.surfaceRaised.withValues(alpha: 0.85),
+          color: Colors.transparent,
           shape: const CircleBorder(),
           clipBehavior: Clip.antiAlias,
           child: IconButton(
@@ -220,6 +220,9 @@ class _PopButtonState extends State<_PopButton>
             icon: Icon(
               widget.active ? widget.icon : widget.idleIcon,
               color: widget.active ? widget.activeColor : kc.textPrimary,
+              shadows: [
+                Shadow(color: kc.surface.withValues(alpha: 0.9), blurRadius: 8),
+              ],
             ),
           ),
         ),

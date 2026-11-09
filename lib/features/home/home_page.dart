@@ -573,6 +573,7 @@ class _FeedState extends ConsumerState<_Feed> {
       return MaxWidth(
         child: CaseSetView(
           key: ValueKey<String>(item.key),
+          endInset: FeedRail.width - KSpace.sm,
           set: set,
           demo: payload.moduleId == null,
           accent: payload.moduleId == null
@@ -604,6 +605,8 @@ class _FeedState extends ConsumerState<_Feed> {
       return MaxWidth(
         child: QuickQuestionCard(
           key: ValueKey<String>(item.key),
+          fullBleed: true,
+          endInset: FeedRail.width,
           prompt: text.prompt,
           options: text.options,
           correctIndex: payload.question.correctIndex,
@@ -649,6 +652,8 @@ class _FeedState extends ConsumerState<_Feed> {
         child: FlashCardView(
           key: ValueKey<String>(item.key),
           showRail: false,
+          fullBleed: true,
+          endInset: FeedRail.width,
           skinColors: skinColors != null && skinColors.length >= 2
               ? skinColors
               : null,
@@ -752,9 +757,7 @@ class _FeedState extends ConsumerState<_Feed> {
             itemBuilder: (context, i) => i == value.length
                 ? const _FeedDone()
                 : Padding(
-                    padding: const EdgeInsetsDirectional.only(
-                      end: FeedRail.width - KSpace.sm,
-                    ),
+                    padding: const EdgeInsetsDirectional.only(end: 0),
                     child: _post(
                       context,
                       value[i],
