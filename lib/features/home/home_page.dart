@@ -743,6 +743,7 @@ class _FeedState extends ConsumerState<_Feed> {
           child: PageView.builder(
             controller: _pages,
             scrollDirection: Axis.vertical,
+            allowImplicitScrolling: true,
             itemCount: value.length + 1,
             onPageChanged: (i) {
               setState(() => _index = i);

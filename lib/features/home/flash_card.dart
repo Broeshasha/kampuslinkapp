@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
+import 'fit_or_scroll.dart';
 
 /// One flashcard, reels style: tap = soft 3D flip; the back shows the
 /// answer and "Again / I knew it"; like and save sit on the side.
@@ -346,7 +347,7 @@ class _Face extends StatelessWidget {
                             ),
                           Expanded(
                             child: Center(
-                              child: SingleChildScrollView(
+                              child: FitOrScroll(
                                 padding: EdgeInsetsDirectional.only(
                                   end: rail == null ? 0 : _ActionRail.width,
                                 ),
