@@ -175,6 +175,10 @@ G. WHAT THE APP MUST NEVER DO
 
 --------------------------------------------------------------------------------
 H. COINS, SHOP, STORIES  (file 33, Phase 1)
+  *** SUPERSEDED BY FILE 39 (v1.12, 2026-11-13): coins and stories are REMOVED. The shop is paid with XP:
+  *** balance = study_stats.xp - sum(kl_xp_spend). get_wallet keeps its keys (today_earned / daily_cap / cap_remaining = 0).
+  *** buy_item error is now insufficient_xp. get_my_stories, post_achievement, delete_my_post, report_post, get_my_achievements are gone.
+  *** sync_progress still accepts story_answer / story_view (no-ops) and still returns "coins": 0 for old apps. Text below = history only.
 --------------------------------------------------------------------------------
   RULE: the server decides every coin. The phone never writes coins; it only shows what the server returns.
   Coins are paid INSIDE sync_progress (never by direct RPCs like review_card). Amounts, daily caps, prices = rows

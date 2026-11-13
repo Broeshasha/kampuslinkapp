@@ -13,6 +13,7 @@ import '../../core/theme/tokens.dart';
 import '../../data/learning/feed_repository.dart';
 import '../../data/learning/learning_providers.dart';
 import '../../data/providers.dart';
+import '../../data/shop/shop_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/reader_settings.dart';
 import '../../ui/max_width.dart';
@@ -409,6 +410,18 @@ class _SavedCardsRow extends ConsumerWidget {
           ),
           title: Text(l10n.downloadsTitle),
           onTap: () => context.go('/profile/downloads'),
+        ),
+        ListTile(
+          leading: Icon(Icons.storefront_rounded, color: kc.xp),
+          title: Text(l10n.shopTitle),
+          trailing: Text(
+            '${ref.watch(walletControllerProvider)?.balance ?? 0} XP',
+            style: TextStyle(
+              color: kc.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          onTap: () => context.push('/shop'),
         ),
         ListTile(
           leading: Icon(Icons.troubleshoot_rounded, color: kc.textSecondary),

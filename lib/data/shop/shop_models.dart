@@ -34,9 +34,6 @@ class InventoryItem {
 class Wallet {
   const Wallet({
     this.balance = 0,
-    this.todayEarned = 0,
-    this.dailyCap = 0,
-    this.capRemaining = 0,
     this.maxFreezes = 0,
     this.streak = 0,
     this.bestStreak = 0,
@@ -51,9 +48,6 @@ class Wallet {
     final s = asMap(m['streak']);
     return Wallet(
       balance: asInt(m['balance']),
-      todayEarned: asInt(m['today_earned']),
-      dailyCap: asInt(m['daily_cap']),
-      capRemaining: asInt(m['cap_remaining']),
       maxFreezes: asInt(m['max_freezes']),
       streak: asInt(s['current']),
       bestStreak: asInt(s['best']),
@@ -74,7 +68,8 @@ class Wallet {
     );
   }
 
-  final int balance, todayEarned, dailyCap, capRemaining, maxFreezes;
+  /// Spendable XP: lifetime XP minus what the shop took.
+  final int balance, maxFreezes;
   final int streak, bestStreak, freezes;
   final bool streakProtected, studiedToday, freezeUsedToday;
   final List<InventoryItem> inventory;

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The per-op answers of sync_progress ({op_id, status, message, coins}),
-/// published as they arrive so screens can react (coins earned, story
-/// answers). Nothing here decides anything: the server already did.
+/// The per-op answers of sync_progress ({op_id, status, message}), published
+/// as they arrive so a screen can wait for one op. Nothing here decides
+/// anything: the server already did.
 class SyncResultsBus {
   final _controller = StreamController<Map<String, dynamic>>.broadcast();
 

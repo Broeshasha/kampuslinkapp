@@ -14,8 +14,8 @@ import '../../core/logging/startup_trace.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
-import '../../data/coins/coins_models.dart' show parseHexColor;
-import '../../data/coins/coins_providers.dart';
+import '../../data/shop/shop_models.dart' show parseHexColor;
+import '../../data/shop/shop_providers.dart';
 import '../../data/db/app_database.dart';
 import '../../data/learning/content_meta.dart';
 import '../../data/learning/feed_pool.dart';
@@ -419,8 +419,7 @@ class _FeedState extends ConsumerState<_Feed> {
     });
   }
 
-  /// Answers go out a few seconds later (one batch), so coins paid by the
-  /// server pop up while the student is still swiping.
+  /// Answers go out a few seconds later, in one batch.
   void _flushSoon() {
     _flushTimer?.cancel();
     _flushTimer = Timer(const Duration(seconds: 3), () {
@@ -760,7 +759,7 @@ class _FeedState extends ConsumerState<_Feed> {
         ?.equippedPayload('celebration')?['style'];
     _fxStyle = fx is String ? fx : null;
     final current = _index < value.length ? value[_index] : null;
-    // Only the cards move; the rail, the heart and the coin bubble stay.
+    // Only the cards move; the rail and the heart stay.
     return Stack(
       children: [
         Positioned.fill(
@@ -825,7 +824,6 @@ class _FeedState extends ConsumerState<_Feed> {
               },
             ),
           ),
-        const Positioned.fill(child: CoinBurstLayer()),
       ],
     );
   }

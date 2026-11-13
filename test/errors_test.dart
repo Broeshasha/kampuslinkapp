@@ -91,6 +91,22 @@ void main() {
     expect(retries, 1);
   });
 
+  testWidgets('a server outage says so and retries by itself', (tester) async {
+    var retries = 0;
+    await pumpInApp(
+      tester,
+      ErrorView(
+        failure: const ServerFailure('PGRST002'),
+        onRetry: () => retries++,
+      ),
+    );
+    expect(find.text('Our server is busy'), findsOneWidget);
+    expect(retries, 0);
+    await tester.pump(const Duration(seconds: 20));
+    expect(retries, greaterThanOrEqualTo(1));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('a crash in build shows the friendly box, not red', (
     tester,
   ) async {

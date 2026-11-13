@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/catalog/catalog.dart' show localized;
-import '../../data/coins/coins_models.dart';
-import '../../data/coins/coins_providers.dart';
+import '../../data/shop/shop_models.dart';
+import '../../data/shop/shop_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 
-/// The Shop: streak freeze + themes. Coins only come from studying; nothing
-/// here is bought with money and nothing is random.
+/// The Shop: streak freeze, skins, helpers. Paid with XP, which only comes
+/// from studying; nothing here is bought with money and nothing is random.
 class ShopPage extends ConsumerWidget {
   const ShopPage({super.key});
 
@@ -78,30 +78,23 @@ class _Balance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final kc = context.kc;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(KSpace.lg),
         child: Row(
           children: [
-            Icon(Icons.monetization_on_rounded, color: kc.xp, size: 40),
+            Icon(Icons.bolt_rounded, color: kc.xp, size: 40),
             const SizedBox(width: KSpace.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${wallet.balance}',
+                    '${wallet.balance} XP',
                     style: Theme.of(context).textTheme.headlineMedium
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
-                  if (wallet.dailyCap > 0)
-                    Text(
-                      l10n.shopToday(wallet.todayEarned, wallet.dailyCap),
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(color: kc.textSecondary),
-                    ),
                 ],
               ),
             ),
@@ -126,7 +119,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
   bool _busy = false;
 
   String _message(AppLocalizations l10n, String code) => switch (code) {
-    'insufficient_coins' => l10n.shopNotEnough,
+    'insufficient_xp' || 'insufficient_coins' => l10n.shopNotEnough,
     'freeze_limit' => l10n.shopMax,
     'offline' => l10n.errorOffline,
     _ => l10n.errorUnknown,
@@ -170,7 +163,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
         onPressed: _busy || full || balance < item.price
             ? null
             : () => _run(() => notifier.buy(item.id)),
-        child: Text(full ? l10n.shopMax : '${l10n.shopBuy} · ${item.price}'),
+        child: Text(full ? l10n.shopMax : '${l10n.shopBuy} · ${item.price} XP'),
       );
     } else if (owned) {
       action = equipped
@@ -186,7 +179,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
         onPressed: _busy || balance < item.price
             ? null
             : () => _run(() => notifier.buy(item.id)),
-        child: Text('${l10n.shopBuy} · ${item.price}'),
+        child: Text('${l10n.shopBuy} · ${item.price} XP'),
       );
     }
     final notEnough =

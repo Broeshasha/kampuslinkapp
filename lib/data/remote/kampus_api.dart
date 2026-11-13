@@ -279,14 +279,11 @@ class KampusApi {
     return _map(bundle);
   }
 
-  // ---- coins, shop, stories (BACKEND_CONTRACT H, file 33) ----
+  // ---- shop, paid with XP (BACKEND_CONTRACT H, file 39) ----
   Future<Map<String, dynamic>> getWallet() async =>
       _map(await _client.rpc('get_wallet').timeout(_timeout));
 
-  Future<Map<String, dynamic>> getMyStories() async =>
-      _map(await _client.rpc('get_my_stories').timeout(_timeout));
-
-  /// Errors: item_not_found, item_inactive, insufficient_coins,
+  /// Errors: item_not_found, item_inactive, not_for_sale, insufficient_xp,
   /// already_owned, freeze_limit.
   Future<Map<String, dynamic>> buyItem(String itemId) async => _map(
     await _client.rpc('buy_item', params: {'p_item': itemId}).timeout(_timeout),

@@ -158,3 +158,7 @@ TESTED: stories_coins_test (models, grouping, question detection, colours, resul
 
 [2026-11-06] LANE: D5 | AI/Person: founder + Claude | WP: Phase 2 step 1 (feed)
 DID: Home feed reels style: only the card moves, fixed side rail (module, like, save, share, more; mirrored in Arabic), double-tap like with big heart, pop/bounce buttons, card skins + celebrations from the shop, coin bubble when the server pays, answers flushed 3 s later; stories bar no longer hides; sync reads the semester saved on the phone (Riverpod loop removed).
+
+[2026-11-13] LANE: D5 | AI/Person: founder + Claude | WP: v1.12 coins and stories removed, shop paid with XP, "server busy" screen
+DID: deleted lib/features/stories, lib/data/coins/stories_models.dart, the coin bubble (feed_rail) and the story/coin texts; lib/data/coins -> lib/data/shop (shop_models, shop_providers); Wallet balance = spendable XP; Shop page shows XP and prices in XP; Shop tile in Profile; ErrorView says "Our server is busy" and retries by itself (8-30 s + jitter) on server errors; backend file 39 (XP shop, drops coin + story tables, keeps a copy in schema kl_backup_1113) and test file 40.
+TESTED: shop_models_test (wallet, colours, results bus), errors_test (server outage retries by itself). Backend file 40 rolls back.

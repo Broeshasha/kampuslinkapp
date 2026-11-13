@@ -5,7 +5,7 @@ import '../core/config/app_config.dart';
 import '../core/l10n/locale_controller.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode_controller.dart';
-import '../data/coins/coins_providers.dart';
+import '../data/shop/shop_providers.dart';
 import '../l10n/app_localizations.dart';
 import 'router.dart';
 import 'sync_triggers.dart';
