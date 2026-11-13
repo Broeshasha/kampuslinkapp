@@ -898,6 +898,18 @@ abstract class AppLocalizations {
   /// **'Our server had a problem. Try again in a moment.'**
   String get errorServer;
 
+  /// No description provided for @errorServerBusyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Our server is busy'**
+  String get errorServerBusyTitle;
+
+  /// No description provided for @errorServerBusyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is wrong with your phone. We keep trying and continue by ourselves.'**
+  String get errorServerBusyBody;
+
   /// No description provided for @errorUnknown.
   ///
   /// In en, this message translates to:
@@ -2116,96 +2128,6 @@ abstract class AppLocalizations {
   /// **'Link copied'**
   String get shareCopied;
 
-  /// No description provided for @storiesToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Today'**
-  String get storiesToday;
-
-  /// No description provided for @storiesClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Close'**
-  String get storiesClose;
-
-  /// No description provided for @coinsBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} coins'**
-  String coinsBalance(int count);
-
-  /// No description provided for @storyCoinsPending.
-  ///
-  /// In en, this message translates to:
-  /// **'Your coins arrive when you are back online.'**
-  String get storyCoinsPending;
-
-  /// No description provided for @storyYesterday.
-  ///
-  /// In en, this message translates to:
-  /// **'Yesterday, {pct}% got this question right'**
-  String storyYesterday(int pct);
-
-  /// No description provided for @storyPlanDue.
-  ///
-  /// In en, this message translates to:
-  /// **'Review {count} cards'**
-  String storyPlanDue(int count);
-
-  /// No description provided for @storyPlanLesson.
-  ///
-  /// In en, this message translates to:
-  /// **'Next episode: {title}'**
-  String storyPlanLesson(String title);
-
-  /// No description provided for @storyPlanMinutes.
-  ///
-  /// In en, this message translates to:
-  /// **'About {minutes} min in total'**
-  String storyPlanMinutes(int minutes);
-
-  /// No description provided for @storyPlanDone.
-  ///
-  /// In en, this message translates to:
-  /// **'You are all caught up. Nice!'**
-  String get storyPlanDone;
-
-  /// No description provided for @storyStreakDays.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} days in a row'**
-  String storyStreakDays(int count);
-
-  /// No description provided for @storyStreakBest.
-  ///
-  /// In en, this message translates to:
-  /// **'Your best: {count}'**
-  String storyStreakBest(int count);
-
-  /// No description provided for @storyStreakNext.
-  ///
-  /// In en, this message translates to:
-  /// **'{days} more days to the {milestone}-day badge: +{coins} coins'**
-  String storyStreakNext(int days, int milestone, int coins);
-
-  /// No description provided for @storyStreakFreezes.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} streak freezes ready'**
-  String storyStreakFreezes(int count);
-
-  /// No description provided for @storyStreakProtected.
-  ///
-  /// In en, this message translates to:
-  /// **'A freeze will save your streak today.'**
-  String get storyStreakProtected;
-
-  /// No description provided for @storyStreakShare.
-  ///
-  /// In en, this message translates to:
-  /// **'I am on a {count}-day streak on KampusLink!'**
-  String storyStreakShare(int count);
-
   /// No description provided for @shopTitle.
   ///
   /// In en, this message translates to:
@@ -2215,14 +2137,8 @@ abstract class AppLocalizations {
   /// No description provided for @shopHint.
   ///
   /// In en, this message translates to:
-  /// **'Earn coins by studying. Nothing here can be bought with money.'**
+  /// **'Earn XP by studying and spend it here. Nothing here can be bought with money.'**
   String get shopHint;
-
-  /// No description provided for @shopToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Study coins today: {earned} / {cap}'**
-  String shopToday(int earned, int cap);
 
   /// No description provided for @shopBuy.
   ///
@@ -2257,7 +2173,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopNotEnough.
   ///
   /// In en, this message translates to:
-  /// **'Not enough coins yet'**
+  /// **'Not enough XP yet'**
   String get shopNotEnough;
 
   /// No description provided for @shopEmpty.

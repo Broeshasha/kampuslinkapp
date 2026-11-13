@@ -469,6 +469,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorServer => 'Our server had a problem. Try again in a moment.';
 
   @override
+  String get errorServerBusyTitle => 'Our server is busy';
+
+  @override
+  String get errorServerBusyBody =>
+      'Nothing is wrong with your phone. We keep trying and continue by ourselves.';
+
+  @override
   String get errorUnknown => 'Something unexpected happened. Try again.';
 
   @override
@@ -1170,81 +1177,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareCopied => 'Link copied';
 
   @override
-  String get storiesToday => 'Today';
-
-  @override
-  String get storiesClose => 'Close';
-
-  @override
-  String coinsBalance(int count) {
-    return '$count coins';
-  }
-
-  @override
-  String get storyCoinsPending => 'Your coins arrive when you are back online.';
-
-  @override
-  String storyYesterday(int pct) {
-    return 'Yesterday, $pct% got this question right';
-  }
-
-  @override
-  String storyPlanDue(int count) {
-    return 'Review $count cards';
-  }
-
-  @override
-  String storyPlanLesson(String title) {
-    return 'Next episode: $title';
-  }
-
-  @override
-  String storyPlanMinutes(int minutes) {
-    return 'About $minutes min in total';
-  }
-
-  @override
-  String get storyPlanDone => 'You are all caught up. Nice!';
-
-  @override
-  String storyStreakDays(int count) {
-    return '$count days in a row';
-  }
-
-  @override
-  String storyStreakBest(int count) {
-    return 'Your best: $count';
-  }
-
-  @override
-  String storyStreakNext(int days, int milestone, int coins) {
-    return '$days more days to the $milestone-day badge: +$coins coins';
-  }
-
-  @override
-  String storyStreakFreezes(int count) {
-    return '$count streak freezes ready';
-  }
-
-  @override
-  String get storyStreakProtected => 'A freeze will save your streak today.';
-
-  @override
-  String storyStreakShare(int count) {
-    return 'I am on a $count-day streak on KampusLink!';
-  }
-
-  @override
   String get shopTitle => 'Shop';
 
   @override
   String get shopHint =>
-      'Earn coins by studying. Nothing here can be bought with money.';
-
-  @override
-  String shopToday(int earned, int cap) {
-    return 'Study coins today: $earned / $cap';
-  }
+      'Earn XP by studying and spend it here. Nothing here can be bought with money.';
 
   @override
   String get shopBuy => 'Buy';
@@ -1264,7 +1201,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopMax => 'Maximum reached';
 
   @override
-  String get shopNotEnough => 'Not enough coins yet';
+  String get shopNotEnough => 'Not enough XP yet';
 
   @override
   String get shopEmpty => 'The shop is empty for now.';
