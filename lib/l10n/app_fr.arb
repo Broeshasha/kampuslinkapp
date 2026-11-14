@@ -354,5 +354,18 @@
   "feedMore": "Plus",
   "legalTerms": "Conditions d'utilisation",
   "legalPrivacy": "Politique de confidentialité",
-  "legalAgree": "En continuant, tu acceptes nos conditions d'utilisation et notre politique de confidentialité."
+  "legalAgree": "En continuant, tu acceptes nos conditions d'utilisation et notre politique de confidentialité.",
+  "trackQuestion": "Tu étudies où ?",
+  "trackUniversity": "Université",
+  "trackBac": "Bac (3e année secondaire)",
+  "bacStreamLabel": "Ta filière",
+  "bacComingSoon": "Bientôt",
+  "bacNotifyMe": "Préviens-moi",
+  "bacNotified": "On te prévient dès l'ouverture.",
+  "bacYearLabel": "Année",
+  "wilayaLabel": "Ta wilaya",
+  "wilayaWhy": "Pour les compétitions entre wilayas. Jamais montrée aux autres élèves.",
+  "wilayaRequired": "Choisis ta wilaya",
+  "bacConsent": "Si tu as moins de 18 ans, un parent ou tuteur accepte que tu utilises KampusLink.",
+  "bacStart": "Commencer"
 }

@@ -227,3 +227,9 @@ bool showDemoCases(Catalog? catalog) =>
 final catalogValueProvider = Provider<Catalog?>(
   (ref) => ref.watch(catalogProvider).value,
 );
+
+/// BAC-1/B16: the student is on the bac track (minors: no chat, no
+/// comments, no student library).
+final isBacProvider = Provider<bool>(
+  (ref) => ref.watch(catalogValueProvider)?.me['track'] == 'bac',
+);

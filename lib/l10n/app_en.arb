@@ -411,5 +411,18 @@
   "feedMore": "More",
   "legalTerms": "Terms of use",
   "legalPrivacy": "Privacy policy",
-  "legalAgree": "By continuing, you accept our Terms of use and Privacy policy."
+  "legalAgree": "By continuing, you accept our Terms of use and Privacy policy.",
+  "trackQuestion": "What are you studying?",
+  "trackUniversity": "University",
+  "trackBac": "Bac (3rd year secondary)",
+  "bacStreamLabel": "Your stream",
+  "bacComingSoon": "Coming soon",
+  "bacNotifyMe": "Notify me",
+  "bacNotified": "We will tell you when it opens.",
+  "bacYearLabel": "Year",
+  "wilayaLabel": "Your wilaya",
+  "wilayaWhy": "For wilaya competitions. Never shown to other students.",
+  "wilayaRequired": "Choose your wilaya",
+  "bacConsent": "If you are under 18, a parent or guardian agrees to your use of KampusLink.",
+  "bacStart": "Start"
 }

@@ -51,6 +51,36 @@ class OfferedSpeciality {
   }
 }
 
+/// BAC-1: one bac stream (SE active at launch; the others "coming soon").
+class BacStream {
+  const BacStream({
+    required this.code,
+    required this.id,
+    required this.name,
+    this.nameI18n = const {},
+    this.active = false,
+  });
+
+  factory BacStream.fromMap(Map<String, dynamic> m) => BacStream(
+    code: '${m['code'] ?? ''}',
+    id: _int(m['id']) ?? 0,
+    name: '${m['name'] ?? ''}',
+    nameI18n: {
+      if (m['name_i18n'] is Map)
+        for (final e in (m['name_i18n'] as Map).entries) '${e.key}': '${e.value}',
+    },
+    active: m['active'] == true,
+  );
+
+  final String code;
+  final int id;
+  final String name;
+  final Map<String, String> nameI18n;
+  final bool active;
+
+  String label(String lang) => nameI18n[lang] ?? nameI18n['fr'] ?? name;
+}
+
 /// get_onboarding_options(): nothing about studies is written in the app.
 class OnboardingOffers {
   const OnboardingOffers({
@@ -58,6 +88,8 @@ class OnboardingOffers {
     this.specialities = const [],
     this.others = const [],
     this.waitlisted = false,
+    this.bacStreams = const [],
+    this.bacYears = const [],
   });
 
   factory OnboardingOffers.fromMap(Map<String, dynamic> m) => OnboardingOffers(
@@ -73,12 +105,24 @@ class OnboardingOffers {
         if (_int(s['id']) != null) (id: _int(s['id'])!, name: '${s['name']}'),
     ],
     waitlisted: m['waitlisted'] == true,
+    bacStreams: [
+      for (final s in _maps(m['bac'] is Map ? (m['bac'] as Map)['streams'] : null))
+        BacStream.fromMap(s),
+    ],
+    bacYears: [
+      for (final y in _maps(m['bac'] is Map ? (m['bac'] as Map)['years'] : null))
+        CatalogLevel.fromMap(y),
+    ],
   );
 
   final List<({int id, String name})> universities;
   final List<OfferedSpeciality> specialities;
   final List<({int id, String name})> others;
   final bool waitlisted;
+
+  /// BAC-1 branch (empty on servers without file 50).
+  final List<BacStream> bacStreams;
+  final List<CatalogLevel> bacYears;
 
   OfferedSpeciality? speciality(int? id) {
     for (final s in specialities) {

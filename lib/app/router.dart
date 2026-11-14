@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/catalog/catalog.dart';
 import '../features/assess/exam_pages.dart';
 import '../features/assess/practice_pages.dart';
 import '../features/cases/case_page.dart';
@@ -104,6 +105,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'chat',
                         parentNavigatorKey: rootKey,
+                        // B16: no chat on the bac track (minors).
+                        redirect: (_, state) =>
+                            ref.read(isBacProvider)
+                            ? '/modules/${state.pathParameters['moduleId']}'
+                            : null,
                         builder: (_, state) =>
                             ChatPage(moduleId: _id(state, 'moduleId')),
                       ),

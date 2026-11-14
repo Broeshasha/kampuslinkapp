@@ -64,6 +64,27 @@ class KampusApi {
         .timeout(_timeout),
   );
 
+  /// File 50 (BAC-1): bac onboarding. Returns get_me().
+  /// Errors: invalid_stream, invalid_year, not_offered, invalid_wilaya.
+  Future<Map<String, dynamic>> setBacProfile({
+    required String stream,
+    required String year,
+    required int wilaya,
+    required String language,
+  }) async => _map(
+    await _client
+        .rpc(
+          'set_bac_profile',
+          params: {
+            'p_stream': stream,
+            'p_year': year,
+            'p_wilaya': wilaya,
+            'p_language': language,
+          },
+        )
+        .timeout(_timeout),
+  );
+
   /// File 46: me + wallet + catalog in ONE call when the app opens. The
   /// catalog is null when [catalogHash] is still the server's.
   Future<Map<String, dynamic>> appOpen(String? catalogHash) async => _map(

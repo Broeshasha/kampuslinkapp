@@ -16,6 +16,7 @@ import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/states.dart';
 import '../profile/account_actions.dart';
+import 'bac_form.dart';
 import 'onboarding_status.dart';
 import 'step_layout.dart';
 
@@ -51,6 +52,9 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
   String? _usernameError;
   _View? _view;
 
+  /// BAC-2: 'univ' or 'bac' (null = ask "University or Bac?").
+  String? _track;
+
   @override
   void dispose() {
     _username.dispose();
@@ -76,6 +80,11 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
       return;
     }
     _prefilled = true;
+    if (me?['track'] == 'bac') {
+      _track = 'bac';
+    } else if (me?['university_id'] != null) {
+      _track = 'univ';
+    }
     final saved = me?['username']?.toString() ?? '';
     final email = ref.read(authControllerProvider).email ?? '';
     _username.text = _usernamePattern.hasMatch(saved)
@@ -265,6 +274,16 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
     }
     final o = offers.requireValue;
     _prefill(o, me.hasValue ? me.requireValue : null);
+    // BAC-2: bac is a separate branch, asked first (servers without file 50
+    // send no bac streams -> straight to the university form).
+    if (o.bacStreams.isNotEmpty && _view != _View.comingSoon) {
+      if (_track == null) {
+        return TrackChoice(onChoose: (t) => setState(() => _track = t));
+      }
+      if (_track == 'bac') {
+        return BacForm(offers: o, onDone: widget.onDone);
+      }
+    }
     return switch (_view ?? _View.form) {
       _View.form => _form(context, o),
       _View.waitlist => _waitlist(context, o),

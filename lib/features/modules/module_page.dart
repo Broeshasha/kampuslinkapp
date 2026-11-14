@@ -6,6 +6,7 @@ import '../../core/connectivity/connectivity.dart';
 import '../../core/errors/failure_mapper.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/catalog/catalog.dart';
 import '../../data/db/app_database.dart';
 import '../../data/lessons/lesson_content.dart';
 import '../../data/lessons/lesson_providers.dart';
@@ -66,11 +67,15 @@ class _ModuleScaffold extends ConsumerWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
-    final chat = IconButton(
-      tooltip: l10n.chatTitle,
-      icon: const Icon(Icons.forum_outlined),
-      onPressed: () => context.go('/modules/${module.id}/chat'),
-    );
+    // B16: bac track (minors) has no chat and no student library.
+    final bac = ref.watch(isBacProvider);
+    final chat = bac
+        ? null
+        : IconButton(
+            tooltip: l10n.chatTitle,
+            icon: const Icon(Icons.forum_outlined),
+            onPressed: () => context.go('/modules/${module.id}/chat'),
+          );
     final drafts = ref.watch(previewDraftsProvider)
         ? IconButton(
             tooltip: l10n.previewTitle,
@@ -78,9 +83,15 @@ class _ModuleScaffold extends ConsumerWidget {
             onPressed: () => context.push('/preview/${module.id}'),
           )
         : null;
+    if (bac) {
+      return Scaffold(
+        appBar: AppBar(title: title, actions: [?drafts]),
+        body: _LessonsTab(module: module),
+      );
+    }
     if (!showLibrary) {
       return Scaffold(
-        appBar: AppBar(title: title, actions: [?drafts, chat]),
+        appBar: AppBar(title: title, actions: [?drafts, ?chat]),
         body: _LessonsTab(module: module),
         floatingActionButton: FloatingActionButton.extended(
           heroTag: 'chat-${module.id}',
@@ -97,7 +108,7 @@ class _ModuleScaffold extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: title,
-          actions: [?drafts, chat],
+          actions: [?drafts, ?chat],
           bottom: TabBar(
             indicatorColor: accent,
             labelColor: accent,
