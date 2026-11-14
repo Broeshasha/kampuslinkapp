@@ -137,7 +137,8 @@ class ServerStatsController
     // B04: app_open already brought fresh stats a moment ago: no get_me.
     final at = DateTime.tryParse(prefs.getString(_statsAtKey) ?? '');
     final fresh =
-        at != null && DateTime.now().difference(at) < const Duration(minutes: 1);
+        at != null &&
+        DateTime.now().difference(at) < const Duration(minutes: 1);
     if (api != null && !fresh) {
       unawaited(_refresh(api, prefs));
     }
