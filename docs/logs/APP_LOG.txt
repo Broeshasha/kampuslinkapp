@@ -191,3 +191,7 @@ OPEN: reminders quiet hours 22-07 + max 2/day for bac, avatars only from the sho
 [2026-11-14] LANE: D5 | AI/Person: founder + Claude | WP: B16 bac safety (quiet hours + server chat block)
 DONE: planReminders(quietHours) - bac reminders never 22:00-07:00 (moved to 21:30 / 07:00), max 1 a day; backend 53: trigger trg_no_bac_posts refuses chat messages and card comments from bac accounts (app already hides them). Bac usernames chosen by the student (founder decision, overrides "no free-text identity").
 TESTED: reminders_test quiet hours; SQL 53 locally.
+
+[2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: B15 first phone-database migration (Phase 2 start)
+DONE: schema v2 = table feed_seen_entries (one row per Home post) replacing the 3000-entry JSON value rewritten on every swipe; onUpgrade step v1->v2 moves the old JSON into rows (broken JSON dropped, never blocks); FeedSeenStore writes only changed posts + prune every 200 saves; drift_schemas v1/v2 snapshots + generated migration helpers; migration_test (data kept), feed_seen_store_test; AGENTS.md rule for schema changes.
+TESTED: migration_test, feed_seen_store_test, feed tests.

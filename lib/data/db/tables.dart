@@ -164,3 +164,18 @@ class KeyValues extends Table {
   @override
   Set<Column<Object>> get primaryKey => {name};
 }
+
+/// B15 (schema v2): what the phone remembers about each Home post. Was ONE
+/// big JSON value in key_values ('feed_seen', up to 3000 entries) rewritten
+/// on every swipe; now one small row per post.
+@DataClassName('FeedSeenRow')
+class FeedSeenEntries extends Table {
+  TextColumn get postKey => text()();
+  IntColumn get lastMs => integer()();
+  IntColumn get times => integer().withDefault(const Constant(1))();
+  IntColumn get today => integer().withDefault(const Constant(1))();
+  TextColumn get outcome => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {postKey};
+}

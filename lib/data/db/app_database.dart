@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/foundation.dart' show ValueNotifier;
@@ -30,6 +32,7 @@ bool webStorageUnsafe(String? implementation) =>
     StudyDays,
     Outbox,
     KeyValues,
+    FeedSeenEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -37,7 +40,11 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 1;
+  /// B15 rule (AGENTS.md): a schema change = version + 1, a step in
+  /// [migration] onUpgrade, a new drift_schemas/ snapshot and a migration
+  /// test. Never drop or recreate a table that holds the student's data.
+  @override
+  int get schemaVersion => 2;
 
   /// Indexes for the hot queries (feed, modules, lessons by module).
   /// IF NOT EXISTS: added to old phones on the next open, no migration.
@@ -57,17 +64,62 @@ class AppDatabase extends _$AppDatabase {
         'ON reading_positions (updated_at)',
     'CREATE INDEX IF NOT EXISTS idx_outbox_next '
         'ON outbox (next_attempt_at, seq)',
+    'CREATE INDEX IF NOT EXISTS idx_feed_seen_last '
+        'ON feed_seen_entries (last_ms)',
   ];
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    // One step per version, in order. Old phones run every step they miss.
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(feedSeenEntries);
+        await _moveFeedSeenOutOfKeyValues();
+      }
+    },
     beforeOpen: (details) async {
       for (final sql in _indexes) {
         await customStatement(sql);
       }
     },
   );
+
+  /// v1 -> v2: the 'feed_seen' JSON value becomes rows. A broken value is
+  /// dropped (it only tunes the Home order), never blocks the upgrade.
+  Future<void> _moveFeedSeenOutOfKeyValues() async {
+    final row = await customSelect(
+      "SELECT value FROM key_values WHERE name = 'feed_seen'",
+    ).getSingleOrNull();
+    final raw = row?.read<String>('value');
+    if (raw != null) {
+      try {
+        final v = jsonDecode(raw);
+        if (v is Map) {
+          final rows = <FeedSeenEntriesCompanion>[];
+          for (final e in v.entries) {
+            final l = e.value;
+            if (l is! List || l.length < 3) continue;
+            rows.add(
+              FeedSeenEntriesCompanion.insert(
+                postKey: '${e.key}',
+                lastMs: (l[0] as num).toInt(),
+                times: Value((l[1] as num).toInt()),
+                today: Value((l[2] as num).toInt()),
+                outcome: Value(l.length > 3 ? l[3] as String? : null),
+              ),
+            );
+          }
+          await batch(
+            (b) => b.insertAllOnConflictUpdate(feedSeenEntries, rows),
+          );
+        }
+      } on Object catch (error) {
+        appLog.info('feed_seen not migrated: $error');
+      }
+    }
+    await customStatement("DELETE FROM key_values WHERE name = 'feed_seen'");
+  }
 
   /// Opens the database (and adds the indexes) before the first screen
   /// asks for it. Called from main(), in parallel with the first frame.

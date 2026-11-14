@@ -20,6 +20,8 @@ Offline-first. Trilingual: Arabic (RTL), French, English. Pilot: Mining Engineer
 - The app reads the local database; the network only syncs. Writes go through the contract's functions.
 - A contract or plan change = a CORE CHANGE REQUEST in `docs/logs/DECISIONS.txt`, then wait for approval.
 - End every session with an entry in `docs/logs/APP_LOG.txt`.
+- Phone database (drift): a schema change = `schemaVersion` + 1, one `onUpgrade` step, a new snapshot in
+  `drift_schemas/` (`dart run drift_dev schema dump ...`) and a migration test. Never drop a table with student data (B15).
 
 ## Folders
 - `backend/sql/` database history (Lane A only) | `fixtures/` sample content | `tools/content/` content tools (Lane C)

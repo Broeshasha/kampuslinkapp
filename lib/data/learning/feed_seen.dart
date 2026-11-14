@@ -1,22 +1,21 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 
 import '../db/app_database.dart';
 import 'feed_queue.dart';
 
-const _seenKey = 'feed_seen';
 const _firstKey = 'feed_last_first';
 
-/// feed_seen (lead brief 2, C), kept in key_values as one JSON map
-/// {key: [last_shown_ms, times_shown, times_on_that_day, last_outcome]}
-/// so no schema change is needed. Only the newest [keep] posts are kept.
+/// feed_seen (lead brief 2, C). B15: one row per post in feed_seen_entries
+/// (schema v2); a save writes only the posts that changed since the last
+/// save, instead of re-encoding all of them on every swipe.
 class FeedSeenStore {
   FeedSeenStore(this._db);
 
   static const keep = 3000;
 
   final AppDatabase _db;
+  Map<String, SeenInfo> _saved = const {};
+  int _writes = 0;
 
   Future<String?> _get(String key) async => (await (_db.select(
     _db.keyValues,
@@ -29,46 +28,62 @@ class FeedSeenStore {
       );
 
   Future<Map<String, SeenInfo>> load() async {
-    final raw = await _get(_seenKey);
-    if (raw == null) return {};
     try {
-      final v = jsonDecode(raw);
-      if (v is! Map) return {};
-      return {
-        for (final e in v.entries)
-          if (e.value is List && (e.value as List).length >= 3)
-            '${e.key}': SeenInfo(
-              last: DateTime.fromMillisecondsSinceEpoch(
-                ((e.value as List)[0] as num).toInt(),
-              ),
-              times: ((e.value as List)[1] as num).toInt(),
-              today: ((e.value as List)[2] as num).toInt(),
-              outcome: (e.value as List).length > 3
-                  ? (e.value as List)[3] as String?
-                  : null,
-            ),
+      final rows =
+          await (_db.select(_db.feedSeenEntries)
+                ..orderBy([(t) => OrderingTerm.desc(t.lastMs)])
+                ..limit(keep))
+              .get();
+      final out = {
+        for (final r in rows)
+          r.postKey: SeenInfo(
+            last: DateTime.fromMillisecondsSinceEpoch(r.lastMs),
+            times: r.times,
+            today: r.today,
+            outcome: r.outcome,
+          ),
       };
+      _saved = out;
+      return out;
     } on Object {
       return {};
     }
   }
 
-  Future<void> save(Map<String, SeenInfo> seen) {
-    final entries = seen.entries.toList()
-      ..sort((a, b) => b.value.last.compareTo(a.value.last));
-    return _set(
-      _seenKey,
-      jsonEncode({
-        for (final e in entries.take(keep))
-          e.key: [
-            e.value.last.millisecondsSinceEpoch,
-            e.value.times,
-            e.value.today,
-            e.value.outcome,
-          ],
-      }),
+  static bool _same(SeenInfo? a, SeenInfo b) =>
+      a != null &&
+      a.last == b.last &&
+      a.times == b.times &&
+      a.today == b.today &&
+      a.outcome == b.outcome;
+
+  Future<void> save(Map<String, SeenInfo> seen) async {
+    final changed = [
+      for (final e in seen.entries)
+        if (!_same(_saved[e.key], e.value)) e,
+    ];
+    _saved = seen;
+    if (changed.isEmpty) return;
+    await _db.batch(
+      (b) => b.insertAllOnConflictUpdate(_db.feedSeenEntries, [
+        for (final e in changed)
+          FeedSeenEntriesCompanion.insert(
+            postKey: e.key,
+            lastMs: e.value.last.millisecondsSinceEpoch,
+            times: Value(e.value.times),
+            today: Value(e.value.today),
+            outcome: Value(e.value.outcome),
+          ),
+      ]),
     );
+    if (++_writes % 200 == 0) await prune();
   }
+
+  /// Keeps only the newest [keep] posts.
+  Future<void> prune() => _db.customStatement(
+    'DELETE FROM feed_seen_entries WHERE post_key NOT IN '
+    '(SELECT post_key FROM feed_seen_entries ORDER BY last_ms DESC LIMIT $keep)',
+  );
 
   Future<String?> lastFirst() => _get(_firstKey);
 
