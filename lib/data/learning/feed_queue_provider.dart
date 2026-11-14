@@ -104,6 +104,12 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
   static int _builds = 0;
   static String? _lastParams;
 
+  /// B01: another student signed in, start the trace from zero.
+  static void resetTrace() {
+    _builds = 0;
+    _lastParams = null;
+  }
+
   @override
   Future<List<FeedItem>> build() async {
     if (!ref.watch(isSignedInProvider)) {

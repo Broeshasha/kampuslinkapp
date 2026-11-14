@@ -2,35 +2,30 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/auth/auth_repository.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
-import '../../data/db/app_database.dart';
+import '../../data/local_data.dart';
 import '../../data/providers.dart';
 
-/// Settings that survive a sign-out or an account deletion.
-const keptPrefs = {'ui_language', 'theme_mode', 'reader_scale_step'};
+export '../../data/local_data.dart' show keptPrefs, wipeLocalData;
 
-/// Empties every local table and forgets everything but the device
-/// settings (language, theme, text size).
-Future<void> wipeLocalData(AppDatabase db, SharedPreferences prefs) async {
-  await db.transaction(() async {
-    for (final table in db.allTables) {
-      await db.delete(table).go();
-    }
-  });
-  for (final key in prefs.getKeys().toList()) {
-    if (!keptPrefs.contains(key)) await prefs.remove(key);
-  }
-}
-
-/// Sign out: stop this phone's push messages first (unregister_push_token),
-/// then end the session. Never throws.
+/// Sign out (B01): send the work still waiting (one try, 15 s), stop this
+/// phone's push messages (unregister_push_token), end the session, then
+/// wipe the phone. If work could not be sent (offline) the data stays: the
+/// same student gets it back at the next sign-in; another student's
+/// sign-in wipes it before anything is sent. Never throws.
 Future<void> signOutEverywhere(WidgetRef ref) async {
   final api = ref.read(kampusApiProvider);
+  final db = ref.read(appDatabaseProvider);
+  final prefs = ref.read(sharedPrefsProvider);
+  final outbox = ref.read(outboxRepositoryProvider);
+  final outboxSync = ref.read(outboxSyncProvider);
+  if (outboxSync != null) {
+    await guard(() => outboxSync.flush().timeout(const Duration(seconds: 15)));
+  }
   if (api != null && !kIsWeb && Firebase.apps.isNotEmpty) {
     await guard(() async {
       final token = await FirebaseMessaging.instance.getToken().timeout(
@@ -40,6 +35,10 @@ Future<void> signOutEverywhere(WidgetRef ref) async {
     });
   }
   await guard(ref.read(authRepositoryProvider).signOut);
+  final pending = await guard(() => outbox.watchPendingCount().first);
+  if (pending case Ok(:final value) when value == 0) {
+    await guard(() => wipeLocalData(db, prefs));
+  }
 }
 
 /// delete_my_account (store policy), then wipe the phone and sign out.

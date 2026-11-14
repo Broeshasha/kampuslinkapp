@@ -20,6 +20,9 @@ import 'download_failure.dart';
 import 'module_downloader.dart';
 import 'module_sync.dart';
 import 'server_merge.dart';
+import '../learning/feed_queue_provider.dart' as feedq;
+import '../learning/learning_providers.dart' as learning;
+import '../local_data.dart' as local;
 
 const _lastSyncKey = 'last_synced_at';
 const _contentCheckKey = 'content_checked_at';
@@ -273,7 +276,27 @@ class SyncController extends Notifier<SyncState> {
     }
   }
 
+  /// B01 (A-01): the phone's data belongs to the signed-in student. Another
+  /// student's data is wiped BEFORE anything is sent with this token.
+  Future<void> _claimLocalData() async {
+    final uid = ref.read(authControllerProvider).userId;
+    if (uid == null) return;
+    final wiped = await local.claimLocalData(
+      uid,
+      ref.read(appDatabaseProvider),
+      ref.read(sharedPrefsProvider),
+    );
+    if (!wiped || !ref.mounted) return;
+    feedq.FeedQueueController.resetTrace();
+    ref.invalidate(learning.serverStatsProvider);
+    ref.invalidate(walletControllerProvider);
+    ref.invalidate(catalogProvider);
+    ref.invalidate(feedq.feedModuleProvider);
+    ref.invalidate(feedq.feedQueueProvider);
+  }
+
   Future<void> _syncNow({bool force = false}) async {
+    await _claimLocalData();
     if (state.running) return;
     final api = ref.read(kampusApiProvider);
     final downloader = _downloader();
