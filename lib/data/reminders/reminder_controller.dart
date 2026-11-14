@@ -568,6 +568,18 @@ class ReminderController extends Notifier<ReminderState?> {
         }
       }
     }
+    // B04: templates + server settings at most once a day (sending unsent
+    // settings above stays immediate).
+    final readAt = DateTime.tryParse(
+      _prefs.getString(_serverReadKey) ?? '',
+    );
+    final daily =
+        readAt == null ||
+        DateTime.now().difference(readAt) >= const Duration(hours: 24);
+    if (!daily) {
+      await refreshPlan();
+      return;
+    }
     await _refreshTemplates(api);
     final stillPending =
         current != null && (_prefs.getBool(reminderPendingKey) ?? false);
@@ -581,6 +593,9 @@ class ReminderController extends Notifier<ReminderState?> {
           await _save(server);
           appLog.info('reminders: settings read from the server');
         }
+      }
+      if (r is Ok) {
+        await _prefs.setString(_serverReadKey, DateTime.now().toIso8601String());
       }
     }
     await refreshPlan();
@@ -605,6 +620,8 @@ class ReminderController extends Notifier<ReminderState?> {
     return rows.isNotEmpty;
   }
 }
+
+const _serverReadKey = 'reminders_server_read_at';
 
 final reminderControllerProvider =
     NotifierProvider<ReminderController, ReminderState?>(

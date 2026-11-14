@@ -170,3 +170,7 @@ TESTED: flutter analyze + phone (links open in the browser, ar/fr/en labels).
 [2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: B03 sync cannot hang or hammer
 DONE: timeouts on get_module_manifest (20 s), get_lesson_bundle + get_module_extras (45 s); 10-min watchdog clears a stuck "running"; a forced sync asked during a pass runs right after it (_pendingForce); circuit breaker: 3 modules in a row failing with network/server errors stop the pass; automatic content checks then wait 2/5/15/60 min (+0-20 % jitter, prefs content_retry_after / content_backoff_step), Retry / pull-to-refresh skip the wait; practice/exam step stops on the first server error; outbox batch 200 -> 25 (up to 200 rounds); the practice step reuses the manifest the downloader just fetched.
 TESTED: module_sync_test (breaker, manifest reuse), sync_backoff_test (ladder, jitter, transient, batch size).
+
+[2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: B04 fewer server calls
+DONE: automatic syncs (resume, timer, network back, Supabase ready) run a full pass at most every 5 min; in between only unsent answers go out (no call when the outbox is empty); after server/network trouble the automatic flush waits 1/2/5/15 min and the next automatic pass 15 min; pull-to-refresh, sign-in, Retry, semester/language change are never throttled. 15-min timer -> random 13-17 min. get_me: calls made at the same time share one request. Reminder templates + server settings read once a day (unsent settings still go at once).
+TESTED: sync_backoff_test (throttle + back-off).

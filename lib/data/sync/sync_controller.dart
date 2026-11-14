@@ -43,6 +43,40 @@ const contentBackoff = [
   Duration(minutes: 60),
 ];
 
+/// B04: automatic passes (resume, timer, network back) at most this often.
+const autoPassEvery = Duration(minutes: 5);
+
+/// B04: after a pass failed on the server: 1, 2, 5, 15 min before an
+/// automatic flush, and at least 15 min before the next automatic pass.
+const serverBackoff = [
+  Duration(minutes: 1),
+  Duration(minutes: 2),
+  Duration(minutes: 5),
+  Duration(minutes: 15),
+];
+
+/// B04: true when an automatic pass may run now.
+bool autoPassDue({
+  required DateTime now,
+  DateTime? lastPass,
+  int serverFailures = 0,
+}) {
+  if (lastPass == null) return true;
+  final gap = serverFailures > 0 ? serverBackoff.last : autoPassEvery;
+  return now.difference(lastPass) >= gap;
+}
+
+/// B04: true when an automatic outbox flush may run now.
+bool autoFlushDue({
+  required DateTime now,
+  DateTime? lastPass,
+  int serverFailures = 0,
+}) {
+  if (lastPass == null || serverFailures == 0) return true;
+  final wait = serverBackoff[(serverFailures - 1).clamp(0, serverBackoff.length - 1)];
+  return now.difference(lastPass) >= wait;
+}
+
 /// B03: a pass older than this is considered dead (the flag is cleared).
 const syncWatchdog = Duration(minutes: 10);
 
@@ -145,6 +179,11 @@ class SyncController extends Notifier<SyncState> {
   /// B03 (A-11): a forced pass asked while another pass was running.
   bool _pendingForce = false;
   final _rnd = math.Random();
+
+  /// B04: when the last pass (or automatic flush) started, and how many
+  /// passes in a row ended with server / network trouble.
+  DateTime? _lastPassAt;
+  int _serverFailures = 0;
 
   @override
   SyncState build() {
@@ -302,7 +341,26 @@ class SyncController extends Notifier<SyncState> {
   /// [force]: pull-to-refresh, "Download now", sign-in, semester or
   /// language change. Otherwise content is checked at most once a day,
   /// unless something is still missing on the phone (resume).
-  Future<void> syncNow({bool force = false}) async {
+  /// [auto]: resume / timer / network back (B04 throttle). Pull-to-refresh,
+  /// sign-in, Retry, semester and language changes are never throttled.
+  Future<void> syncNow({bool force = false, bool auto = false}) async {
+    if (auto && !force && !state.running) {
+      final now = DateTime.now();
+      if (!autoPassDue(
+        now: now,
+        lastPass: _lastPassAt,
+        serverFailures: _serverFailures,
+      )) {
+        if (autoFlushDue(
+          now: now,
+          lastPass: _lastPassAt,
+          serverFailures: _serverFailures,
+        )) {
+          await _flushOnly();
+        }
+        return;
+      }
+    }
     try {
       await _syncNow(force: force);
     } catch (error, stack) {
@@ -316,6 +374,25 @@ class SyncController extends Notifier<SyncState> {
     if (_pendingForce && !state.running && ref.mounted) {
       _pendingForce = false;
       await syncNow(force: true);
+    }
+  }
+
+  /// B04: between two full passes only unsent answers go out (no call at
+  /// all when the outbox is empty).
+  Future<void> _flushOnly() async {
+    final outboxSync = ref.read(outboxSyncProvider);
+    if (outboxSync == null ||
+        !ref.read(isSignedInProvider) ||
+        !ref.read(isOnlineProvider)) {
+      return;
+    }
+    final r = await outboxSync.flush();
+    if (r.sent > 0) _lastPassAt = DateTime.now();
+    if (isTransientFailure(r.failure)) {
+      _lastPassAt = DateTime.now();
+      _serverFailures++;
+    } else if (r.sent > 0) {
+      _serverFailures = 0;
     }
   }
 
@@ -384,6 +461,7 @@ class SyncController extends Notifier<SyncState> {
     }
     final prefs = ref.read(sharedPrefsProvider);
     _runningSince = DateTime.now();
+    _lastPassAt = _runningSince;
     state = state.copyWith(running: true, clearFailure: true);
     AppFailure? firstFailure;
     final outboxSync = ref.read(outboxSyncProvider);
@@ -416,6 +494,9 @@ class SyncController extends Notifier<SyncState> {
     if (!checkContent) {
       final now = DateTime.now();
       _runningSince = null;
+      _serverFailures = isTransientFailure(firstFailure)
+          ? _serverFailures + 1
+          : 0;
       if (firstFailure == null) {
         await prefs.setString(_lastSyncKey, now.toIso8601String());
       }
@@ -475,6 +556,9 @@ class SyncController extends Notifier<SyncState> {
     }
     final now = DateTime.now();
     _runningSince = null;
+    _serverFailures = isTransientFailure(firstFailure) || contentFailed
+        ? _serverFailures + 1
+        : 0;
     if (firstFailure == null) {
       await prefs.setString(_lastSyncKey, now.toIso8601String());
       if (!_stop) {

@@ -13,8 +13,14 @@ class KampusApi {
 
   Map<String, dynamic> _map(Object? v) => (v as Map).cast<String, dynamic>();
 
-  /// null when the profile row does not exist yet.
-  Future<Map<String, dynamic>?> getMe() async {
+  Future<Map<String, dynamic>?>? _meCall;
+
+  /// null when the profile row does not exist yet. B04: calls made while
+  /// one is running share it (start, Home and onboarding ask at once).
+  Future<Map<String, dynamic>?> getMe() =>
+      _meCall ??= _fetchMe().whenComplete(() => _meCall = null);
+
+  Future<Map<String, dynamic>?> _fetchMe() async {
     final me = await _client.rpc('get_me').timeout(_timeout);
     return me == null ? null : _map(me);
   }

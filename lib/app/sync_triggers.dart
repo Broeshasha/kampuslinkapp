@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,12 +32,23 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
     with WidgetsBindingObserver {
   Timer? _timer;
   Timer? _reminders;
+  final _rnd = math.Random();
+
+  /// B04: every 13-17 minutes (phones never call all at the same minute).
+  void _scheduleTick() {
+    _timer?.cancel();
+    final wait = Duration(seconds: 13 * 60 + _rnd.nextInt(4 * 60 + 1));
+    _timer = Timer(wait, () {
+      _sync();
+      if (mounted) _scheduleTick();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _timer = Timer.periodic(const Duration(minutes: 15), (_) => _sync());
+    _scheduleTick();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _sync();
       // Reminders start a moment after the first frame (never before Home).
@@ -78,7 +90,9 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
     if (!mounted) {
       return;
     }
-    ref.read(syncControllerProvider.notifier).syncNow();
+    // B04: automatic pass (resume, timer, network back): a full pass at
+    // most every 5 minutes; in between only unsent answers go out.
+    ref.read(syncControllerProvider.notifier).syncNow(auto: true);
   }
 
   void _saveFeed() {
