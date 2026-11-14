@@ -386,4 +386,10 @@ void main() {
       expect(c.read(sharedPrefsProvider).getBool(reminderPendingKey), isTrue);
     });
   });
+
+  test('B16: bac reminders never between 22:00 and 07:00', () {
+    expect(quietSafeTime(23, 15), (hour: 21, minute: 30));
+    expect(quietSafeTime(5, 0), (hour: 7, minute: 0));
+    expect(quietSafeTime(18, 45), (hour: 18, minute: 45));
+  });
 }

@@ -425,7 +425,13 @@ class ReminderController extends Notifier<ReminderState?> {
         return;
       }
       final now = _now();
-      final plan = planReminders(current, now, max: reminderMaxSlots);
+      // One reminder a day at most (2 allowed for bac); bac: quiet 22-07.
+      final plan = planReminders(
+        current,
+        now,
+        max: reminderMaxSlots,
+        quietHours: ref.read(isBacProvider),
+      );
       final studied = await _studiedToday();
       final today = algiersWall(now);
       bool keepGoing(int i) {

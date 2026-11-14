@@ -187,3 +187,7 @@ TESTED: analytics_test; DebugView by the founder.
 DONE: backend: profiles.track/bac_stream/bac_year/wilaya_code, kl_wilayas (58), domain bac, kl_bac_streams (SE active, M/MTM/GE/LP/LE coming soon), level 3AS, offer SE 3AS, modules 3001 SVT/3002 PHY/3003 CHEM/3004 MATH, get_onboarding_options bac branch (bac streams never in university lists), set_bac_profile (generated username, no university/school/birth date), get_me/get_my_catalog return track (never the wilaya), bac subjects only with published content, university flows refuse bac streams. App: "University or Bac?" first, BacForm (stream radio + coming soon/Notify me, year, searchable wilaya list shipped in the app, consent TEXT line (founder: no checkbox) + Terms/Privacy), isBacProvider: no chat, no library on the bac track (route redirect too).
 TESTED: SQL 51 locally 6/6; app analyze + phone by the founder.
 OPEN: reminders quiet hours 22-07 + max 2/day for bac, avatars only from the shop, server-side chat block for bac, B14/B17.
+
+[2026-11-14] LANE: D5 | AI/Person: founder + Claude | WP: B16 bac safety (quiet hours + server chat block)
+DONE: planReminders(quietHours) - bac reminders never 22:00-07:00 (moved to 21:30 / 07:00), max 1 a day; backend 53: trigger trg_no_bac_posts refuses chat messages and card comments from bac accounts (app already hides them). Bac usernames chosen by the student (founder decision, overrides "no free-text identity").
+TESTED: reminders_test quiet hours; SQL 53 locally.

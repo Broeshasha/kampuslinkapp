@@ -297,20 +297,36 @@ DateTime algiersWall(DateTime t) => t.toUtc().add(const Duration(hours: 1));
 /// student already studied that day (founder decision, Nov 2026); only
 /// off, paused, stopped, the second-chance window and the Android
 /// permission stop them.
-List<DateTime> planReminders(ReminderState state, DateTime now, {int max = 6}) {
+/// B16 / BAC-2: bac students (minors) get no reminder between 22:00 and
+/// 07:00 Algiers time: a later time moves to 21:30, an earlier one to 07:00.
+({int hour, int minute}) quietSafeTime(int hour, int minute) {
+  if (hour >= 22) return (hour: 21, minute: 30);
+  if (hour < 7) return (hour: 7, minute: 0);
+  return (hour: hour, minute: minute);
+}
+
+List<DateTime> planReminders(
+  ReminderState state,
+  DateTime now, {
+  int max = 6,
+  bool quietHours = false,
+}) {
   final out = <DateTime>[];
   var s = state;
   if (!s.active) {
     return out;
   }
   final today = algiersWall(now);
+  final time = quietHours
+      ? quietSafeTime(s.hour, s.minute)
+      : (hour: s.hour, minute: s.minute);
   for (var offset = 0; offset < 28 && out.length < max; offset++) {
     final at = algiersToUtc(
       today.year,
       today.month,
       today.day + offset,
-      s.hour,
-      s.minute,
+      time.hour,
+      time.minute,
     );
     final window = s.secondChanceUntil;
     if (window != null && !at.isBefore(window)) {
