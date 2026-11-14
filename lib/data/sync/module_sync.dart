@@ -1,3 +1,4 @@
+import '../../core/analytics/analytics.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/result.dart';
 import '../db/app_database.dart';
@@ -91,6 +92,7 @@ class ModuleSyncService {
       if (failure == null) {
         downloaded++;
         inRow = 0;
+        Analytics.log('module_download_complete');
       } else {
         failures[m.id] = failure;
         inRow = failure.transient ? inRow + 1 : 0;

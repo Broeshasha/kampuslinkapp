@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/connectivity/connectivity.dart';
 import '../../core/errors/app_failure.dart';
@@ -402,12 +403,32 @@ class SyncController extends Notifier<SyncState> {
           me.cast<String, dynamic>(),
         );
         ref.invalidate(learning.serverStatsProvider);
+        _analyticsUser(me.cast<String, dynamic>());
       }
       return;
     }
     appLog.info('app_open failed, old calls: ${(r as Err).failure}');
     await wallet.refresh();
     await catalog.refresh();
+  }
+
+  /// P1-ANALYTICS: allowed user properties + one streak_day per day.
+  void _analyticsUser(Map<String, dynamic> me) {
+    final year = me['academic_year'];
+    Analytics.setUser(
+      track: 'univ',
+      year: year is String ? year : null,
+      uiLang: ref.read(localeControllerProvider)?.languageCode,
+    );
+    final prefs = ref.read(sharedPrefsProvider);
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final streak = me['current_streak'];
+    if (prefs.getString('analytics_streak_day') != today &&
+        streak is num &&
+        streak > 0) {
+      prefs.setString('analytics_streak_day', today);
+      Analytics.log('streak_day', {'days': streak > 30 ? 30 : streak.toInt()});
+    }
   }
 
   /// B04: between two full passes only unsent answers go out (no call at

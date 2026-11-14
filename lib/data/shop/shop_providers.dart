@@ -4,6 +4,7 @@ import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/connectivity/connectivity.dart';
 import '../../core/errors/app_failure.dart';
@@ -51,7 +52,11 @@ class WalletController extends Notifier<Wallet?> {
 
   /// null = done, else an error code: insufficient_xp, freeze_limit,
   /// already_owned, not_for_sale, item_not_found, item_inactive, offline, unknown.
-  Future<String?> buy(String itemId) => _call((api) => api.buyItem(itemId));
+  Future<String?> buy(String itemId) async {
+    final r = await _call((api) => api.buyItem(itemId));
+    if (r == null) Analytics.log('shop_buy');
+    return r;
+  }
 
   Future<String?> equip(String itemId, {bool on = true}) =>
       _call((api) => api.equipItem(itemId, on: on));

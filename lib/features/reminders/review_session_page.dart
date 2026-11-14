@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/errors/result.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/learning/feed_repository.dart';
@@ -47,6 +48,9 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
 
   @override
   void dispose() {
+    if (_reviewed > 0) {
+      Analytics.log('cards_session', {'cards': _reviewed > 20 ? 20 : _reviewed});
+    }
     _timer?.cancel();
     super.dispose();
   }

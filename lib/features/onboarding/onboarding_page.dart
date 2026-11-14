@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -33,6 +34,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   void initState() {
     super.initState();
     _step = ref.read(isSignedInProvider) ? 2 : 0;
+    Analytics.log('onboarding_start');
   }
 
   void _go(int step) => setState(() => _step = step);
@@ -42,6 +44,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   Future<void> _finish() async {
     final uid = ref.read(authControllerProvider).userId;
     await markOnboardingDone(ref, uid);
+    Analytics.log('onboarding_complete');
     if (mounted) context.go('/home');
   }
 

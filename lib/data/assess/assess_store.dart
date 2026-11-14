@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/errors/result.dart';
 import '../../core/logging/logger.dart';
 import '../db/app_database.dart';
@@ -200,6 +201,7 @@ class AssessStore {
   Future<void> saveAttempt(ExamAttempt attempt) async {
     final list = await attempts(attempt.paperId);
     final i = list.indexWhere((a) => a.attemptId == attempt.attemptId);
+    final wasFinished = i >= 0 && list[i].status == AttemptStatus.finished;
     final merged = _merge(i < 0 ? null : list[i], attempt);
     if (i < 0) {
       list.add(merged);
@@ -207,6 +209,9 @@ class AssessStore {
       list[i] = merged;
     }
     await _storeAttempts(attempt.paperId, list);
+    if (merged.status == AttemptStatus.finished && !wasFinished) {
+      Analytics.log('exam_complete');
+    }
     await _outbox.enqueue(
       'exam_attempt',
       merged.toPayload(),

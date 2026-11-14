@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../db/app_database.dart';
 import '../sync/outbox_repository.dart';
 import 'leitner.dart';
@@ -62,6 +63,7 @@ class ProgressRepository {
           'lesson_id': lessonId,
           'score': score,
         });
+        Analytics.log('lesson_complete');
       });
 
   /// Latest position wins; only the newest op per lesson stays queued.

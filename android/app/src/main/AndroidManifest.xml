@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" tools:node="remove" />
+    <!-- P1-ANALYTICS: no advertising ID (students, minors on the bac track). -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <application
         android:label="KampusLink"
@@ -44,6 +46,11 @@
         <meta-data
             android:name="androidx.credentials.CREDENTIAL_SERVICE_ENABLED"
             android:value="false" />
+
+        <!-- P1-ANALYTICS: privacy-safe Firebase Analytics (no ad ID, no SSAID, no ad personalization). -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_ssaid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
 
         <!-- Notification icon/color, otherwise Android shows a generic fallback icon -->
         <meta-data

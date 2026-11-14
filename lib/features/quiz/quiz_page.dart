@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/analytics.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
@@ -74,6 +75,7 @@ class _QuizPageState extends ConsumerState<QuizPage> {
     final total = _questions?.length ?? 0;
     final score = total == 0 ? 0 : (_correct * 100 / total).round();
     guard(() => _quiz.finish(widget.lessonId, score));
+    Analytics.log('quiz_complete', {'score': Analytics.scoreBucket(score)});
   }
 
   Future<void> _choose(QuizQuestion q, int choice) async {
