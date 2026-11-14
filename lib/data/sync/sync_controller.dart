@@ -73,7 +73,8 @@ bool autoFlushDue({
   int serverFailures = 0,
 }) {
   if (lastPass == null || serverFailures == 0) return true;
-  final wait = serverBackoff[(serverFailures - 1).clamp(0, serverBackoff.length - 1)];
+  final wait =
+      serverBackoff[(serverFailures - 1).clamp(0, serverBackoff.length - 1)];
   return now.difference(lastPass) >= wait;
 }
 
