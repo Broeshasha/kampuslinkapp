@@ -266,20 +266,29 @@ void main() {
     expect(await lessonIds(), [101]);
   });
 
-  test('B03: 3 modules in a row failing stops the pass (no hammering)', () async {
-    moduleList = [for (var i = 1; i <= 6; i++) serverModule(i, 1)];
-    server.failManifest = true;
-    final r = await service().sync(['fr']);
-    expect(r.tripped, isTrue);
-    expect(r.failures.keys, hasLength(3));
-    // 3 modules x (1 try + 3 retries) manifest calls, modules 4-6 untouched.
-    expect(server.manifestCalls, 12);
-  });
+  test(
+    'B03: 3 modules in a row failing stops the pass (no hammering)',
+    () async {
+      moduleList = [for (var i = 1; i <= 6; i++) serverModule(i, 1)];
+      server.failManifest = true;
+      final r = await service().sync(['fr']);
+      expect(r.tripped, isTrue);
+      expect(r.failures.keys, hasLength(3));
+      // 3 modules x (1 try + 3 retries) manifest calls, modules 4-6 untouched.
+      expect(server.manifestCalls, 12);
+    },
+  );
 
-  test('B03: the downloader keeps the manifest for the practice step', () async {
-    server.lessons[1] = {101: 'a'};
-    final d = downloader();
-    await d.download(1, ['fr', 'ar']);
-    expect(d.manifests[ModuleDownloader.manifestKey(1, ['ar', 'fr'])], isNotNull);
-  });
+  test(
+    'B03: the downloader keeps the manifest for the practice step',
+    () async {
+      server.lessons[1] = {101: 'a'};
+      final d = downloader();
+      await d.download(1, ['fr', 'ar']);
+      expect(
+        d.manifests[ModuleDownloader.manifestKey(1, ['ar', 'fr'])],
+        isNotNull,
+      );
+    },
+  );
 }

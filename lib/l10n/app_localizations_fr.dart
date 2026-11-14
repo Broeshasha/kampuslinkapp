@@ -1225,4 +1225,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get feedMore => 'Plus';
+
+  @override
+  String get legalTerms => 'Conditions d\'utilisation';
+
+  @override
+  String get legalPrivacy => 'Politique de confidentialité';
+
+  @override
+  String get legalAgree =>
+      'En continuant, tu acceptes nos conditions d\'utilisation et notre politique de confidentialité.';
 }

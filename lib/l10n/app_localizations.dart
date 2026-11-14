@@ -2205,6 +2205,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More'**
   String get feedMore;
+
+  /// No description provided for @legalTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of use'**
+  String get legalTerms;
+
+  /// No description provided for @legalPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get legalPrivacy;
+
+  /// No description provided for @legalAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing, you accept our Terms of use and Privacy policy.'**
+  String get legalAgree;
 }
 
 class _AppLocalizationsDelegate

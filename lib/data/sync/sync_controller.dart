@@ -54,7 +54,9 @@ Duration contentBackoffFor(int step, {double jitter = 0}) {
 
 /// Network / server trouble (worth backing off), not a bug or a 4xx.
 bool isTransientFailure(AppFailure? f) =>
-    f is OfflineFailure || f is ServerFailure || f is RateLimitedFailure ||
+    f is OfflineFailure ||
+    f is ServerFailure ||
+    f is RateLimitedFailure ||
     (f is UnknownFailure && f.error is TimeoutException);
 
 /// All the languages a lesson can have (the top-up target).

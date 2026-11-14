@@ -1207,4 +1207,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get feedMore => 'المزيد';
+
+  @override
+  String get legalTerms => 'شروط الاستخدام';
+
+  @override
+  String get legalPrivacy => 'سياسة الخصوصية';
+
+  @override
+  String get legalAgree =>
+      'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية.';
 }

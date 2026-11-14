@@ -15,7 +15,10 @@ void main() {
   });
 
   test('B03: jitter adds at most 20 %', () {
-    expect(contentBackoffFor(0, jitter: 0.5), const Duration(minutes: 2, seconds: 24));
+    expect(
+      contentBackoffFor(0, jitter: 0.5),
+      const Duration(minutes: 2, seconds: 24),
+    );
   });
 
   test('B03: only network / server trouble backs off', () {

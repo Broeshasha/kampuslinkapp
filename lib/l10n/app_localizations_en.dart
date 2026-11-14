@@ -1217,4 +1217,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedMore => 'More';
+
+  @override
+  String get legalTerms => 'Terms of use';
+
+  @override
+  String get legalPrivacy => 'Privacy policy';
+
+  @override
+  String get legalAgree =>
+      'By continuing, you accept our Terms of use and Privacy policy.';
 }
