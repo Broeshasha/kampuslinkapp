@@ -88,6 +88,24 @@ drop policy if exists kl_wilayas_read on public.kl_wilayas;
 create policy kl_wilayas_read on public.kl_wilayas for select to anon, authenticated using (true);
 revoke insert, update, delete, truncate on public.kl_wilayas from anon, authenticated;
 
+-- year_system CHECK constraints get the new value 'bac' (existing values kept)
+do $ys$
+declare r record; v_def text; v_vals text;
+begin
+  for r in select c.conname, c.conrelid::regclass::text as tbl, pg_get_constraintdef(c.oid) as def
+             from pg_constraint c
+            where c.contype = 'c' and c.connamespace = 'public'::regnamespace
+              and c.conrelid in ('public.specialities'::regclass, 'public.kl_study_levels'::regclass)
+              and pg_get_constraintdef(c.oid) ~ 'year_system'
+              and pg_get_constraintdef(c.oid) !~ '''bac''' loop
+    select string_agg(quote_literal(m[1]), ', ') into v_vals
+      from regexp_matches(r.def, '''([^'']+)''', 'g') as m;
+    v_vals := coalesce(v_vals || ', ', '') || '''bac''';
+    execute format('alter table %s drop constraint %I', r.tbl, r.conname);
+    execute format('alter table %s add constraint %I check (year_system in (%s))', r.tbl, r.conname, v_vals);
+  end loop;
+end $ys$;
+
 -- the bac "institution" = a domain, the streams = specialities with year_system 'bac'
 insert into public.domains (code, name) select 'bac', 'Baccalauréat'
  where not exists (select 1 from public.domains where code = 'bac');
@@ -281,8 +299,9 @@ begin
 end
 $function$;
 
--- set_bac_profile: the bac onboarding (no username, no school, no birth date: a username is generated)
-create or replace function public.set_bac_profile(p_stream text, p_year text, p_wilaya smallint, p_language text default 'ar')
+-- set_bac_profile: the bac onboarding (no school, no birth date; username chosen by the student, generated if empty)
+create or replace function public.set_bac_profile(p_stream text, p_year text, p_wilaya smallint, p_language text default 'ar',
+                                                   p_username text default null)
 returns jsonb
 language plpgsql
 security definer
@@ -301,7 +320,15 @@ begin
   if p_wilaya is null or p_wilaya not between 1 and 58 then raise exception 'invalid_wilaya'; end if;
   if p_language is null or p_language not in ('ar','fr','en') then raise exception 'invalid_language'; end if;
   insert into public.profiles (id) values (uid) on conflict (id) do nothing;
-  select username into v_name from public.profiles where id = uid;
+  -- founder decision: bac students choose their username (same rule as university); empty = generated
+  v_name := lower(trim(coalesce(p_username, '')));
+  if v_name <> '' then
+    if v_name !~ '^[a-z0-9_.]{3,20}$' then raise exception 'invalid_username'; end if;
+    if exists (select 1 from public.profiles x where lower(x.username) = v_name and x.id <> uid) then
+      raise exception 'username_taken'; end if;
+  else
+    select username into v_name from public.profiles where id = uid;
+  end if;
   if v_name is null or v_name !~ '^[a-z0-9_.]{3,20}$' then
     loop
       v_name := 'bac_' || lpad((floor(random() * 1000000))::int::text, 6, '0');
@@ -319,8 +346,8 @@ begin
   insert into public.user_reminder_state (user_id, last_active_at) values (uid, now()) on conflict (user_id) do nothing;
   return public.get_me();
 end $$;
-revoke all on function public.set_bac_profile(text, text, smallint, text) from public, anon;
-grant execute on function public.set_bac_profile(text, text, smallint, text) to authenticated, service_role;
+revoke all on function public.set_bac_profile(text, text, smallint, text, text) from public, anon;
+grant execute on function public.set_bac_profile(text, text, smallint, text, text) to authenticated, service_role;
 
 -- university onboarding must never accept a bac stream (and vice versa)
 create or replace function public._is_univ_speciality(p_speciality integer) returns boolean

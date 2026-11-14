@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/errors/failure_mapper.dart';
 import '../../core/errors/result.dart';
+import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/catalog/catalog.dart';
@@ -14,6 +15,7 @@ import '../../data/profile/wilayas.dart';
 import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/legal_links.dart';
+import '../../ui/states.dart';
 import 'onboarding_status.dart';
 import 'step_layout.dart';
 
@@ -37,6 +39,15 @@ class _BacFormState extends ConsumerState<BacForm> {
   int? _wilaya;
   bool _busy = false;
   final _notified = <String>{};
+  final _username = TextEditingController();
+  String? _usernameError;
+  static final _usernamePattern = RegExp(r'^[a-z0-9_.]{3,20}$');
+
+  @override
+  void dispose() {
+    _username.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -88,6 +99,12 @@ class _BacFormState extends ConsumerState<BacForm> {
       messenger.showSnackBar(SnackBar(content: Text(l10n.wilayaRequired)));
       return;
     }
+    // Founder decision: bac students choose their username (their identity).
+    final username = _username.text.trim().toLowerCase();
+    if (!_usernamePattern.hasMatch(username)) {
+      setState(() => _usernameError = l10n.usernameHelp);
+      return;
+    }
     final api = ref.read(kampusApiProvider);
     if (api == null) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.errorServer)));
@@ -100,6 +117,7 @@ class _BacFormState extends ConsumerState<BacForm> {
         year: year,
         wilaya: wilaya,
         language: language,
+        username: username,
       ),
     );
     if (result is Ok) {
@@ -115,7 +133,16 @@ class _BacFormState extends ConsumerState<BacForm> {
       case Ok():
         widget.onDone();
       case Err(:final failure):
-        if (failure is ValidationFailure && failure.code == 'not_offered') {
+        if (failure is ValidationFailure &&
+            (failure.code == 'username_taken' ||
+                failure.code == 'invalid_username')) {
+          setState(
+            () => _usernameError = failure.code == 'username_taken'
+                ? l10n.usernameTaken
+                : l10n.usernameHelp,
+          );
+        } else if (failure is ValidationFailure &&
+            failure.code == 'not_offered') {
           ref.invalidate(onboardingOptionsProvider);
           messenger.showSnackBar(
             SnackBar(content: Text(l10n.studiesNotOffered)),
@@ -211,6 +238,19 @@ class _BacFormState extends ConsumerState<BacForm> {
                 label: '${w.code} - ${lang == 'ar' ? w.ar : w.fr}',
               ),
           ],
+        ),
+        const SizedBox(height: KSpace.md),
+        TextField(
+          controller: _username,
+          autocorrect: false,
+          decoration: InputDecoration(
+            labelText: l10n.usernameLabel,
+            helperText: l10n.usernameHelp,
+            errorText: _usernameError,
+          ),
+          onChanged: (_) {
+            if (_usernameError != null) setState(() => _usernameError = null);
+          },
         ),
         const SizedBox(height: KSpace.lg),
         Text(

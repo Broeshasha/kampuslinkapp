@@ -34,6 +34,9 @@ begin
   v_me := public.set_bac_profile('SE', '3AS', 16::smallint, 'ar');
   if v_me ->> 'track' <> 'bac' or v_me ->> 'username' !~ '^bac_[0-9]{6}$' or v_me ->> 'university_id' is not null
      or v_me ? 'wilaya_code' then raise exception 'BAC1 TEST T4 FAILED: %', v_me; end if;
+  -- chosen username is kept; a taken one is refused
+  v_me := public.set_bac_profile('SE', '3AS', 16::smallint, 'ar', 'b51_test_user');
+  if v_me ->> 'username' <> 'b51_test_user' then raise exception 'BAC1 TEST T4 FAILED: chosen username %', v_me ->> 'username'; end if;
   v_ok := v_ok + 1;
   -- T5 university onboarding refuses a bac stream
   begin

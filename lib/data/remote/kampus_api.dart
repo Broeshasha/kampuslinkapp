@@ -71,6 +71,7 @@ class KampusApi {
     required String year,
     required int wilaya,
     required String language,
+    String? username,
   }) async => _map(
     await _client
         .rpc(
@@ -80,6 +81,7 @@ class KampusApi {
             'p_year': year,
             'p_wilaya': wilaya,
             'p_language': language,
+            'p_username': username,
           },
         )
         .timeout(_timeout),
