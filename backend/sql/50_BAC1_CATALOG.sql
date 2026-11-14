@@ -140,6 +140,19 @@ begin
   end loop;
 end $s$;
 
+-- _levels_for knew only 'lmd' and 'unified' (everything else became lmd): bac streams get the bac levels
+create or replace function public._levels_for(p_speciality integer)
+ returns setof public.kl_study_levels
+ language sql
+ stable security definer
+ set search_path to 'public'
+as $function$
+  select l.* from public.specialities s
+  join public.kl_study_levels l on l.year_system = case when s.year_system in ('unified', 'bac') then s.year_system else 'lmd' end
+  where s.id = p_speciality and (s.year_system is distinct from 'unified' or l.position <= coalesce(s.max_year, 6))
+  order by l.position
+$function$;
+
 -- year 3AS (no semesters)
 insert into public.kl_study_levels (year_system, year, position, semesters, label)
 select 'bac', '3AS', 1, '{}', '{"ar":"السنة الثالثة ثانوي","fr":"3e année secondaire","en":"3rd year secondary"}'::jsonb

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/app_failure.dart';
-import '../../core/errors/failure_mapper.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
