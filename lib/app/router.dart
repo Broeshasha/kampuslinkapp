@@ -106,8 +106,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         path: 'chat',
                         parentNavigatorKey: rootKey,
                         // B16: no chat on the bac track (minors).
-                        redirect: (_, state) =>
-                            ref.read(isBacProvider)
+                        redirect: (_, state) => ref.read(isBacProvider)
                             ? '/modules/${state.pathParameters['moduleId']}'
                             : null,
                         builder: (_, state) =>

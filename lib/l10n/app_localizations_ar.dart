@@ -1217,4 +1217,44 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get legalAgree =>
       'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية.';
+
+  @override
+  String get trackQuestion => 'ماذا تدرس؟';
+
+  @override
+  String get trackUniversity => 'الجامعة';
+
+  @override
+  String get trackBac => 'البكالوريا (السنة الثالثة ثانوي)';
+
+  @override
+  String get bacStreamLabel => 'شعبتك';
+
+  @override
+  String get bacComingSoon => 'قريبًا';
+
+  @override
+  String get bacNotifyMe => 'أعلمني';
+
+  @override
+  String get bacNotified => 'سنعلمك عند افتتاحها.';
+
+  @override
+  String get bacYearLabel => 'السنة';
+
+  @override
+  String get wilayaLabel => 'ولايتك';
+
+  @override
+  String get wilayaWhy => 'لمسابقات الولايات. لا تظهر أبدًا للتلاميذ الآخرين.';
+
+  @override
+  String get wilayaRequired => 'اختر ولايتك';
+
+  @override
+  String get bacConsent =>
+      'إذا كان عمرك أقل من 18 سنة، فإن أحد الوالدين أو الولي يوافق على استخدامك لـ KampusLink.';
+
+  @override
+  String get bacStart => 'ابدأ';
 }

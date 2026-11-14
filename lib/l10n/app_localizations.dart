@@ -2223,6 +2223,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'By continuing, you accept our Terms of use and Privacy policy.'**
   String get legalAgree;
+
+  /// No description provided for @trackQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you studying?'**
+  String get trackQuestion;
+
+  /// No description provided for @trackUniversity.
+  ///
+  /// In en, this message translates to:
+  /// **'University'**
+  String get trackUniversity;
+
+  /// No description provided for @trackBac.
+  ///
+  /// In en, this message translates to:
+  /// **'Bac (3rd year secondary)'**
+  String get trackBac;
+
+  /// No description provided for @bacStreamLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stream'**
+  String get bacStreamLabel;
+
+  /// No description provided for @bacComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get bacComingSoon;
+
+  /// No description provided for @bacNotifyMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify me'**
+  String get bacNotifyMe;
+
+  /// No description provided for @bacNotified.
+  ///
+  /// In en, this message translates to:
+  /// **'We will tell you when it opens.'**
+  String get bacNotified;
+
+  /// No description provided for @bacYearLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get bacYearLabel;
+
+  /// No description provided for @wilayaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wilaya'**
+  String get wilayaLabel;
+
+  /// No description provided for @wilayaWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'For wilaya competitions. Never shown to other students.'**
+  String get wilayaWhy;
+
+  /// No description provided for @wilayaRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your wilaya'**
+  String get wilayaRequired;
+
+  /// No description provided for @bacConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'If you are under 18, a parent or guardian agrees to your use of KampusLink.'**
+  String get bacConsent;
+
+  /// No description provided for @bacStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get bacStart;
 }
 
 class _AppLocalizationsDelegate

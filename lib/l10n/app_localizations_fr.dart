@@ -1235,4 +1235,45 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get legalAgree =>
       'En continuant, tu acceptes nos conditions d\'utilisation et notre politique de confidentialité.';
+
+  @override
+  String get trackQuestion => 'Tu étudies où ?';
+
+  @override
+  String get trackUniversity => 'Université';
+
+  @override
+  String get trackBac => 'Bac (3e année secondaire)';
+
+  @override
+  String get bacStreamLabel => 'Ta filière';
+
+  @override
+  String get bacComingSoon => 'Bientôt';
+
+  @override
+  String get bacNotifyMe => 'Préviens-moi';
+
+  @override
+  String get bacNotified => 'On te prévient dès l\'ouverture.';
+
+  @override
+  String get bacYearLabel => 'Année';
+
+  @override
+  String get wilayaLabel => 'Ta wilaya';
+
+  @override
+  String get wilayaWhy =>
+      'Pour les compétitions entre wilayas. Jamais montrée aux autres élèves.';
+
+  @override
+  String get wilayaRequired => 'Choisis ta wilaya';
+
+  @override
+  String get bacConsent =>
+      'Si tu as moins de 18 ans, un parent ou tuteur accepte que tu utilises KampusLink.';
+
+  @override
+  String get bacStart => 'Commencer';
 }

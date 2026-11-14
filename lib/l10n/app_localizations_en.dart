@@ -1227,4 +1227,45 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get legalAgree =>
       'By continuing, you accept our Terms of use and Privacy policy.';
+
+  @override
+  String get trackQuestion => 'What are you studying?';
+
+  @override
+  String get trackUniversity => 'University';
+
+  @override
+  String get trackBac => 'Bac (3rd year secondary)';
+
+  @override
+  String get bacStreamLabel => 'Your stream';
+
+  @override
+  String get bacComingSoon => 'Coming soon';
+
+  @override
+  String get bacNotifyMe => 'Notify me';
+
+  @override
+  String get bacNotified => 'We will tell you when it opens.';
+
+  @override
+  String get bacYearLabel => 'Year';
+
+  @override
+  String get wilayaLabel => 'Your wilaya';
+
+  @override
+  String get wilayaWhy =>
+      'For wilaya competitions. Never shown to other students.';
+
+  @override
+  String get wilayaRequired => 'Choose your wilaya';
+
+  @override
+  String get bacConsent =>
+      'If you are under 18, a parent or guardian agrees to your use of KampusLink.';
+
+  @override
+  String get bacStart => 'Start';
 }

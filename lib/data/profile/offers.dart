@@ -67,7 +67,8 @@ class BacStream {
     name: '${m['name'] ?? ''}',
     nameI18n: {
       if (m['name_i18n'] is Map)
-        for (final e in (m['name_i18n'] as Map).entries) '${e.key}': '${e.value}',
+        for (final e in (m['name_i18n'] as Map).entries)
+          '${e.key}': '${e.value}',
     },
     active: m['active'] == true,
   );
@@ -106,11 +107,15 @@ class OnboardingOffers {
     ],
     waitlisted: m['waitlisted'] == true,
     bacStreams: [
-      for (final s in _maps(m['bac'] is Map ? (m['bac'] as Map)['streams'] : null))
+      for (final s in _maps(
+        m['bac'] is Map ? (m['bac'] as Map)['streams'] : null,
+      ))
         BacStream.fromMap(s),
     ],
     bacYears: [
-      for (final y in _maps(m['bac'] is Map ? (m['bac'] as Map)['years'] : null))
+      for (final y in _maps(
+        m['bac'] is Map ? (m['bac'] as Map)['years'] : null,
+      ))
         CatalogLevel.fromMap(y),
     ],
   );
