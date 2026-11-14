@@ -174,3 +174,7 @@ TESTED: module_sync_test (breaker, manifest reuse), sync_backoff_test (ladder, j
 [2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: B04 fewer server calls
 DONE: automatic syncs (resume, timer, network back, Supabase ready) run a full pass at most every 5 min; in between only unsent answers go out (no call when the outbox is empty); after server/network trouble the automatic flush waits 1/2/5/15 min and the next automatic pass 15 min; pull-to-refresh, sign-in, Retry, semester/language change are never throttled. 15-min timer -> random 13-17 min. get_me: calls made at the same time share one request. Reminder templates + server settings read once a day (unsent settings still go at once).
 TESTED: sync_backoff_test (throttle + back-off).
+
+[2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: app_open - one call when the app opens
+DONE: backend 46_APP_OPEN.sql (app_open(p_catalog_hash) = get_me + get_wallet + get_my_catalog, catalog only when its md5 changed) + test 47; KampusApi.appOpen; SyncController._appOpen replaces get_wallet + get_my_catalog (falls back to them on any error); catalog stored with its server hash (_hash); WalletController.apply, CatalogController.apply/localHash; server stats stamped (server_stats_at) so Home does not call get_me again within 1 min.
+TESTED: SQL 47 locally (3/3); app: analyze + phone at the end.

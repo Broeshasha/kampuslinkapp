@@ -378,6 +378,38 @@ class SyncController extends Notifier<SyncState> {
     }
   }
 
+  /// app_open (file 46): me + wallet + catalog in one call. A server
+  /// without it (or any error) falls back to the two old calls.
+  Future<void> _appOpen(KampusApi api) async {
+    final catalog = ref.read(catalogProvider.notifier);
+    final wallet = ref.read(walletControllerProvider.notifier);
+    final r = await guard(() async => api.appOpen(await catalog.localHash()));
+    if (r case Ok(:final value)) {
+      final w = value['wallet'];
+      if (w is Map) await wallet.apply(w.cast<String, dynamic>());
+      final c = value['catalog'];
+      final hash = value['catalog_hash'];
+      if (c is Map) {
+        await catalog.apply(
+          c.cast<String, dynamic>(),
+          hash is String ? hash : null,
+        );
+      }
+      final me = value['me'];
+      if (me is Map) {
+        await learning.storeServerStats(
+          ref.read(sharedPrefsProvider),
+          me.cast<String, dynamic>(),
+        );
+        ref.invalidate(learning.serverStatsProvider);
+      }
+      return;
+    }
+    appLog.info('app_open failed, old calls: ${(r as Err).failure}');
+    await wallet.refresh();
+    await catalog.refresh();
+  }
+
   /// B04: between two full passes only unsent answers go out (no call at
   /// all when the outbox is empty).
   Future<void> _flushOnly() async {
@@ -469,10 +501,8 @@ class SyncController extends Notifier<SyncState> {
     if (outboxSync != null) {
       firstFailure = (await outboxSync.flush()).failure;
     }
-    // The shop wallet (XP balance, freezes, owned items), cached for offline use.
-    await ref.read(walletControllerProvider.notifier).refresh();
-    // The catalog (years, modules, settings) first: it decides what shows.
-    await ref.read(catalogProvider.notifier).refresh();
+    // ONE call: profile stats + wallet + catalog (only when it changed).
+    await _appOpen(api);
     // Chat messages typed offline go out with the sync too (MASTER_PLAN 7.8).
     await guard(() async {
       final chat = ref.read(chatRepositoryProvider);

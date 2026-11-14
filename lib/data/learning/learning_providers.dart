@@ -107,6 +107,8 @@ const _statsKeys = [
   'first_name',
 ];
 
+const _statsAtKey = 'server_stats_at';
+
 /// Keeps the parts of get_me() the app shows (cached for offline starts).
 Future<Map<String, dynamic>> storeServerStats(
   SharedPreferences prefs,
@@ -114,6 +116,7 @@ Future<Map<String, dynamic>> storeServerStats(
 ) async {
   final stats = <String, dynamic>{for (final key in _statsKeys) key: me[key]};
   await prefs.setString(_statsKey, jsonEncode(stats));
+  await prefs.setString(_statsAtKey, DateTime.now().toIso8601String());
   return stats;
 }
 
@@ -131,7 +134,11 @@ class ServerStatsController
     ref.watch(syncControllerProvider.select((s) => s.lastSyncedAt));
     final prefs = ref.read(sharedPrefsProvider);
     final api = ref.watch(kampusApiProvider);
-    if (api != null) {
+    // B04: app_open already brought fresh stats a moment ago: no get_me.
+    final at = DateTime.tryParse(prefs.getString(_statsAtKey) ?? '');
+    final fresh =
+        at != null && DateTime.now().difference(at) < const Duration(minutes: 1);
+    if (api != null && !fresh) {
       unawaited(_refresh(api, prefs));
     }
     return AsyncData(_cachedStats(prefs));

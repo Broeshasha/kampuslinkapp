@@ -158,6 +158,35 @@ class CatalogController extends AsyncNotifier<Catalog?> {
     }
   }
 
+  /// The server hash of the catalog stored on the phone (null = none).
+  Future<String?> localHash() async {
+    final db = ref.read(appDatabaseProvider);
+    final row = await (db.select(
+      db.keyValues,
+    )..where((t) => t.name.equals(_catalogKey))).getSingleOrNull();
+    if (row == null) return null;
+    try {
+      final v = jsonDecode(row.value);
+      return v is Map && v['_hash'] is String ? v['_hash'] as String : null;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Stores a catalog sent by app_open (with its server hash).
+  Future<void> apply(Map<String, dynamic> raw, String? hash) async {
+    final db = ref.read(appDatabaseProvider);
+    await db
+        .into(db.keyValues)
+        .insertOnConflictUpdate(
+          KeyValuesCompanion(
+            name: const Value(_catalogKey),
+            value: Value(jsonEncode({...raw, '_hash': ?hash})),
+          ),
+        );
+    state = AsyncData(Catalog.fromMap(raw));
+  }
+
   /// Fetches get_my_catalog() and stores it; keeps the old copy offline.
   Future<Result<void>> refresh() async {
     final api = ref.read(kampusApiProvider);

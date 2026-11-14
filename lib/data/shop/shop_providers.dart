@@ -36,12 +36,17 @@ class WalletController extends Notifier<Wallet?> {
     final uid = ref.read(authControllerProvider).userId;
     if (api == null || uid == null || !ref.read(isOnlineProvider)) return;
     final r = await guard(api.getWallet);
-    if (r case Ok(:final value)) {
-      state = Wallet.fromMap(value);
-      await ref
-          .read(sharedPrefsProvider)
-          .setString('wallet:$uid', jsonEncode(value));
-    }
+    if (r case Ok(:final value)) await apply(value);
+  }
+
+  /// Stores a wallet the server sent (get_wallet or app_open).
+  Future<void> apply(Map<String, dynamic> value) async {
+    final uid = ref.read(authControllerProvider).userId;
+    if (uid == null) return;
+    state = Wallet.fromMap(value);
+    await ref
+        .read(sharedPrefsProvider)
+        .setString('wallet:$uid', jsonEncode(value));
   }
 
   /// null = done, else an error code: insufficient_xp, freeze_limit,

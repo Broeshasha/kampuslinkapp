@@ -64,6 +64,14 @@ class KampusApi {
         .timeout(_timeout),
   );
 
+  /// File 46: me + wallet + catalog in ONE call when the app opens. The
+  /// catalog is null when [catalogHash] is still the server's.
+  Future<Map<String, dynamic>> appOpen(String? catalogHash) async => _map(
+    await _client
+        .rpc('app_open', params: {'p_catalog_hash': catalogHash})
+        .timeout(_timeout),
+  );
+
   /// WP17/18-1: config, me, speciality, levels and modules in one call.
   Future<Map<String, dynamic>> getMyCatalog() async =>
       _map(await _client.rpc('get_my_catalog').timeout(_timeout));
