@@ -2,10 +2,26 @@
 -- Expected last line: "B02 TEST: ALL 7 PASSED (rolled back on purpose)".
 do $t$
 declare
-  v_uid uuid; v_ok int := 0; v_n int; v_goal int; v_tbl text;
+  v_uid uuid; v_ok int := 0; v_n int; v_n0 int; v_goal int; v_tbl text; v_row jsonb; v_cols text;
 begin
   select id into v_uid from public.profiles where not coalesce(is_admin, false) limit 1;
   if v_uid is null then raise exception 'B02 TEST: no non-admin profile found'; end if;
+  -- report template: copy a real report (any other reporter) so every NOT NULL column has a valid value
+  select to_jsonb(r) into v_row from public.reports r where r.reporter_id <> v_uid limit 1;
+  if v_row is null then
+    v_row := jsonb_build_object('target_type', 'message', 'target_id', gen_random_uuid()::text, 'reason', 'spam');
+    -- no reports yet: take allowed values from the table's CHECK constraints (first value in each list)
+    foreach v_tbl in array array['target_type','reason'] loop
+      select substring(pg_get_constraintdef(c.oid) from '''([^'']+)''') into v_cols
+        from pg_constraint c where c.conrelid = 'public.reports'::regclass and c.contype = 'c'
+         and pg_get_constraintdef(c.oid) ~ ('\m' || v_tbl || '\M') and pg_get_constraintdef(c.oid) like '%''%' limit 1;
+      if v_cols is not null then v_row := v_row || jsonb_build_object(v_tbl, v_cols); end if;
+      v_cols := null;
+    end loop;
+  end if;
+  v_row := (v_row - 'id' - 'created_at') || jsonb_build_object('reporter_id', v_uid, 'details', 'b02 test');
+  select string_agg(quote_ident(k), ', ') into v_cols from jsonb_object_keys(v_row) k;
+  select count(*) into v_n0 from public.reports where reporter_id = v_uid;
   perform set_config('request.jwt.claims', json_build_object('sub', v_uid, 'role', 'authenticated')::text, true);
   set local role authenticated;
 
@@ -46,12 +62,12 @@ begin
   if v_n <> 0 then raise exception 'B02 TEST T5 FAILED: normal user still reads % content rows', v_n; end if;
   v_ok := v_ok + 1;
 
-  -- T6 same report twice = one row (counted as postgres, reports are not readable by users)
-  insert into public.reports (reporter_id, target_type, target_id, details) values (v_uid, 'b02_test', 'x1', 'test');
-  insert into public.reports (reporter_id, target_type, target_id, details) values (v_uid, 'b02_test', 'x1', 'test');
+  -- T6 same report twice = one new row (counted as postgres, reports are not readable by users)
+  execute format('insert into public.reports (%s) select %s from jsonb_populate_record(null::public.reports, $1)', v_cols, v_cols) using v_row;
+  execute format('insert into public.reports (%s) select %s from jsonb_populate_record(null::public.reports, $1)', v_cols, v_cols) using v_row;
   reset role;
-  select count(*) into v_n from public.reports where reporter_id = v_uid and target_type = 'b02_test';
-  if v_n <> 1 then raise exception 'B02 TEST T6 FAILED: % rows for one target', v_n; end if;
+  select count(*) - v_n0 into v_n from public.reports where reporter_id = v_uid;
+  if v_n <> 1 then raise exception 'B02 TEST T6 FAILED: % new rows for one target', v_n; end if;
   v_ok := v_ok + 1;
 
   -- T7 anon cannot write profiles
