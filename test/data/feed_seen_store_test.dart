@@ -29,7 +29,11 @@ void main() {
     final store = FeedSeenStore(db);
     final seen = {
       for (var i = 0; i < FeedSeenStore.keep + 5; i++)
-        'c:$i': markShown(const {}, 'x', DateTime(2026, 1, 1).add(Duration(minutes: i)))['x']!,
+        'c:$i': markShown(
+          const {},
+          'x',
+          DateTime(2026, 1, 1).add(Duration(minutes: i)),
+        )['x']!,
     };
     await store.save(seen);
     await store.prune();

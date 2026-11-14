@@ -5057,6 +5057,364 @@ class KeyValuesCompanion extends UpdateCompanion<KeyValueRow> {
   }
 }
 
+class $FeedSeenEntriesTable extends FeedSeenEntries
+    with TableInfo<$FeedSeenEntriesTable, FeedSeenRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FeedSeenEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _postKeyMeta = const VerificationMeta(
+    'postKey',
+  );
+  @override
+  late final GeneratedColumn<String> postKey = GeneratedColumn<String>(
+    'post_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastMsMeta = const VerificationMeta('lastMs');
+  @override
+  late final GeneratedColumn<int> lastMs = GeneratedColumn<int>(
+    'last_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timesMeta = const VerificationMeta('times');
+  @override
+  late final GeneratedColumn<int> times = GeneratedColumn<int>(
+    'times',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _todayMeta = const VerificationMeta('today');
+  @override
+  late final GeneratedColumn<int> today = GeneratedColumn<int>(
+    'today',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _outcomeMeta = const VerificationMeta(
+    'outcome',
+  );
+  @override
+  late final GeneratedColumn<String> outcome = GeneratedColumn<String>(
+    'outcome',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    postKey,
+    lastMs,
+    times,
+    today,
+    outcome,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'feed_seen_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FeedSeenRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('post_key')) {
+      context.handle(
+        _postKeyMeta,
+        postKey.isAcceptableOrUnknown(data['post_key']!, _postKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_postKeyMeta);
+    }
+    if (data.containsKey('last_ms')) {
+      context.handle(
+        _lastMsMeta,
+        lastMs.isAcceptableOrUnknown(data['last_ms']!, _lastMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lastMsMeta);
+    }
+    if (data.containsKey('times')) {
+      context.handle(
+        _timesMeta,
+        times.isAcceptableOrUnknown(data['times']!, _timesMeta),
+      );
+    }
+    if (data.containsKey('today')) {
+      context.handle(
+        _todayMeta,
+        today.isAcceptableOrUnknown(data['today']!, _todayMeta),
+      );
+    }
+    if (data.containsKey('outcome')) {
+      context.handle(
+        _outcomeMeta,
+        outcome.isAcceptableOrUnknown(data['outcome']!, _outcomeMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {postKey};
+  @override
+  FeedSeenRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FeedSeenRow(
+      postKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}post_key'],
+      )!,
+      lastMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_ms'],
+      )!,
+      times: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}times'],
+      )!,
+      today: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}today'],
+      )!,
+      outcome: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}outcome'],
+      ),
+    );
+  }
+
+  @override
+  $FeedSeenEntriesTable createAlias(String alias) {
+    return $FeedSeenEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class FeedSeenRow extends DataClass implements Insertable<FeedSeenRow> {
+  final String postKey;
+  final int lastMs;
+  final int times;
+  final int today;
+  final String? outcome;
+  const FeedSeenRow({
+    required this.postKey,
+    required this.lastMs,
+    required this.times,
+    required this.today,
+    this.outcome,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['post_key'] = Variable<String>(postKey);
+    map['last_ms'] = Variable<int>(lastMs);
+    map['times'] = Variable<int>(times);
+    map['today'] = Variable<int>(today);
+    if (!nullToAbsent || outcome != null) {
+      map['outcome'] = Variable<String>(outcome);
+    }
+    return map;
+  }
+
+  FeedSeenEntriesCompanion toCompanion(bool nullToAbsent) {
+    return FeedSeenEntriesCompanion(
+      postKey: Value(postKey),
+      lastMs: Value(lastMs),
+      times: Value(times),
+      today: Value(today),
+      outcome: outcome == null && nullToAbsent
+          ? const Value.absent()
+          : Value(outcome),
+    );
+  }
+
+  factory FeedSeenRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FeedSeenRow(
+      postKey: serializer.fromJson<String>(json['postKey']),
+      lastMs: serializer.fromJson<int>(json['lastMs']),
+      times: serializer.fromJson<int>(json['times']),
+      today: serializer.fromJson<int>(json['today']),
+      outcome: serializer.fromJson<String?>(json['outcome']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'postKey': serializer.toJson<String>(postKey),
+      'lastMs': serializer.toJson<int>(lastMs),
+      'times': serializer.toJson<int>(times),
+      'today': serializer.toJson<int>(today),
+      'outcome': serializer.toJson<String?>(outcome),
+    };
+  }
+
+  FeedSeenRow copyWith({
+    String? postKey,
+    int? lastMs,
+    int? times,
+    int? today,
+    Value<String?> outcome = const Value.absent(),
+  }) => FeedSeenRow(
+    postKey: postKey ?? this.postKey,
+    lastMs: lastMs ?? this.lastMs,
+    times: times ?? this.times,
+    today: today ?? this.today,
+    outcome: outcome.present ? outcome.value : this.outcome,
+  );
+  FeedSeenRow copyWithCompanion(FeedSeenEntriesCompanion data) {
+    return FeedSeenRow(
+      postKey: data.postKey.present ? data.postKey.value : this.postKey,
+      lastMs: data.lastMs.present ? data.lastMs.value : this.lastMs,
+      times: data.times.present ? data.times.value : this.times,
+      today: data.today.present ? data.today.value : this.today,
+      outcome: data.outcome.present ? data.outcome.value : this.outcome,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FeedSeenRow(')
+          ..write('postKey: $postKey, ')
+          ..write('lastMs: $lastMs, ')
+          ..write('times: $times, ')
+          ..write('today: $today, ')
+          ..write('outcome: $outcome')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(postKey, lastMs, times, today, outcome);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FeedSeenRow &&
+          other.postKey == this.postKey &&
+          other.lastMs == this.lastMs &&
+          other.times == this.times &&
+          other.today == this.today &&
+          other.outcome == this.outcome);
+}
+
+class FeedSeenEntriesCompanion extends UpdateCompanion<FeedSeenRow> {
+  final Value<String> postKey;
+  final Value<int> lastMs;
+  final Value<int> times;
+  final Value<int> today;
+  final Value<String?> outcome;
+  final Value<int> rowid;
+  const FeedSeenEntriesCompanion({
+    this.postKey = const Value.absent(),
+    this.lastMs = const Value.absent(),
+    this.times = const Value.absent(),
+    this.today = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FeedSeenEntriesCompanion.insert({
+    required String postKey,
+    required int lastMs,
+    this.times = const Value.absent(),
+    this.today = const Value.absent(),
+    this.outcome = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : postKey = Value(postKey),
+       lastMs = Value(lastMs);
+  static Insertable<FeedSeenRow> custom({
+    Expression<String>? postKey,
+    Expression<int>? lastMs,
+    Expression<int>? times,
+    Expression<int>? today,
+    Expression<String>? outcome,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (postKey != null) 'post_key': postKey,
+      if (lastMs != null) 'last_ms': lastMs,
+      if (times != null) 'times': times,
+      if (today != null) 'today': today,
+      if (outcome != null) 'outcome': outcome,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FeedSeenEntriesCompanion copyWith({
+    Value<String>? postKey,
+    Value<int>? lastMs,
+    Value<int>? times,
+    Value<int>? today,
+    Value<String?>? outcome,
+    Value<int>? rowid,
+  }) {
+    return FeedSeenEntriesCompanion(
+      postKey: postKey ?? this.postKey,
+      lastMs: lastMs ?? this.lastMs,
+      times: times ?? this.times,
+      today: today ?? this.today,
+      outcome: outcome ?? this.outcome,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (postKey.present) {
+      map['post_key'] = Variable<String>(postKey.value);
+    }
+    if (lastMs.present) {
+      map['last_ms'] = Variable<int>(lastMs.value);
+    }
+    if (times.present) {
+      map['times'] = Variable<int>(times.value);
+    }
+    if (today.present) {
+      map['today'] = Variable<int>(today.value);
+    }
+    if (outcome.present) {
+      map['outcome'] = Variable<String>(outcome.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FeedSeenEntriesCompanion(')
+          ..write('postKey: $postKey, ')
+          ..write('lastMs: $lastMs, ')
+          ..write('times: $times, ')
+          ..write('today: $today, ')
+          ..write('outcome: $outcome, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5076,6 +5434,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $StudyDaysTable studyDays = $StudyDaysTable(this);
   late final $OutboxTable outbox = $OutboxTable(this);
   late final $KeyValuesTable keyValues = $KeyValuesTable(this);
+  late final $FeedSeenEntriesTable feedSeenEntries = $FeedSeenEntriesTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5093,6 +5454,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     studyDays,
     outbox,
     keyValues,
+    feedSeenEntries,
   ];
 }
 
@@ -7863,6 +8225,217 @@ typedef $$KeyValuesTableProcessedTableManager =
       KeyValueRow,
       PrefetchHooks Function()
     >;
+typedef $$FeedSeenEntriesTableCreateCompanionBuilder =
+    FeedSeenEntriesCompanion Function({
+      required String postKey,
+      required int lastMs,
+      Value<int> times,
+      Value<int> today,
+      Value<String?> outcome,
+      Value<int> rowid,
+    });
+typedef $$FeedSeenEntriesTableUpdateCompanionBuilder =
+    FeedSeenEntriesCompanion Function({
+      Value<String> postKey,
+      Value<int> lastMs,
+      Value<int> times,
+      Value<int> today,
+      Value<String?> outcome,
+      Value<int> rowid,
+    });
+
+class $$FeedSeenEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $FeedSeenEntriesTable> {
+  $$FeedSeenEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get postKey => $composableBuilder(
+    column: $table.postKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastMs => $composableBuilder(
+    column: $table.lastMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get times => $composableBuilder(
+    column: $table.times,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get today => $composableBuilder(
+    column: $table.today,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FeedSeenEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $FeedSeenEntriesTable> {
+  $$FeedSeenEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get postKey => $composableBuilder(
+    column: $table.postKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastMs => $composableBuilder(
+    column: $table.lastMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get times => $composableBuilder(
+    column: $table.times,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get today => $composableBuilder(
+    column: $table.today,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get outcome => $composableBuilder(
+    column: $table.outcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FeedSeenEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FeedSeenEntriesTable> {
+  $$FeedSeenEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get postKey =>
+      $composableBuilder(column: $table.postKey, builder: (column) => column);
+
+  GeneratedColumn<int> get lastMs =>
+      $composableBuilder(column: $table.lastMs, builder: (column) => column);
+
+  GeneratedColumn<int> get times =>
+      $composableBuilder(column: $table.times, builder: (column) => column);
+
+  GeneratedColumn<int> get today =>
+      $composableBuilder(column: $table.today, builder: (column) => column);
+
+  GeneratedColumn<String> get outcome =>
+      $composableBuilder(column: $table.outcome, builder: (column) => column);
+}
+
+class $$FeedSeenEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FeedSeenEntriesTable,
+          FeedSeenRow,
+          $$FeedSeenEntriesTableFilterComposer,
+          $$FeedSeenEntriesTableOrderingComposer,
+          $$FeedSeenEntriesTableAnnotationComposer,
+          $$FeedSeenEntriesTableCreateCompanionBuilder,
+          $$FeedSeenEntriesTableUpdateCompanionBuilder,
+          (
+            FeedSeenRow,
+            BaseReferences<_$AppDatabase, $FeedSeenEntriesTable, FeedSeenRow>,
+          ),
+          FeedSeenRow,
+          PrefetchHooks Function()
+        > {
+  $$FeedSeenEntriesTableTableManager(
+    _$AppDatabase db,
+    $FeedSeenEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FeedSeenEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FeedSeenEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FeedSeenEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> postKey = const Value.absent(),
+                Value<int> lastMs = const Value.absent(),
+                Value<int> times = const Value.absent(),
+                Value<int> today = const Value.absent(),
+                Value<String?> outcome = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FeedSeenEntriesCompanion(
+                postKey: postKey,
+                lastMs: lastMs,
+                times: times,
+                today: today,
+                outcome: outcome,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String postKey,
+                required int lastMs,
+                Value<int> times = const Value.absent(),
+                Value<int> today = const Value.absent(),
+                Value<String?> outcome = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FeedSeenEntriesCompanion.insert(
+                postKey: postKey,
+                lastMs: lastMs,
+                times: times,
+                today: today,
+                outcome: outcome,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FeedSeenEntriesTable, FeedSeenRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $FeedSeenEntriesTable,
+                    FeedSeenRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FeedSeenEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FeedSeenEntriesTable,
+      FeedSeenRow,
+      $$FeedSeenEntriesTableFilterComposer,
+      $$FeedSeenEntriesTableOrderingComposer,
+      $$FeedSeenEntriesTableAnnotationComposer,
+      $$FeedSeenEntriesTableCreateCompanionBuilder,
+      $$FeedSeenEntriesTableUpdateCompanionBuilder,
+      (
+        FeedSeenRow,
+        BaseReferences<_$AppDatabase, $FeedSeenEntriesTable, FeedSeenRow>,
+      ),
+      FeedSeenRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7891,4 +8464,6 @@ class $AppDatabaseManager {
       $$OutboxTableTableManager(_db, _db.outbox);
   $$KeyValuesTableTableManager get keyValues =>
       $$KeyValuesTableTableManager(_db, _db.keyValues);
+  $$FeedSeenEntriesTableTableManager get feedSeenEntries =>
+      $$FeedSeenEntriesTableTableManager(_db, _db.feedSeenEntries);
 }
