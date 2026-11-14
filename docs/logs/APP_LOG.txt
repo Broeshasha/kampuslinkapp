@@ -162,3 +162,7 @@ DID: Home feed reels style: only the card moves, fixed side rail (module, like, 
 [2026-11-13] LANE: D5 | AI/Person: founder + Claude | WP: v1.12 coins and stories removed, shop paid with XP, "server busy" screen
 DID: deleted lib/features/stories, lib/data/coins/stories_models.dart, the coin bubble (feed_rail) and the story/coin texts; lib/data/coins -> lib/data/shop (shop_models, shop_providers); Wallet balance = spendable XP; Shop page shows XP and prices in XP; Shop tile in Profile; ErrorView says "Our server is busy" and retries by itself (8-30 s + jitter) on server errors; backend file 39 (XP shop, drops coin + story tables, keeps a copy in schema kl_backup_1113) and test file 40.
 TESTED: shop_models_test (wallet, colours, results bus), errors_test (server outage retries by itself). Backend file 40 rolls back.
+
+[2026-11-14] LANE: B1 | AI/Person: founder + Claude | WP: legal links (B02 side batch)
+DONE: lib/ui/legal_links.dart (privacyUrl, termsUrl, openLegalPage, LegalLinksLine); onboarding sign-in step shows "By continuing, you accept..." + Terms / Privacy buttons; Profile About card has Terms of use + Privacy policy rows; strings legalTerms/legalPrivacy/legalAgree in en/fr/ar. Bac consent checkbox comes later in BAC-2.
+TESTED: flutter analyze + phone (links open in the browser, ar/fr/en labels).

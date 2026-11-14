@@ -16,6 +16,7 @@ import '../../data/providers.dart';
 import '../../data/shop/shop_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/reader_settings.dart';
+import '../../ui/legal_links.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
 import '../auth/google_sign_in_button.dart';
@@ -578,6 +579,20 @@ class _AboutCard extends ConsumerWidget {
             Uri.parse('https://t.me/$feedbackTelegram'),
             mode: LaunchMode.externalApplication,
           ),
+        ),
+        Divider(height: 1, color: kc.border),
+        ListTile(
+          leading: Icon(Icons.description_outlined, color: kc.accentText),
+          title: Text(l10n.legalTerms),
+          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+          onTap: () => openLegalPage(termsUrl),
+        ),
+        Divider(height: 1, color: kc.border),
+        ListTile(
+          leading: Icon(Icons.privacy_tip_outlined, color: kc.accentText),
+          title: Text(l10n.legalPrivacy),
+          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+          onTap: () => openLegalPage(privacyUrl),
         ),
         Divider(height: 1, color: kc.border),
         ListTile(

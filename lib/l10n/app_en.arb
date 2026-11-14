@@ -408,5 +408,8 @@
   "shopOffline": "Connect to the internet to use the shop.",
   "shopBought": "Done!",
   "feedShare": "Share",
-  "feedMore": "More"
+  "feedMore": "More",
+  "legalTerms": "Terms of use",
+  "legalPrivacy": "Privacy policy",
+  "legalAgree": "By continuing, you accept our Terms of use and Privacy policy."
 }

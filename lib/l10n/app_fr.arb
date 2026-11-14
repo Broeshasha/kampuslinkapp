@@ -351,5 +351,8 @@
   "shopOffline": "Connecte-toi \u00e0 internet pour utiliser la boutique.",
   "shopBought": "C\u2019est fait !",
   "feedShare": "Partager",
-  "feedMore": "Plus"
+  "feedMore": "Plus",
+  "legalTerms": "Conditions d'utilisation",
+  "legalPrivacy": "Politique de confidentialité",
+  "legalAgree": "En continuant, tu acceptes nos conditions d'utilisation et notre politique de confidentialité."
 }

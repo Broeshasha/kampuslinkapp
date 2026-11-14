@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../ui/brand_logo.dart';
+import '../../ui/legal_links.dart';
 import '../auth/google_sign_in_button.dart';
 import '../profile/language_picker.dart';
 import '../reminders/reminder_step.dart';
@@ -198,6 +199,8 @@ class _SignInStep extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(color: kc.textSecondary),
         ),
+        const SizedBox(height: KSpace.xl),
+        const LegalLinksLine(),
       ],
       action: const GoogleSignInButton(),
     );
