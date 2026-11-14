@@ -49,7 +49,9 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
   @override
   void dispose() {
     if (_reviewed > 0) {
-      Analytics.log('cards_session', {'cards': _reviewed > 20 ? 20 : _reviewed});
+      Analytics.log('cards_session', {
+        'cards': _reviewed > 20 ? 20 : _reviewed,
+      });
     }
     _timer?.cancel();
     super.dispose();
