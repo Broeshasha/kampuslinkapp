@@ -4,6 +4,7 @@ import '../core/theme/app_theme.dart';
 import 'block_style.dart';
 import 'code_block.dart';
 import 'code_tokens.dart';
+import 'bidi_math.dart';
 import 'latex_plain.dart';
 import 'math_view.dart';
 import 'segments.dart';
@@ -31,7 +32,7 @@ List<InlineSpan> buildMathSpans(
   for (final s in segments) {
     switch (s.kind) {
       case SegmentKind.plain:
-        spans.add(TextSpan(text: fixBareCommands(s.text)));
+        spans.addAll(plainTextSpans(fixBareCommands(s.text), rtl: rtl));
       case SegmentKind.term:
         spans.add(
           TextSpan(

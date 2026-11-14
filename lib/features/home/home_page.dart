@@ -626,6 +626,8 @@ class _FeedState extends ConsumerState<_Feed> {
           prompt: text.prompt,
           options: text.options,
           correctIndex: payload.question.correctIndex,
+          questionId: payload.question.id,
+          shuffleSeed: ref.read(authControllerProvider).userId ?? '',
           explanation: text.explanation,
           language: text.language,
           figure: pickFigure(text: local, shared: shared?['figure']),

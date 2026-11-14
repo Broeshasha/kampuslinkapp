@@ -195,3 +195,8 @@ TESTED: reminders_test quiet hours; SQL 53 locally.
 [2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: B15 first phone-database migration (Phase 2 start)
 DONE: schema v2 = table feed_seen_entries (one row per Home post) replacing the 3000-entry JSON value rewritten on every swipe; onUpgrade step v1->v2 moves the old JSON into rows (broken JSON dropped, never blocks); FeedSeenStore writes only changed posts + prune every 200 saves; drift_schemas v1/v2 snapshots + generated migration helpers; migration_test (data kept), feed_seen_store_test; AGENTS.md rule for schema changes.
 TESTED: migration_test, feed_seen_store_test, feed tests.
+
+[2026-11-14] LANE: D2 | AI/Person: founder + Claude | WP: B14/B17 additions from the bac maths content review
+DONE: 1) quiz options shown in a stable shuffled order per student and question (lib/data/learning/option_order.dart; lesson quiz + Home quick question); answers still use the ORIGINAL index everywhere (server, outbox, saved state). 2) RTL: plain maths runs inside Arabic text isolated LTR with U+2066/U+2069 (lib/render/bidi_math.dart, used for plain segments in buildMathSpans); golden test with the 4 review examples. 3) Fonts: NotoSansMath was already bundled + in fontFamilyFallback (has U+20D7, U+22A5, U+21D2); letters carrying a combining mark (vector arrow) are now drawn with NotoSansMath so the arrow sits on the letter.
+TESTED: option_order_test, bidi_math_test (+ golden goldens/bidi_math_ar.png made with --update-goldens on the founder PC).
+NOTE: explanations that say "answer A" no longer match the shuffled letters - content should name the answer, not the letter.

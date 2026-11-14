@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/analytics/analytics.dart';
+import '../../core/auth/auth_repository.dart';
 import '../../core/errors/result.dart';
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/learning/learning_providers.dart';
+import '../../data/learning/option_order.dart';
 import '../../data/learning/quiz_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
@@ -132,6 +134,7 @@ class _QuizPageState extends ConsumerState<QuizPage> {
         index: _index,
         total: questions.length,
         chosen: _chosen,
+        seed: ref.read(authControllerProvider).userId ?? '',
         onChoose: (i) => _choose(q, i),
         onNext: _next,
       );
@@ -171,8 +174,11 @@ class _QuestionView extends StatelessWidget {
     required this.chosen,
     required this.onChoose,
     required this.onNext,
+    this.seed = '',
   });
 
+  /// Shuffles the options per student (see [optionOrder]).
+  final String seed;
   final QuizQuestion question;
   final int index;
   final int total;
@@ -199,6 +205,7 @@ class _QuestionView extends StatelessWidget {
     final options = question.options.isNotEmpty
         ? question.options
         : [l10n.trueLabel, l10n.falseLabel];
+    final order = optionOrder(question.id, seed, options.length);
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         KSpace.lg,
@@ -247,8 +254,10 @@ class _QuestionView extends StatelessWidget {
               OptionGrid(
                 count: options.length,
                 withFigures: question.optionFigures.isNotEmpty,
-                itemBuilder: (context, i) => _OptionTile(
-                  letter: String.fromCharCode(65 + i),
+                itemBuilder: (context, slot) {
+                  final i = order[slot];
+                  return _OptionTile(
+                  letter: String.fromCharCode(65 + slot),
                   text: options[i],
                   style: style,
                   figure: i < question.optionFigures.length
@@ -262,7 +271,8 @@ class _QuestionView extends StatelessWidget {
                       ? _OptionState.wrong
                       : _OptionState.dim,
                   onTap: answered == null ? () => onChoose(i) : null,
-                ),
+                  );
+                },
               ),
               if (answered != null) ...[
                 const SizedBox(height: KSpace.sm),

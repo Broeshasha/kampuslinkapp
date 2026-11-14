@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
+import '../../data/learning/option_order.dart';
 import 'post_backdrop.dart';
 
 /// Feed post Q: one MCQ about something the student knows. One tap answers
@@ -30,7 +31,13 @@ class QuickQuestionCard extends StatefulWidget {
     this.endInset = 0,
     this.topInset = 0,
     this.bottomInset = 0,
+    this.questionId,
+    this.shuffleSeed = '',
   });
+
+  /// Options shown in a stable shuffled order per student (null = as is).
+  final int? questionId;
+  final String shuffleSeed;
 
   final String prompt;
   final List<String> options;
@@ -171,8 +178,18 @@ class _QuickQuestionCardState extends State<QuickQuestionCard> {
                     OptionGrid(
                       count: widget.options.length,
                       withFigures: widget.optionFigures.isNotEmpty,
-                      itemBuilder: (context, i) =>
-                          _option(context, i, answer, style),
+                      itemBuilder: (context, slot) => _option(
+                        context,
+                        widget.questionId == null
+                            ? slot
+                            : optionOrder(
+                                widget.questionId!,
+                                widget.shuffleSeed,
+                                widget.options.length,
+                              )[slot],
+                        answer,
+                        style,
+                      ),
                     ),
                     if (answer != null) ...[
                       Text(
