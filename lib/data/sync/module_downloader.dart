@@ -126,6 +126,13 @@ class ModuleDownloader {
 
   bool get _stopped => shouldStop?.call() ?? false;
 
+  /// B03: manifests fetched in this pass (key: module + langs), reused by the
+  /// practice/exam step instead of a second call.
+  final Map<String, Map<String, dynamic>> manifests = {};
+
+  static String manifestKey(int moduleId, List<String> langs) =>
+      '$moduleId|${(langs.toSet().toList()..sort()).join(',')}';
+
   void _count(Object? json) {
     final f = onBytes;
     if (f == null) return;
@@ -211,6 +218,7 @@ class ModuleDownloader {
     Map<String, dynamic> manifest;
     try {
       manifest = await _retry(() => fetchManifest(moduleId, langs));
+      manifests[manifestKey(moduleId, langs)] = manifest;
     } catch (e, s) {
       final inner = e is _Attempted ? e.error : e;
       if (isMissingFunction(inner)) return _fallback(moduleId, langs);

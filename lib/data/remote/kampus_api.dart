@@ -195,10 +195,12 @@ class KampusApi {
     int moduleId,
     List<String> langs,
   ) async => _map(
-    await _client.rpc(
-      'get_module_manifest',
-      params: {'p_module': moduleId, 'p_langs': langs},
-    ),
+    await _client
+        .rpc(
+          'get_module_manifest',
+          params: {'p_module': moduleId, 'p_langs': langs},
+        )
+        .timeout(_timeout),
   );
 
   /// File 13: ONE lesson (same shape as one element of bundle.lessons).
@@ -206,10 +208,12 @@ class KampusApi {
     int lessonId,
     List<String> langs,
   ) async => _map(
-    await _client.rpc(
-      'get_lesson_bundle',
-      params: {'p_lesson': lessonId, 'p_langs': langs},
-    ),
+    await _client
+        .rpc(
+          'get_lesson_bundle',
+          params: {'p_lesson': lessonId, 'p_langs': langs},
+        )
+        .timeout(const Duration(seconds: 45)),
   );
 
   /// File 13: glossary, carousel sets and resources of a module.
@@ -217,10 +221,12 @@ class KampusApi {
     int moduleId,
     List<String> langs,
   ) async => _map(
-    await _client.rpc(
-      'get_module_extras',
-      params: {'p_module': moduleId, 'p_langs': langs},
-    ),
+    await _client
+        .rpc(
+          'get_module_extras',
+          params: {'p_module': moduleId, 'p_langs': langs},
+        )
+        .timeout(const Duration(seconds: 45)),
   );
 
   /// Contract file 15: the practice items of one chapter (all languages

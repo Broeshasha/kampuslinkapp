@@ -30,6 +30,8 @@ class FakeServer {
   final lessons = <int, Map<int, String>>{};
   final failLesson = <int>{};
   bool missingFunctions = false;
+  bool failManifest = false;
+  var manifestCalls = 0;
   final lessonCalls = <int, int>{};
   final asked = <int, List<String>>{};
   var extrasCalls = 0;
@@ -62,7 +64,9 @@ class FakeServer {
   };
 
   Future<Map<String, dynamic>> manifest(int m, List<String> langs) async {
+    manifestCalls++;
     if (missingFunctions) _missing();
+    if (failManifest) throw TimeoutException('server down');
     final ls = lessons[m] ?? const <int, String>{};
     return {
       'schema_version': 3,
@@ -260,5 +264,22 @@ void main() {
     final r = await s.sync(['fr']);
     expect(r.failure, isA<OfflineFailure>());
     expect(await lessonIds(), [101]);
+  });
+
+  test('B03: 3 modules in a row failing stops the pass (no hammering)', () async {
+    moduleList = [for (var i = 1; i <= 6; i++) serverModule(i, 1)];
+    server.failManifest = true;
+    final r = await service().sync(['fr']);
+    expect(r.tripped, isTrue);
+    expect(r.failures.keys, hasLength(3));
+    // 3 modules x (1 try + 3 retries) manifest calls, modules 4-6 untouched.
+    expect(server.manifestCalls, 12);
+  });
+
+  test('B03: the downloader keeps the manifest for the practice step', () async {
+    server.lessons[1] = {101: 'a'};
+    final d = downloader();
+    await d.download(1, ['fr', 'ar']);
+    expect(d.manifests[ModuleDownloader.manifestKey(1, ['ar', 'fr'])], isNotNull);
   });
 }

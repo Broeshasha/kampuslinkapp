@@ -17,9 +17,12 @@ class FlushResult {
   bool get ok => failure == null;
 }
 
-/// Drains the outbox in batches of 200, oldest first. One flush at a time.
+/// Drains the outbox in batches of [batchSize] (25: short server
+/// transactions, B03 / C-04), oldest first. One flush at a time.
 class OutboxSync {
   OutboxSync(this._outbox, this._send);
+
+  static const batchSize = 25;
 
   final OutboxRepository _outbox;
   final SendOps _send;
@@ -30,8 +33,8 @@ class OutboxSync {
 
   Future<FlushResult> _flush() async {
     var sent = 0;
-    for (var round = 0; round < 50; round++) {
-      final batch = await _outbox.due(limit: 200);
+    for (var round = 0; round < 200; round++) {
+      final batch = await _outbox.due(limit: batchSize);
       if (batch.isEmpty) break;
       final ids = [for (final r in batch) r.opId];
       final ops = [

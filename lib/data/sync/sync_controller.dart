@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,6 +31,31 @@ const _contentCheckKey = 'content_checked_at';
 const _pausedKey = 'downloads_paused';
 const _firstOkKey = 'first_download_ok';
 const _assessVersionKey = 'assess_version:';
+const _retryAfterKey = 'content_retry_after';
+const _backoffStepKey = 'content_backoff_step';
+
+/// B03: after a failed content pass, automatic passes wait 2, 5, 15, then
+/// 60 minutes (+ up to 20 % jitter). "Retry" / pull-to-refresh skip the wait.
+const contentBackoff = [
+  Duration(minutes: 2),
+  Duration(minutes: 5),
+  Duration(minutes: 15),
+  Duration(minutes: 60),
+];
+
+/// B03: a pass older than this is considered dead (the flag is cleared).
+const syncWatchdog = Duration(minutes: 10);
+
+/// Next wait for backoff [step] (0-based), with jitter in [0, 20 %).
+Duration contentBackoffFor(int step, {double jitter = 0}) {
+  final base = contentBackoff[step.clamp(0, contentBackoff.length - 1)];
+  return base + base * jitter.clamp(0, 0.2);
+}
+
+/// Network / server trouble (worth backing off), not a bug or a 4xx.
+bool isTransientFailure(AppFailure? f) =>
+    f is OfflineFailure || f is ServerFailure || f is RateLimitedFailure ||
+    (f is UnknownFailure && f.error is TimeoutException);
 
 /// All the languages a lesson can have (the top-up target).
 const allContentLanguages = ['ar', 'fr', 'en'];
@@ -109,6 +136,13 @@ class SyncState {
 /// a time; Pause stops between two lessons and resumes where it was.
 class SyncController extends Notifier<SyncState> {
   bool _stop = false;
+
+  /// B03: when the current pass started (watchdog).
+  DateTime? _runningSince;
+
+  /// B03 (A-11): a forced pass asked while another pass was running.
+  bool _pendingForce = false;
+  final _rnd = math.Random();
 
   @override
   SyncState build() {
@@ -272,8 +306,39 @@ class SyncController extends Notifier<SyncState> {
     } catch (error, stack) {
       // Never leave the sync stuck as "running": nothing would download again.
       appLog.error(error, stack, reason: 'syncNow crashed');
+      _runningSince = null;
       state = state.copyWith(running: false, failure: UnknownFailure(error));
     }
+    // A forced pass (Retry, new semester, new language) asked during the
+    // last pass runs now instead of being lost.
+    if (_pendingForce && !state.running && ref.mounted) {
+      _pendingForce = false;
+      await syncNow(force: true);
+    }
+  }
+
+  /// Automatic passes wait after a failed content check (see [contentBackoff]).
+  DateTime? get contentRetryAfter {
+    final raw = ref.read(sharedPrefsProvider).getString(_retryAfterKey);
+    return raw == null ? null : DateTime.tryParse(raw);
+  }
+
+  Future<void> _backOff() async {
+    final prefs = ref.read(sharedPrefsProvider);
+    final step = prefs.getInt(_backoffStepKey) ?? 0;
+    final wait = contentBackoffFor(step, jitter: _rnd.nextDouble() * 0.2);
+    await prefs.setString(
+      _retryAfterKey,
+      DateTime.now().add(wait).toIso8601String(),
+    );
+    await prefs.setInt(_backoffStepKey, step + 1);
+    appLog.info('content check backs off ${wait.inMinutes} min');
+  }
+
+  Future<void> _clearBackOff() async {
+    final prefs = ref.read(sharedPrefsProvider);
+    await prefs.remove(_retryAfterKey);
+    await prefs.remove(_backoffStepKey);
   }
 
   /// B01 (A-01): the phone's data belongs to the signed-in student. Another
@@ -297,7 +362,16 @@ class SyncController extends Notifier<SyncState> {
 
   Future<void> _syncNow({bool force = false}) async {
     await _claimLocalData();
-    if (state.running) return;
+    if (state.running) {
+      final since = _runningSince;
+      if (since != null && DateTime.now().difference(since) > syncWatchdog) {
+        appLog.warn('sync watchdog: pass running since $since, cleared');
+        state = state.copyWith(running: false);
+      } else {
+        if (force) _pendingForce = true;
+        return;
+      }
+    }
     final api = ref.read(kampusApiProvider);
     final downloader = _downloader();
     if (api == null ||
@@ -307,6 +381,7 @@ class SyncController extends Notifier<SyncState> {
       return;
     }
     final prefs = ref.read(sharedPrefsProvider);
+    _runningSince = DateTime.now();
     state = state.copyWith(running: true, clearFailure: true);
     AppFailure? firstFailure;
     final outboxSync = ref.read(outboxSyncProvider);
@@ -326,14 +401,19 @@ class SyncController extends Notifier<SyncState> {
     });
     final langs = _firstLanguages();
     final last = contentCheckedAt;
+    final retryAfter = contentRetryAfter;
+    final backingOff =
+        !force && retryAfter != null && DateTime.now().isBefore(retryAfter);
     final checkContent =
         !state.paused &&
+        !backingOff &&
         (force ||
             last == null ||
             DateTime.now().difference(last) >= contentCheckEvery ||
             await _missingLocally(langs));
     if (!checkContent) {
       final now = DateTime.now();
+      _runningSince = null;
       if (firstFailure == null) {
         await prefs.setString(_lastSyncKey, now.toIso8601String());
       }
@@ -358,6 +438,11 @@ class SyncController extends Notifier<SyncState> {
       onProgress: _progress,
     );
     state = state.copyWith(failures: report.failures);
+    // Network / server trouble (not a full disk, not a bug): back off.
+    final contentFailed =
+        report.tripped ||
+        report.failures.values.any((f) => f.transient) ||
+        (report.failures.isEmpty && isTransientFailure(report.failure));
     firstFailure ??= report.failure;
     if (firstFailure == null) {
       final merged = await guard(() async {
@@ -374,9 +459,20 @@ class SyncController extends Notifier<SyncState> {
     // Practice + mock exams of the current semester (contract file 15),
     // only for modules whose version changed (or when forced).
     if (firstFailure == null && !_stop) {
-      await _syncAssess(api, langs, force: force);
+      await _syncAssess(
+        api,
+        langs,
+        force: force,
+        manifests: downloader.manifests,
+      );
+    }
+    if (contentFailed) {
+      await _backOff();
+    } else if (firstFailure == null) {
+      await _clearBackOff();
     }
     final now = DateTime.now();
+    _runningSince = null;
     if (firstFailure == null) {
       await prefs.setString(_lastSyncKey, now.toIso8601String());
       if (!_stop) {
@@ -394,6 +490,7 @@ class SyncController extends Notifier<SyncState> {
     KampusApi api,
     List<String> langs, {
     bool force = false,
+    Map<String, Map<String, dynamic>> manifests = const {},
   }) async {
     final store = ref.read(assessStoreProvider);
     final db = ref.read(appDatabaseProvider);
@@ -410,7 +507,9 @@ class SyncController extends Notifier<SyncState> {
       final stamp = '${m.serverVersion}|$langKey';
       if (!force && prefs.getString(key) == stamp) continue;
       final r = await guard(() async {
-        final manifest = await api.getModuleManifest(m.id, langs);
+        final manifest =
+            manifests[ModuleDownloader.manifestKey(m.id, langs)] ??
+            await api.getModuleManifest(m.id, langs);
         await store.applyManifest(
           m.id,
           manifest,
@@ -424,6 +523,8 @@ class SyncController extends Notifier<SyncState> {
           await prefs.setString(key, stamp);
         case Err(:final failure):
           appLog.info('practice/exams of module ${m.id}: $failure');
+          // Server or network trouble: stop here, the next pass resumes.
+          if (isTransientFailure(failure)) return;
       }
     }
   }

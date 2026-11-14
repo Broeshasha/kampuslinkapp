@@ -166,3 +166,7 @@ TESTED: shop_models_test (wallet, colours, results bus), errors_test (server out
 [2026-11-14] LANE: B1 | AI/Person: founder + Claude | WP: legal links (B02 side batch)
 DONE: lib/ui/legal_links.dart (privacyUrl, termsUrl, openLegalPage, LegalLinksLine); onboarding sign-in step shows "By continuing, you accept..." + Terms / Privacy buttons; Profile About card has Terms of use + Privacy policy rows; strings legalTerms/legalPrivacy/legalAgree in en/fr/ar. Bac consent checkbox comes later in BAC-2.
 TESTED: flutter analyze + phone (links open in the browser, ar/fr/en labels).
+
+[2026-11-14] LANE: D1 | AI/Person: founder + Claude | WP: B03 sync cannot hang or hammer
+DONE: timeouts on get_module_manifest (20 s), get_lesson_bundle + get_module_extras (45 s); 10-min watchdog clears a stuck "running"; a forced sync asked during a pass runs right after it (_pendingForce); circuit breaker: 3 modules in a row failing with network/server errors stop the pass; automatic content checks then wait 2/5/15/60 min (+0-20 % jitter, prefs content_retry_after / content_backoff_step), Retry / pull-to-refresh skip the wait; practice/exam step stops on the first server error; outbox batch 200 -> 25 (up to 200 rounds); the practice step reuses the manifest the downloader just fetched.
+TESTED: module_sync_test (breaker, manifest reuse), sync_backoff_test (ladder, jitter, transient, batch size).
