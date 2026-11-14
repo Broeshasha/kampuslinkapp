@@ -257,20 +257,20 @@ class _QuestionView extends StatelessWidget {
                 itemBuilder: (context, slot) {
                   final i = order[slot];
                   return _OptionTile(
-                  letter: String.fromCharCode(65 + slot),
-                  text: options[i],
-                  style: style,
-                  figure: i < question.optionFigures.length
-                      ? question.optionFigures[i]
-                      : null,
-                  state: answered == null
-                      ? _OptionState.idle
-                      : i == question.correctIndex
-                      ? _OptionState.right
-                      : i == answered
-                      ? _OptionState.wrong
-                      : _OptionState.dim,
-                  onTap: answered == null ? () => onChoose(i) : null,
+                    letter: String.fromCharCode(65 + slot),
+                    text: options[i],
+                    style: style,
+                    figure: i < question.optionFigures.length
+                        ? question.optionFigures[i]
+                        : null,
+                    state: answered == null
+                        ? _OptionState.idle
+                        : i == question.correctIndex
+                        ? _OptionState.right
+                        : i == answered
+                        ? _OptionState.wrong
+                        : _OptionState.dim,
+                    onTap: answered == null ? () => onChoose(i) : null,
                   );
                 },
               ),
