@@ -898,6 +898,18 @@ abstract class AppLocalizations {
   /// **'Our server had a problem. Try again in a moment.'**
   String get errorServer;
 
+  /// No description provided for @errorServerBusyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Our server is busy'**
+  String get errorServerBusyTitle;
+
+  /// No description provided for @errorServerBusyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is wrong with your phone. We keep trying and continue by ourselves.'**
+  String get errorServerBusyBody;
+
   /// No description provided for @errorUnknown.
   ///
   /// In en, this message translates to:
@@ -2115,6 +2127,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link copied'**
   String get shareCopied;
+
+  /// No description provided for @shopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get shopTitle;
+
+  /// No description provided for @shopHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn XP by studying and spend it here. Nothing here can be bought with money.'**
+  String get shopHint;
+
+  /// No description provided for @shopBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get shopBuy;
+
+  /// No description provided for @shopUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get shopUse;
+
+  /// No description provided for @shopInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get shopInUse;
+
+  /// No description provided for @shopHave.
+  ///
+  /// In en, this message translates to:
+  /// **'You have {count} of {max}'**
+  String shopHave(int count, int max);
+
+  /// No description provided for @shopMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum reached'**
+  String get shopMax;
+
+  /// No description provided for @shopNotEnough.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough XP yet'**
+  String get shopNotEnough;
+
+  /// No description provided for @shopEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The shop is empty for now.'**
+  String get shopEmpty;
+
+  /// No description provided for @shopOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to use the shop.'**
+  String get shopOffline;
+
+  /// No description provided for @shopBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Done!'**
+  String get shopBought;
+
+  /// No description provided for @feedShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get feedShare;
+
+  /// No description provided for @feedMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get feedMore;
 }
 
 class _AppLocalizationsDelegate

@@ -152,3 +152,13 @@ TESTED: release_ready_test (config numbers/strings, needsUpdate min/latest, demo
 [2026-10-24 04:00] LANE: D4 | AI/Person: founder + Claude | WP: 17-B practice + mock exams
 DID: lib/data/assess (models, store, providers), KampusApi getPractice / getExamPaper / getMyExamAttempts, download in syncNow, lib/features/assess (module entry tiles, practice chapters / list / item, exam list / exam mode / correction), routes /modules/:id/practice and /exams, report targets practice + exam with part key; 35 new keys en/fr/ar.
 TESTED: assess_test (Ondes 840 canonical, Chimie 842 converted with text marking and ignored copies, Python 994 code solutions; 0.25 grid / clamp / unknown keys / out of 20; whole scores map + finished never goes back; practice progress merge; manifest rev diff and deletions; exam mode hides solutions, finish -> correction, +0.25 sent; Arabic 320 1.5x correction; practice hints one at a time, solution, rating saved).
+[2026-11-05] LANE: D5 | AI/Person: founder + Claude | WP: Phase 1 coins + stories (backend file 33)
+DID: lib/data/coins (wallet, stories, shop providers, models), sync results bus, KampusApi get_wallet / get_my_stories / buy_item / equip_item / shop rows, features/stories (bar, viewer, question / plan / streak / editorial templates), features/shop (route /shop), Home stories bar + coin chip, Shop theme accent, 27 new keys en/fr/ar.
+TESTED: stories_coins_test (models, grouping, question detection, colours, results bus).
+
+[2026-11-06] LANE: D5 | AI/Person: founder + Claude | WP: Phase 2 step 1 (feed)
+DID: Home feed reels style: only the card moves, fixed side rail (module, like, save, share, more; mirrored in Arabic), double-tap like with big heart, pop/bounce buttons, card skins + celebrations from the shop, coin bubble when the server pays, answers flushed 3 s later; stories bar no longer hides; sync reads the semester saved on the phone (Riverpod loop removed).
+
+[2026-11-13] LANE: D5 | AI/Person: founder + Claude | WP: v1.12 coins and stories removed, shop paid with XP, "server busy" screen
+DID: deleted lib/features/stories, lib/data/coins/stories_models.dart, the coin bubble (feed_rail) and the story/coin texts; lib/data/coins -> lib/data/shop (shop_models, shop_providers); Wallet balance = spendable XP; Shop page shows XP and prices in XP; Shop tile in Profile; ErrorView says "Our server is busy" and retries by itself (8-30 s + jitter) on server errors; backend file 39 (XP shop, drops coin + story tables, keeps a copy in schema kl_backup_1113) and test file 40.
+TESTED: shop_models_test (wallet, colours, results bus), errors_test (server outage retries by itself). Backend file 40 rolls back.

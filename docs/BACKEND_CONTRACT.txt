@@ -172,3 +172,100 @@ G. WHAT THE APP MUST NEVER DO
   - call the Kampus Store functions (admin_*, ks_*, advertiser/partner functions, get_my_profile())
     or touch Store tables: the Store is a separate product
 ================================================================================
+
+--------------------------------------------------------------------------------
+H. COINS, SHOP, STORIES  (file 33, Phase 1)
+  *** SUPERSEDED BY FILE 39 (v1.12, 2026-11-13): coins and stories are REMOVED. The shop is paid with XP:
+  *** balance = study_stats.xp - sum(kl_xp_spend). get_wallet keeps its keys (today_earned / daily_cap / cap_remaining = 0).
+  *** buy_item error is now insufficient_xp. get_my_stories, post_achievement, delete_my_post, report_post, get_my_achievements are gone.
+  *** sync_progress still accepts story_answer / story_view (no-ops) and still returns "coins": 0 for old apps. Text below = history only.
+--------------------------------------------------------------------------------
+  RULE: the server decides every coin. The phone never writes coins; it only shows what the server returns.
+  Coins are paid INSIDE sync_progress (never by direct RPCs like review_card). Amounts, daily caps, prices = rows
+  (kl_coin_rules, kl_shop_items, app_config), never an app release. Day = Algiers day, decided by the server at sync time
+  (an offline replay pays on the day it is synced). Daily cap on study coins: app_config coins_daily_cap (100).
+  Streak milestones (3/7/30/100) are outside the cap. Idempotent: the same event never pays twice (ledger unique ref).
+
+  sync_progress: result per op gets one extra key  "coins": int  (coins paid by THIS op, 0 if none) -> animate "+N".
+  New op kinds:
+    story_answer  {story_key, choice(int>=0)}   story_key from get_my_stories ('qotd:YYYY-MM-DD' or 'ed:<uuid>')
+                  right = coins (rule story_question_right), wrong = 0. Answering twice = applied, 0 coins.
+                  A question-of-the-day answer also counts as a quiz answer (XP, streak day, wrong -> cards return).
+                  rejected messages: invalid_story | invalid_choice | story_not_found | story_expired | not_a_question
+    story_view    {story_key}                   marks the story as seen (grey ring). Idempotent.
+  Coins paid automatically by existing kinds: review (card reaches box 5, once per card), lesson_done (once per lesson),
+    study_time (daily goal reached, once per day), exam_attempt (finished + self-scored, once per paper), any study op
+    (streak milestone). Off for now: card_got_it (Phase 2), report_confirmed, invite_* (Phase 3).
+
+  get_wallet() -> jsonb
+     { balance, today_earned, daily_cap, cap_remaining, max_freezes,
+       streak:{ current, best, freezes, protected(bool: a freeze will save a missed day), studied_today,
+                freeze_used_today, freeze_days_covered },
+       inventory:[{item_id, kind, equipped}] }
+  buy_item(p_item text) -> { item_id, balance, freezes }
+     errors: item_not_found | item_inactive | insufficient_coins | already_owned | freeze_limit
+  equip_item(p_item text, p_on bool = true) -> { item_id, equipped }      error: not_owned  (one equipped item per kind)
+  Shop list: direct read of kl_shop_items (active rows): { id, kind, price, name_i18n, desc_i18n, payload, sort }.
+  Streak freeze: bought with coins (max app_config coins_max_freezes), used AUTOMATICALLY by the server when the student
+     comes back after 1..freeze_max_gap_days missed days and owns enough freezes (1 freeze = 1 day). Streak itself = study_stats.
+
+  get_my_stories() -> jsonb     (call with the daily sync; cache it; works offline afterwards)
+     { day, generated_at, language, balance, templates:{ type:{name,cta,icon,colors,duration_ms,interactive} },
+       stories:[{ key, source:'auto'|'editorial', template, payload, expires_at, seen(bool),
+                  answered:null|{choice,is_correct} }] }
+     Order: question of the day, plan, streak, then editorial (newest first). Stories live at most 24 h.
+     template 'question' payload: { story_key, question_id, lesson_id, module{id,name_i18n,icon,color}, correct_index, figure,
+                  option_figures, i18n:{lang:{prompt,options[],explanation}}, yesterday?:{question_id,answers,pct_correct} }
+        'yesterday' exists ONLY when >= app_config story_min_sample (30) real answers. Never show a number that is not here.
+     template 'plan' payload: { story_key, module, due_cards, lesson_id|null, lesson_title_i18n, lesson_minutes, est_minutes (ESTIMATE) }
+     template 'streak' payload: { story_key, current, best, freezes, protected, studied_today, next_milestone, days_to_next, next_reward }
+     editorial payload: free i18n JSON by template; interactive question stories carry correct_index.
+     errors: not_authenticated | profile_missing
+  Templates (kl_story_templates, readable): question, trap, plan, streak, recap, explainer, news, fun.
+  Notifications: new template kind 'story_qotd' ({name} {module}) in kl_notification_templates = the ONE daily push.
+  New error codes (buy_item / equip_item): item_not_found, item_inactive, insufficient_coins, already_owned, freeze_limit, not_owned.
+
+
+--------------------------------------------------------------------------------
+I. ACHIEVEMENT POSTS + BIGGER SHOP  (file 35)
+--------------------------------------------------------------------------------
+  Achievements = real study events recorded by the server inside sync_progress (even when the coin cap is reached):
+    lesson_done {lesson_id, module, lesson_title_i18n} | exam {paper_id, score_20, paper_title, module} |
+    daily_goal {minutes} | streak {days}  (streak days list: app_config achievement_streaks)
+  A student can post an achievement ONCE, within post_window_hours (48), max posts_per_day (5); exams only from
+  post_exam_min_20 (10/20). No text, no pictures, no comments. Posts live 24 h. Visible to: same speciality + year
+  (posts_scope 'university' = also same university). Blocked users never see each other. post_reports_hide (3) hides.
+
+  get_my_stories() adds:
+    me: { id, username, title (i18n of the equipped title | null), frame ([colour, colour] | null) }
+    postable: [{ achievement_id, kind, payload, created_at }]       -> the "Post to my story" list
+    stories with template 'achievement': source 'mine' (own, first) or 'post' (classmates);
+      payload = achievement payload + { story_key, kind, post_id, author:{id, username, title, frame} }
+      key 'post:<uuid>'  (story_view works as for other stories)
+  get_my_achievements() -> same list as postable
+  post_achievement(p_achievement bigint) -> { post_id, story_key }
+     errors: not_found | already_posted | not_postable | daily_limit | posts_disabled
+  delete_my_post(p_post uuid) -> { deleted }          error: not_found
+  report_post(p_post uuid) -> { reported }            error: not_found (own post or unknown)
+  Shop: new kinds in use: frame (payload.colors [2 hex] = ring around the story circle / avatar),
+        title (name_i18n shown under the username). One equipped per kind (equip_item).
+
+
+--------------------------------------------------------------------------------
+J. SHOP V2  (file 37)
+--------------------------------------------------------------------------------
+  kl_shop_items: + buyable (false = earned only, error not_for_sale), + unlock ({"streak":30} | {"exam_20":18} | {"invites":3}).
+  New kinds: card_skin (payload {bg:[2 hex], fg}), celebration (payload {style: confetti|stars|fireworks}),
+    helper (payload {helper: fifty_fifty|hint, uses}), streak_repair, header_text.
+  Earned items are granted by the server when the achievement is recorded (30-day streak, mock exam >= 18/20).
+  buy_item errors: + not_for_sale, nothing_to_repair, repair_cooldown (streak_repair_cooldown_days = 30).
+    streak_repair works only when the student missed exactly yesterday (last study day = 2 days ago).
+    helper packs stack (no already_owned).
+  set_header_text(p_text text) -> { header_text }   (empty = back to KampusLink)
+     errors: not_owned (buy custom_header first) | invalid_text (2..20 chars, letters/digits/space . _ ' ! -) | blocked_text
+     Shown ONLY on the owner's phone and on the share images the owner creates (never to classmates in the app).
+     Blocked words: table kl_blocked_words (lowercase rows, "contains" check).
+  sync_progress new kind: helper_use {helper: fifty_fifty|hint}  -> rejected 'no_helper' when none left.
+     Helpers work in practice only, never in mock exams (app rule).
+  get_wallet adds: helpers {fifty_fifty: n, hint: n}, header_text, inventory[].payload (the item's look).
+

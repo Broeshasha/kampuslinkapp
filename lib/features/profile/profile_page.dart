@@ -13,6 +13,7 @@ import '../../core/theme/tokens.dart';
 import '../../data/learning/feed_repository.dart';
 import '../../data/learning/learning_providers.dart';
 import '../../data/providers.dart';
+import '../../data/shop/shop_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/reader_settings.dart';
 import '../../ui/max_width.dart';
@@ -26,8 +27,9 @@ import 'account_actions.dart';
 import 'language_picker.dart';
 import 'semester_sheet.dart';
 
-/// Where "Send feedback" writes to. Change it here only.
-const feedbackEmail = 'chidafarai06@gmail.com';
+/// Where feedback goes. Change it here only.
+const feedbackEmail = 'kampuslink.team@kampus-link.com';
+const feedbackTelegram = 'Shasha23prof';
 
 final appVersionProvider = FutureProvider<String>((ref) async {
   try {
@@ -410,6 +412,18 @@ class _SavedCardsRow extends ConsumerWidget {
           onTap: () => context.go('/profile/downloads'),
         ),
         ListTile(
+          leading: Icon(Icons.storefront_rounded, color: kc.xp),
+          title: Text(l10n.shopTitle),
+          trailing: Text(
+            '${ref.watch(walletControllerProvider)?.balance ?? 0} XP',
+            style: TextStyle(
+              color: kc.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          onTap: () => context.push('/shop'),
+        ),
+        ListTile(
           leading: Icon(Icons.troubleshoot_rounded, color: kc.textSecondary),
           title: Text(l10n.dlRunCheck),
           onTap: () => context.push('/doctor'),
@@ -545,6 +559,7 @@ class _AboutCard extends ConsumerWidget {
         ListTile(
           leading: Icon(Icons.mail_outline_rounded, color: kc.accentText),
           title: Text(l10n.sendFeedback),
+          subtitle: const Text(feedbackEmail),
           onTap: () => launchUrl(
             Uri(
               scheme: 'mailto',
@@ -552,6 +567,16 @@ class _AboutCard extends ConsumerWidget {
               query:
                   'subject=${Uri.encodeComponent('KampusLink feedback $version')}',
             ),
+          ),
+        ),
+        Divider(height: 1, color: kc.border),
+        ListTile(
+          leading: Icon(Icons.send_rounded, color: kc.accentText),
+          title: const Text('Telegram'),
+          subtitle: const Text('@$feedbackTelegram'),
+          onTap: () => launchUrl(
+            Uri.parse('https://t.me/$feedbackTelegram'),
+            mode: LaunchMode.externalApplication,
           ),
         ),
         Divider(height: 1, color: kc.border),

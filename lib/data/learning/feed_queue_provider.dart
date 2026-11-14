@@ -93,6 +93,10 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
   final _session = <String>{};
   bool _reloading = false;
 
+  /// The list last put on screen. Kept here because reading `state` inside
+  /// build() on a rebuild throws CircularDependencyError.
+  List<FeedItem>? _current;
+
   int get _index => _indexes[_module] ?? 0;
 
   /// Start-up trace: how many times the queue was built (a rebuild during
@@ -118,7 +122,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
     // Rebuilt with the same semester (a provider woke up during start-up):
     // keep the posts already on screen instead of starting over.
     final params = '$semester|$ahead';
-    final previous = state.value;
+    final previous = _current;
     if (_lastParams == params && previous != null && previous.isNotEmpty) {
       startupTrace.mark('feed kept #$build', '${previous.length} posts');
       unawaited(_warmPool(ahead: ahead, first: previous.first.key));
@@ -148,11 +152,13 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
       if (restored.isNotEmpty) {
         _queues[_module] = restored;
         unawaited(_warmPool(ahead: ahead, first: restored.first.key));
+        _current = restored;
         return restored;
       }
     }
     final fresh = await _fresh(ahead: ahead);
     startupTrace.mark('feed full build #$build', '${fresh.length} posts');
+    _current = fresh;
     return fresh;
   }
 
@@ -299,6 +305,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
     if (more.isEmpty) return false;
     final next = [...list, ...more];
     _queues[_module] = next;
+    _current = next;
     state = AsyncData(next);
     return true;
   }
@@ -341,6 +348,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
     }
     _queues[module] = list;
     _indexes[module] = 0;
+    _current = list;
     state = AsyncData(list);
     if (list.isNotEmpty) shown(0);
   }
@@ -352,6 +360,7 @@ class FeedQueueController extends AsyncNotifier<List<FeedItem>> {
     _indexes.clear();
     _session.clear();
     state = await AsyncValue.guard(() => _fresh(ahead: ahead));
+    _current = state.value;
   }
 
   /// The post at [index] is on screen: remember it, top up when needed.

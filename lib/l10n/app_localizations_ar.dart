@@ -465,6 +465,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorServer => 'حدثت مشكلة في الخادم. حاول بعد لحظات.';
 
   @override
+  String get errorServerBusyTitle => 'الخادم مشغول حالياً';
+
+  @override
+  String get errorServerBusyBody =>
+      'لا توجد أي مشكلة في هاتفك. سنواصل المحاولة تلقائياً.';
+
+  @override
   String get errorUnknown => 'حدث أمر غير متوقع. حاول مجددًا.';
 
   @override
@@ -1158,4 +1165,46 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shareCopied => 'تم نسخ الرابط';
+
+  @override
+  String get shopTitle => 'المتجر';
+
+  @override
+  String get shopHint =>
+      'اربح نقاط الخبرة (XP) بالدراسة وأنفقها هنا. لا شيء هنا يُشترى بالمال.';
+
+  @override
+  String get shopBuy => 'شراء';
+
+  @override
+  String get shopUse => 'استخدام';
+
+  @override
+  String get shopInUse => 'قيد الاستخدام';
+
+  @override
+  String shopHave(int count, int max) {
+    return 'لديك $count من $max';
+  }
+
+  @override
+  String get shopMax => 'بلغت الحد الأقصى';
+
+  @override
+  String get shopNotEnough => 'ليس لديك نقاط XP كافية بعد';
+
+  @override
+  String get shopEmpty => 'المتجر فارغ حالياً.';
+
+  @override
+  String get shopOffline => 'اتصل بالإنترنت لاستخدام المتجر.';
+
+  @override
+  String get shopBought => 'تم!';
+
+  @override
+  String get feedShare => 'مشاركة';
+
+  @override
+  String get feedMore => 'المزيد';
 }

@@ -10,6 +10,8 @@ import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
+import 'fit_or_scroll.dart';
+import 'post_backdrop.dart';
 
 /// One flashcard, reels style: tap = soft 3D flip; the back shows the
 /// answer and "Again / I knew it"; like and save sit on the side.
@@ -29,6 +31,13 @@ class FlashCardView extends StatefulWidget {
     this.onReport,
     this.figure,
     this.onLearn,
+    this.showRail = true,
+    this.skinColors,
+    this.skinText,
+    this.fullBleed = false,
+    this.endInset = 0,
+    this.topInset = 0,
+    this.bottomInset = 0,
   });
 
   final String front;
@@ -50,6 +59,22 @@ class FlashCardView extends StatefulWidget {
 
   /// "Learn this": opens the card's lesson (cards of a lesson not read yet).
   final VoidCallback? onLearn;
+
+  /// false = like / save / report are drawn by the feed's fixed side rail.
+  final bool showRail;
+
+  /// An equipped Shop card skin: background gradient + text colour.
+  final List<Color>? skinColors;
+  final Color? skinText;
+
+  /// Home feed: the card fills the screen edge to edge (no margin, no
+  /// rounded corners); [endInset] keeps the text clear of the side rail.
+  final bool fullBleed;
+  final double endInset;
+
+  /// Room kept free at the top / bottom (glass bars floating over the card).
+  final double topInset;
+  final double bottomInset;
 
   @override
   State<FlashCardView> createState() => _FlashCardViewState();
@@ -91,13 +116,14 @@ class _FlashCardViewState extends State<FlashCardView>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final kc = context.kc;
+    final skinText = widget.skinText;
+    final kc = skinText == null ? context.kc : context.kc.withText(skinText);
     final lang = supportedLanguageCodes.contains(widget.language)
         ? widget.language
         : fallbackLanguageCode;
     final style = BlockStyle(
       language: lang,
-      scale: 1.25,
+      scale: widget.fullBleed ? 1.4 : 1.25,
       kc: kc,
       labels: lookupAppLocalizations(Locale(lang)),
       base: Theme.of(context).textTheme.bodyLarge ?? const TextStyle(),
@@ -105,101 +131,119 @@ class _FlashCardViewState extends State<FlashCardView>
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     // TikTok style: like / save / report stacked on the card itself
     // (bottom end), so the card keeps the full width of the phone.
-    final rail = _ActionRail(
-      children: [
-        _RailButton(
-          icon: _liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          color: _liked ? kc.danger : kc.textPrimary,
-          tooltip: l10n.likeLabel,
-          onTap: () {
-            setState(() => _liked = !_liked);
-            widget.onLike?.call(_liked);
-          },
-        ),
-        _RailButton(
-          icon: _saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-          color: _saved ? kc.xp : kc.textPrimary,
-          tooltip: l10n.saveLabel,
-          onTap: () {
-            setState(() => _saved = !_saved);
-            widget.onSave?.call(_saved);
-          },
-        ),
-        if (widget.onReport case final report?)
-          _RailButton(
-            icon: Icons.flag_outlined,
-            color: kc.textSecondary,
-            tooltip: l10n.reportMistake,
-            onTap: report,
-          ),
-      ],
-    );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        KSpace.md,
-        KSpace.xs,
-        KSpace.md,
-        KSpace.md,
-      ),
-      child: GestureDetector(
-        onTap: _toggle,
-        child: AnimatedBuilder(
-          animation: _flip,
-          builder: (context, _) {
-            final t = reduceMotion
-                ? (_flip.value < 0.5 ? 0.0 : 1.0)
-                : Curves.easeInOutCubic.transform(_flip.value);
-            final showBack = t >= 0.5;
-            final angle = t * math.pi;
-            return Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.0012)
-                ..multiply(
-                  Matrix4.rotationY(showBack ? angle - math.pi : angle),
-                ),
-              child: _Face(
-                key: ValueKey<bool>(showBack),
-                accent: widget.accent,
-                moduleName: widget.moduleName,
-                back: showBack,
-                text: showBack ? widget.back : widget.front,
-                style: style,
-                rail: rail,
-                figure: widget.figure,
-                onLearn: widget.onLearn,
-                footer: showBack
-                    ? Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _answer(false),
-                              icon: const Icon(Icons.replay_rounded),
-                              label: Text(l10n.again),
-                            ),
-                          ),
-                          const SizedBox(width: KSpace.sm),
-                          Expanded(
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: widget.accent,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () => _answer(true),
-                              icon: const Icon(Icons.check_rounded),
-                              label: Text(l10n.knewIt),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Text(
-                        l10n.tapToFlip,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: kc.textSecondary),
-                      ),
+    final rail = !widget.showRail
+        ? null
+        : _ActionRail(
+            children: [
+              _RailButton(
+                icon: _liked
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: _liked ? kc.danger : kc.textPrimary,
+                tooltip: l10n.likeLabel,
+                onTap: () {
+                  setState(() => _liked = !_liked);
+                  widget.onLike?.call(_liked);
+                },
               ),
-            );
-          },
+              _RailButton(
+                icon: _saved
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
+                color: _saved ? kc.xp : kc.textPrimary,
+                tooltip: l10n.saveLabel,
+                onTap: () {
+                  setState(() => _saved = !_saved);
+                  widget.onSave?.call(_saved);
+                },
+              ),
+              if (widget.onReport case final report?)
+                _RailButton(
+                  icon: Icons.flag_outlined,
+                  color: kc.textSecondary,
+                  tooltip: l10n.reportMistake,
+                  onTap: report,
+                ),
+            ],
+          );
+    return Padding(
+      padding: widget.fullBleed
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(
+              KSpace.md,
+              KSpace.xs,
+              KSpace.md,
+              KSpace.md,
+            ),
+      child: Theme(
+        data: Theme.of(context).copyWith(extensions: [kc]),
+        child: GestureDetector(
+          onTap: _toggle,
+          child: AnimatedBuilder(
+            animation: _flip,
+            builder: (context, _) {
+              final t = reduceMotion
+                  ? (_flip.value < 0.5 ? 0.0 : 1.0)
+                  : Curves.easeInOutCubic.transform(_flip.value);
+              final showBack = t >= 0.5;
+              final angle = t * math.pi;
+              return Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.0012)
+                  ..multiply(
+                    Matrix4.rotationY(showBack ? angle - math.pi : angle),
+                  ),
+                child: _Face(
+                  key: ValueKey<bool>(showBack),
+                  accent: widget.accent,
+                  moduleName: widget.moduleName,
+                  back: showBack,
+                  text: showBack ? widget.back : widget.front,
+                  style: style,
+                  rail: rail,
+                  bleed: widget.fullBleed,
+                  endInset: widget.endInset,
+                  topInset: widget.topInset,
+                  bottomInset: widget.bottomInset,
+                  skin: widget.skinColors,
+                  figure: widget.figure,
+                  onLearn: widget.onLearn,
+                  footer: showBack
+                      ? Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _answer(false),
+                                icon: const Icon(Icons.replay_rounded),
+                                label: Text(l10n.again),
+                              ),
+                            ),
+                            const SizedBox(width: KSpace.sm),
+                            Expanded(
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: widget.accent,
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () => _answer(true),
+                                icon: const Icon(Icons.check_rounded),
+                                label: Text(l10n.knewIt),
+                              ),
+                            ),
+                          ],
+                        )
+                      : widget.fullBleed
+                      ? _FlipHint(label: l10n.tapToFlip, color: kc.textPrimary)
+                      : Text(
+                          l10n.tapToFlip,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: kc.textSecondary),
+                        ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -216,8 +260,13 @@ class _Face extends StatelessWidget {
     required this.style,
     required this.footer,
     required this.rail,
+    this.skin,
     this.figure,
     this.onLearn,
+    this.bleed = false,
+    this.endInset = 0,
+    this.topInset = 0,
+    this.bottomInset = 0,
   });
 
   final Color accent;
@@ -228,33 +277,58 @@ class _Face extends StatelessWidget {
   final Widget footer;
 
   /// Like / save / report, stacked at the bottom end of the text area.
-  final Widget rail;
+  final Widget? rail;
+  final List<Color>? skin;
   final Map<String, dynamic>? figure;
   final VoidCallback? onLearn;
+  final bool bleed;
+  final double endInset;
+  final double topInset;
+  final double bottomInset;
 
   @override
   Widget build(BuildContext context) {
     final kc = context.kc;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(KRadius.sheet),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: back
-              ? [kc.surfaceRaised, kc.surface]
-              : [accent.withValues(alpha: 0.30), kc.surface],
-        ),
-        border: Border.all(color: accent.withValues(alpha: back ? 0.25 : 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+    final skinList = skin;
+    final face = Container(
+      decoration: bleed
+          ? null
+          : BoxDecoration(
+              borderRadius: bleed
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(KRadius.sheet),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: switch (skin) {
+                  final s? when s.length >= 2 => back ? [s[1], s[0]] : s,
+                  _ =>
+                    back
+                        ? [kc.surfaceRaised, kc.surface]
+                        : [accent.withValues(alpha: 0.30), kc.surface],
+                },
+              ),
+              border: bleed
+                  ? null
+                  : Border.all(
+                      color: accent.withValues(alpha: back ? 0.25 : 0.5),
+                    ),
+              boxShadow: bleed
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+            ),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        KSpace.lg,
+        KSpace.lg + topInset,
+        KSpace.lg + endInset,
+        KSpace.lg + bottomInset,
       ),
-      padding: const EdgeInsets.all(KSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -263,26 +337,28 @@ class _Face extends StatelessWidget {
               Flexible(
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: KSpace.sm,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(KRadius.chip),
-                    ),
-                    child: Text(
-                      moduleName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: accent,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                  child: bleed
+                      ? _Eyebrow(accent: accent, name: moduleName)
+                      : Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: KSpace.sm,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(KRadius.chip),
+                          ),
+                          child: Text(
+                            moduleName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: accent,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
                 ),
               ),
               if (onLearn != null)
@@ -319,9 +395,9 @@ class _Face extends StatelessWidget {
                             ),
                           Expanded(
                             child: Center(
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsetsDirectional.only(
-                                  end: _ActionRail.width,
+                              child: FitOrScroll(
+                                padding: EdgeInsetsDirectional.only(
+                                  end: rail == null ? 0 : _ActionRail.width,
                                 ),
                                 child: Directionality(
                                   textDirection: style.direction,
@@ -338,7 +414,8 @@ class _Face extends StatelessWidget {
                     },
                   ),
                 ),
-                PositionedDirectional(end: 0, bottom: 0, child: rail),
+                if (rail != null)
+                  PositionedDirectional(end: 0, bottom: 0, child: rail!),
               ],
             ),
           ),
@@ -347,7 +424,95 @@ class _Face extends StatelessWidget {
         ],
       ),
     );
+    if (!bleed) return face;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PostBackdrop(
+          accent: accent,
+          strength: back ? 0.22 : 0.38,
+          colors: switch (skinList) {
+            final s? when s.length >= 2 => back ? [s[1], s[0]] : s,
+            _ => null,
+          },
+        ),
+        face,
+      ],
+    );
   }
+}
+
+/// Module name with a small badge, above the text of a full-screen card.
+class _Eyebrow extends StatelessWidget {
+  const _Eyebrow({required this.accent, required this.name});
+
+  final Color accent;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Icon(Icons.layers_outlined, color: accent, size: 20),
+      ),
+      const SizedBox(width: 10),
+      Flexible(
+        child: Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: accent,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// "Tap to flip" as a quiet pill under the text.
+class _FlipHint extends StatelessWidget {
+  const _FlipHint({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: color.withValues(alpha: 0.06),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.touch_app_outlined, size: 16, color: color),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ActionRail extends StatelessWidget {

@@ -95,6 +95,48 @@ class KampusColors extends ThemeExtension<KampusColors> {
   @override
   KampusColors copyWith() => this;
 
+  /// The same palette with another text colour (an equipped card skin).
+  KampusColors withText(Color fg) => KampusColors(
+    background: background,
+    surface: surface,
+    surfaceRaised: surfaceRaised,
+    border: border,
+    accent: accent,
+    onAccent: onAccent,
+    accentText: accentText,
+    accentAlt: accentAlt,
+    textPrimary: fg,
+    textSecondary: fg.withValues(alpha: 0.75),
+    official: official,
+    community: community,
+    danger: danger,
+    success: success,
+    warning: warning,
+    xp: xp,
+    streak: streak,
+  );
+
+  /// The same palette with another accent (an equipped Shop theme).
+  KampusColors withAccent(Color a, {required bool dark}) => KampusColors(
+    background: background,
+    surface: surface,
+    surfaceRaised: surfaceRaised,
+    border: border,
+    accent: a,
+    onAccent: onAccent,
+    accentText: dark ? (Color.lerp(a, const Color(0xFFFFFFFF), 0.25) ?? a) : a,
+    accentAlt: accentAlt,
+    textPrimary: textPrimary,
+    textSecondary: textSecondary,
+    official: official,
+    community: community,
+    danger: danger,
+    success: success,
+    warning: warning,
+    xp: xp,
+    streak: streak,
+  );
+
   @override
   KampusColors lerp(ThemeExtension<KampusColors>? other, double t) {
     if (other is! KampusColors) return this;
@@ -110,6 +152,21 @@ extension KampusThemeX on BuildContext {
 abstract final class AppTheme {
   static ThemeData get dark => _build(KampusColors.dark, Brightness.dark);
   static ThemeData get light => _build(KampusColors.light, Brightness.light);
+
+  /// [accent] = the accent of the equipped Shop theme (null = normal look).
+  static ThemeData lightWith(Color? accent) => accent == null
+      ? light
+      : _build(
+          KampusColors.light.withAccent(accent, dark: false),
+          Brightness.light,
+        );
+
+  static ThemeData darkWith(Color? accent) => accent == null
+      ? dark
+      : _build(
+          KampusColors.dark.withAccent(accent, dark: true),
+          Brightness.dark,
+        );
 
   static ThemeData _build(KampusColors c, Brightness brightness) {
     final scheme =

@@ -472,6 +472,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Notre serveur a un souci. Réessaie dans un instant.';
 
   @override
+  String get errorServerBusyTitle => 'Notre serveur est occupé';
+
+  @override
+  String get errorServerBusyBody =>
+      'Ton téléphone n’a aucun problème. On réessaie et on continue tout seuls.';
+
+  @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite. Réessaie.';
 
   @override
@@ -1175,4 +1182,47 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shareCopied => 'Lien copié';
+
+  @override
+  String get shopTitle => 'Boutique';
+
+  @override
+  String get shopHint =>
+      'Gagne de l’XP en étudiant et dépense-la ici. Rien ici ne s’achète avec de l’argent.';
+
+  @override
+  String get shopBuy => 'Acheter';
+
+  @override
+  String get shopUse => 'Utiliser';
+
+  @override
+  String get shopInUse => 'Utilisé';
+
+  @override
+  String shopHave(int count, int max) {
+    return 'Tu en as $count sur $max';
+  }
+
+  @override
+  String get shopMax => 'Maximum atteint';
+
+  @override
+  String get shopNotEnough => 'Pas encore assez d’XP';
+
+  @override
+  String get shopEmpty => 'La boutique est vide pour le moment.';
+
+  @override
+  String get shopOffline =>
+      'Connecte-toi à internet pour utiliser la boutique.';
+
+  @override
+  String get shopBought => 'C’est fait !';
+
+  @override
+  String get feedShare => 'Partager';
+
+  @override
+  String get feedMore => 'Plus';
 }

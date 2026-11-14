@@ -43,6 +43,8 @@ class AppShell extends StatelessWidget {
         final width = constraints.maxWidth;
         if (width < KBreakpoints.medium) {
           return Scaffold(
+            // Home: the card colour runs behind the glass navigation bar.
+            extendBody: navigationShell.currentIndex == 0,
             body: navigationShell,
             bottomNavigationBar: _FloatingNavBar(
               tabs: tabs,

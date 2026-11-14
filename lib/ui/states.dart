@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -93,26 +94,78 @@ class EmptyView extends StatelessWidget {
   }
 }
 
-class ErrorView extends StatelessWidget {
+class ErrorView extends StatefulWidget {
   const ErrorView({super.key, required this.failure, this.onRetry});
 
   final AppFailure failure;
   final VoidCallback? onRetry;
 
   @override
+  State<ErrorView> createState() => _ErrorViewState();
+}
+
+class _ErrorViewState extends State<ErrorView> {
+  Timer? _timer;
+  int _attempt = 0;
+
+  /// A server problem on a screen that can retry: it retries by itself.
+  bool get _busy => widget.failure is ServerFailure && widget.onRetry != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _arm();
+  }
+
+  @override
+  void didUpdateWidget(ErrorView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _arm();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  /// Waits a little longer each time (8 s up to 30 s) and a little differently
+  /// on every phone, so a crowd of students never hits a recovering server
+  /// at the same second.
+  void _arm() {
+    if (!_busy || (_timer?.isActive ?? false)) return;
+    final seconds = min(8 + _attempt * 4, 30) + Random().nextInt(8);
+    _timer = Timer(Duration(seconds: seconds), () {
+      if (!mounted) return;
+      _attempt++;
+      widget.onRetry?.call();
+      _arm();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final kc = context.kc;
+    final failure = widget.failure;
     final offline = failure is OfflineFailure;
     return _StateLayout(
-      icon: offline ? Icons.cloud_off_outlined : Icons.error_outline,
-      iconColor: offline ? kc.textSecondary : kc.warning,
-      title: l10n.errorTitle,
-      message: failureMessage(l10n, failure),
-      action: onRetry == null
+      icon: offline
+          ? Icons.cloud_off_outlined
+          : _busy
+          ? Icons.hourglass_top_rounded
+          : Icons.error_outline,
+      iconColor: offline
+          ? kc.textSecondary
+          : _busy
+          ? kc.accentText
+          : kc.warning,
+      title: _busy ? l10n.errorServerBusyTitle : l10n.errorTitle,
+      message: _busy ? l10n.errorServerBusyBody : failureMessage(l10n, failure),
+      action: widget.onRetry == null
           ? null
           : FilledButton.icon(
-              onPressed: onRetry,
+              onPressed: widget.onRetry,
               icon: const Icon(Icons.refresh),
               label: Text(l10n.retry),
             ),
