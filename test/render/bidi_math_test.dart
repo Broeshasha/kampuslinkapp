@@ -7,8 +7,8 @@ import 'package:kampuslink/render/bidi_math.dart';
 import 'package:kampuslink/render/block_style.dart';
 import 'package:kampuslink/render/rich_block_text.dart';
 
-const _l = '⁦';
-const _p = '⁩';
+const _l = '\u2066';
+const _p = '\u2069';
 
 /// The 4 examples from the bac maths content review.
 const examples = [
@@ -28,7 +28,7 @@ Future<void> _loadFont(String family, List<String> assets) async {
 
 void main() {
   test('maths runs inside Arabic stay left-to-right', () {
-    expect(isolateMathRuns(examples[0]), 'العدد ${_l}-5$_p سالب.');
+    expect(isolateMathRuns(examples[0]), 'العدد $_l-5$_p سالب.');
     expect(isolateMathRuns(examples[1]), 'المجال $_l[0;3]$_p مغلق');
     expect(isolateMathRuns(examples[2]), 'لدينا ${_l}i^4 = 1$_p دائما');
     expect(

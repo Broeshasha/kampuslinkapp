@@ -3,8 +3,8 @@ import 'package:flutter/painting.dart';
 /// Content review (bac, Arabic): inside right-to-left text, plain maths like
 /// "-5", "[0;3]", "i^4 = 1" or "AB⃗ ⊥ CD⃗ ⇒" must stay left-to-right. Each
 /// maths run is wrapped in a Unicode isolate (LRI U+2066 ... PDI U+2069).
-const _lri = '⁦';
-const _pdi = '⁩';
+const _lri = '\u2066';
+const _pdi = '\u2069';
 
 const _tok =
     r"[-−+]?[\[\]\(\{|]?[0-9A-Za-z][0-9A-Za-z̀-ͯ⃐-⃿\^.,;:\[\]\(\)\{\}'_|]*";
