@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/connectivity/connectivity.dart';
 import '../../core/errors/result.dart';
+import '../../core/l10n/locale_controller.dart' show sharedPrefsProvider;
 import '../../core/logging/logger.dart';
 import '../providers.dart';
 import '../reminders/reminder_controller.dart';
