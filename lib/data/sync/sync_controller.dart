@@ -538,6 +538,10 @@ class SyncController extends Notifier<SyncState> {
     AppFailure? firstFailure;
     final outboxSync = ref.read(outboxSyncProvider);
     if (outboxSync != null) {
+      // B09: sign-in, pull-to-refresh, network back = no waiting.
+      if (force) {
+        await guard(() => ref.read(outboxRepositoryProvider).resetBackoff());
+      }
       firstFailure = (await outboxSync.flush()).failure;
     }
     // ONE call: profile stats + wallet + catalog (only when it changed).

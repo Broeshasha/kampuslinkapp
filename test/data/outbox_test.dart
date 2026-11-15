@@ -72,7 +72,7 @@ void main() {
     },
   );
 
-  test('a network error keeps every op and backs off: nothing lost', () async {
+  test('a network error keeps every op and pauses: nothing lost', () async {
     await outbox.enqueue('study_time', {'seconds': 60});
     final sync = OutboxSync(
       outbox,
@@ -84,7 +84,33 @@ void main() {
     clock.advance(const Duration(seconds: 6));
     final rows = await outbox.due();
     expect(rows, hasLength(1));
-    expect(rows.single.attempts, 1);
+    // B09: being offline is not a failed attempt (no growing back-off).
+    expect(rows.single.attempts, 0);
+  });
+
+  test('B09: strict order - a waiting op holds back newer ones', () async {
+    final first = await outbox.enqueue('answer', {'question_id': 1});
+    await outbox.markFailed([first], 'server');
+    await outbox.enqueue('review', {'card_id': 2});
+    expect(await outbox.due(), isEmpty);
+    await outbox.resetBackoff();
+    final rows = await outbox.due();
+    expect([for (final r in rows) r.kind], ['answer', 'review']);
+  });
+
+  test('B09: offline work carries the moment it happened', () async {
+    final progress = ProgressRepository(db, outbox, now: clock.call);
+    await progress.reviewCard(9, correct: true);
+    await progress.logStudySeconds(120);
+    await progress.completeLesson(4, score: 50);
+    for (final op in await outbox.due()) {
+      final payload = jsonDecode(op.payloadJson) as Map;
+      expect(
+        DateTime.parse('${payload['at']}'),
+        clock.now.toUtc(),
+        reason: op.kind,
+      );
+    }
   });
 
   test('ops the server did not answer are retried later', () async {

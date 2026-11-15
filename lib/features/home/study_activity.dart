@@ -29,9 +29,12 @@ class _StudyActivityState extends ConsumerState<StudyActivity> {
   void initState() {
     super.initState();
     _progress = ref.read(progressRepositoryProvider);
+    // B09: one op per 5 minutes (and when the app goes to the background
+    // or this page closes), not one every 30 s.
     _counter = ActiveTimeCounter(
       onFlush: (seconds) =>
           unawaited(guard(() => _progress.logStudySeconds(seconds))),
+      flushEvery: 300,
     );
     _counter.touch(DateTime.now());
     _ticker = Timer.periodic(

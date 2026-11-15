@@ -67,15 +67,28 @@ class OutboxRepository {
     return opId;
   }
 
-  /// Ops ready to send now, oldest first.
-  Future<List<OutboxRow>> due({int limit = 200}) {
+  /// Ops ready to send now, oldest first. B09: STRICT order - an op that is
+  /// still waiting holds back every newer op (a review never overtakes the
+  /// answer before it).
+  Future<List<OutboxRow>> due({int limit = 200}) async {
     final now = _now();
-    return (_db.select(_db.outbox)
-          ..where((t) => t.nextAttemptAt.isSmallerOrEqualValue(now))
-          ..orderBy([(t) => OrderingTerm.asc(t.seq)])
-          ..limit(limit))
-        .get();
+    final rows =
+        await (_db.select(_db.outbox)
+              ..orderBy([(t) => OrderingTerm.asc(t.seq)])
+              ..limit(limit))
+            .get();
+    final out = <OutboxRow>[];
+    for (final r in rows) {
+      if (r.nextAttemptAt.isAfter(now)) break;
+      out.add(r);
+    }
+    return out;
   }
+
+  /// B09: network back, sign-in, pull-to-refresh: try everything now.
+  Future<void> resetBackoff() => (_db.update(
+    _db.outbox,
+  )).write(OutboxCompanion(nextAttemptAt: Value(_now())));
 
   Stream<int> watchPendingCount() {
     final count = countAll();
@@ -111,7 +124,13 @@ class OutboxRepository {
   }
 
   /// Network/server failure: keep the ops, wait longer before the next try.
-  Future<void> markFailed(Iterable<String> opIds, String error) async {
+  /// B09: [countAttempt] false (phone offline) = a short fixed pause, the
+  /// growing back-off is for server trouble only.
+  Future<void> markFailed(
+    Iterable<String> opIds,
+    String error, {
+    bool countAttempt = true,
+  }) async {
     final now = _now();
     await _db.transaction(() async {
       for (final id in opIds) {
@@ -119,11 +138,14 @@ class OutboxRepository {
           _db.outbox,
         )..where((t) => t.opId.equals(id))).getSingleOrNull();
         if (row == null) continue;
-        final attempts = row.attempts + 1;
+        final attempts = countAttempt ? row.attempts + 1 : row.attempts;
+        final wait = countAttempt
+            ? outboxBackoff(attempts)
+            : const Duration(seconds: 5);
         await (_db.update(_db.outbox)..where((t) => t.opId.equals(id))).write(
           OutboxCompanion(
             attempts: Value(attempts),
-            nextAttemptAt: Value(now.add(outboxBackoff(attempts))),
+            nextAttemptAt: Value(now.add(wait)),
             lastError: Value(error),
           ),
         );

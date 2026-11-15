@@ -55,7 +55,11 @@ class OutboxSync {
         } else {
           appLog.error(error, stack, reason: 'outbox flush');
         }
-        await _outbox.markFailed(ids, failure.toString());
+        await _outbox.markFailed(
+          ids,
+          failure.toString(),
+          countAttempt: failure is! OfflineFailure,
+        );
         return FlushResult(sent: sent, failure: failure);
       }
       final unanswered = await _outbox.applyResults(ids, results);

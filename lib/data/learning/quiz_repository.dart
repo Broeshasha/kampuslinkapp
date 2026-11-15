@@ -169,6 +169,7 @@ class QuizRepository {
         await _outbox.enqueue('answer', {
           'question_id': question.id,
           'choice': choice,
+          'at': _now().toUtc().toIso8601String(),
         });
         final correct = choice == question.correctIndex;
         if (!correct) {

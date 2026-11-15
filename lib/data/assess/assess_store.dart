@@ -169,12 +169,15 @@ class AssessStore {
       'self_rating': rating ?? old['self_rating'],
       'at': _now().toUtc().toIso8601String(),
     };
-    await _put('practice_prog:$practiceId', merged);
-    await _outbox.enqueue(
-      'practice_progress',
-      merged,
-      replaceKey: 'practice_progress:$practiceId',
-    );
+    // B09: the saved progress and its op are one unit.
+    await _db.transaction(() async {
+      await _put('practice_prog:$practiceId', merged);
+      await _outbox.enqueue(
+        'practice_progress',
+        merged,
+        replaceKey: 'practice_progress:$practiceId',
+      );
+    });
   }
 
   // ---- exam attempts ----
@@ -214,15 +217,17 @@ class AssessStore {
     } else {
       list[i] = merged;
     }
-    await _storeAttempts(attempt.paperId, list);
+    await _db.transaction(() async {
+      await _storeAttempts(attempt.paperId, list);
+      await _outbox.enqueue(
+        'exam_attempt',
+        merged.toPayload(),
+        replaceKey: 'exam_attempt:${attempt.attemptId}',
+      );
+    });
     if (merged.status == AttemptStatus.finished && !wasFinished) {
       Analytics.log('exam_complete');
     }
-    await _outbox.enqueue(
-      'exam_attempt',
-      merged.toPayload(),
-      replaceKey: 'exam_attempt:${attempt.attemptId}',
-    );
   }
 
   /// get_my_exam_attempts rows (new phone / reinstall): merged, no op sent.

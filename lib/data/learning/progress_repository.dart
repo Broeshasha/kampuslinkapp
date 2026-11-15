@@ -44,6 +44,8 @@ class ProgressRepository {
         await _outbox.enqueue('review', {
           'card_id': cardId,
           'correct': correct,
+          // B09: when it happened (offline work keeps its real day).
+          'at': _now().toUtc().toIso8601String(),
         });
       });
 
@@ -67,6 +69,7 @@ class ProgressRepository {
       await _outbox.enqueue('lesson_done', {
         'lesson_id': lessonId,
         'score': score,
+        'at': _now().toUtc().toIso8601String(),
       });
       Analytics.log('lesson_complete');
     },
@@ -115,7 +118,11 @@ class ProgressRepository {
               seconds: Value((row?.seconds ?? 0) + capped),
             ),
           );
-      await _outbox.enqueue('study_time', {'seconds': capped});
+      // B09: never a replace key (each minute counts); the day travels too.
+      await _outbox.enqueue('study_time', {
+        'seconds': capped,
+        'at': _now().toUtc().toIso8601String(),
+      });
     });
   }
 }
