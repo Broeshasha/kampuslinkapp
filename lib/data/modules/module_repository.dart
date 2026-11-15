@@ -81,11 +81,12 @@ class ModuleRepository {
   /// B08 (B-01): the module's download marks go too, otherwise a module that
   /// comes back (year changed and changed back) is "complete" with no lessons.
   Future<void> _deleteModule(int id) async {
-    final lessonIds = await (_db.selectOnly(_db.lessons)
-          ..addColumns([_db.lessons.id])
-          ..where(_db.lessons.moduleId.equals(id)))
-        .map((r) => r.read(_db.lessons.id)!)
-        .get();
+    final lessonIds =
+        await (_db.selectOnly(_db.lessons)
+              ..addColumns([_db.lessons.id])
+              ..where(_db.lessons.moduleId.equals(id)))
+            .map((r) => r.read(_db.lessons.id)!)
+            .get();
     await (_db.delete(_db.keyValues)..where(
           (t) => t.name.isIn([
             for (final l in lessonIds) ...[
