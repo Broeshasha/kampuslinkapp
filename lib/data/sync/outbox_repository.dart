@@ -86,9 +86,9 @@ class OutboxRepository {
   }
 
   /// B09: network back, sign-in, pull-to-refresh: try everything now.
-  Future<void> resetBackoff() => (_db.update(
-    _db.outbox,
-  )).write(OutboxCompanion(nextAttemptAt: Value(_now())));
+  Future<void> resetBackoff() =>
+      (_db.update(_db.outbox))
+          .write(OutboxCompanion(nextAttemptAt: Value(_now())));
 
   Stream<int> watchPendingCount() {
     final count = countAll();
