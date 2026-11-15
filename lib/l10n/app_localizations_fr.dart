@@ -1281,4 +1281,165 @@ class AppLocalizationsFr extends AppLocalizations {
   String bacBadge(int year) {
     return 'Bac $year';
   }
+
+  @override
+  String get missionTitle => 'Mission du jour';
+
+  @override
+  String missionCards(int count) {
+    return 'Réviser $count cartes';
+  }
+
+  @override
+  String missionCardsProgress(int done, int total) {
+    return '$done sur $total cartes';
+  }
+
+  @override
+  String get missionLesson => 'Lire une étape de leçon';
+
+  @override
+  String get missionQuiz => 'Répondre à 3 questions';
+
+  @override
+  String get missionNothing => 'Télécharge tes modules pour avoir une mission.';
+
+  @override
+  String get missionGo => 'Aller';
+
+  @override
+  String get missionDoneTitle => 'Mission accomplie';
+
+  @override
+  String missionDoneDay(int count) {
+    return 'Jour $count cette semaine. De petits pas chaque jour valent mieux que de longues nuits.';
+  }
+
+  @override
+  String weekGoalLabel(int days, int goal) {
+    return 'Objectif de la semaine : $days sur $goal jours';
+  }
+
+  @override
+  String weekReached(int count) {
+    return '$count jours cette semaine. Tu deviens quelqu\'un qui étudie chaque jour.';
+  }
+
+  @override
+  String get weekFreshStart => 'Nouvelle semaine, nouveau départ.';
+
+  @override
+  String get weeksInRowLabel => 'semaines d\'affilée';
+
+  @override
+  String get whyTitle => 'Qu\'est-ce qui compte le plus pour toi ?';
+
+  @override
+  String get whyBody =>
+      'Choisis 1 ou 2. Cela reste sur ton téléphone, personne d\'autre ne le voit.';
+
+  @override
+  String get whyValueFamily => 'Ma famille';
+
+  @override
+  String get whyValueFutureJob => 'Mon futur métier';
+
+  @override
+  String get whyValueFaith => 'Ma foi';
+
+  @override
+  String get whyValueProveMyself => 'Me le prouver à moi-même';
+
+  @override
+  String get whyValueScholarship => 'Une bourse';
+
+  @override
+  String get whyValueOther => 'Autre chose';
+
+  @override
+  String get whyTextHint => 'Avec tes mots (facultatif)';
+
+  @override
+  String get whyShownTitle => 'Ta raison';
+
+  @override
+  String get howTitle => 'Comment étudier avec KampusLink';
+
+  @override
+  String get how1 =>
+      'Des séances courtes chaque jour valent mieux que de longues nuits avant l\'examen.';
+
+  @override
+  String get how2 => 'Les cartes reviennent juste avant que tu les oublies.';
+
+  @override
+  String get how3 => 'Les erreurs font grandir la mémoire.';
+
+  @override
+  String get motNext => 'Suivant';
+
+  @override
+  String get motSkip => 'Passer';
+
+  @override
+  String get motStart => 'C\'est parti';
+
+  @override
+  String get anchorTitle => 'Quand vas-tu étudier chaque jour ?';
+
+  @override
+  String get anchorAfterSchool => 'Après l\'école';
+
+  @override
+  String get anchorAfterMaghrib => 'Après le Maghrib';
+
+  @override
+  String get anchorAfterIsha => 'Après l\'Icha';
+
+  @override
+  String get anchorAfterDinner => 'Après le dîner';
+
+  @override
+  String get anchorBeforeSleep => 'Avant de dormir';
+
+  @override
+  String get anchorCustom => 'Choisir une heure';
+
+  @override
+  String get weekTileLabel => 'jours cette semaine';
+
+  @override
+  String bacCountdownWeeks(int count) {
+    return 'Bac dans environ $count semaines';
+  }
+
+  @override
+  String bacCountdownDays(int count) {
+    return 'Bac dans $count jours';
+  }
+
+  @override
+  String get bacReadinessTitle => 'Où tu en es';
+
+  @override
+  String get bacReadinessHint =>
+      'Cartes bien sues et leçons faites, chapitre par chapitre.';
+
+  @override
+  String get bacSubjectSvt => 'SVT';
+
+  @override
+  String get bacSubjectMath => 'Maths';
+
+  @override
+  String get bacSubjectPhys => 'Physique-chimie';
+
+  @override
+  String bacCoef(int count) {
+    return 'coef. $count';
+  }
+
+  @override
+  String get weekFreezeUsed =>
+      'Un gel de semaine a gardé tes semaines d\'affilée.';
 }

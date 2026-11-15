@@ -2307,6 +2307,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bac {year}'**
   String bacBadge(int year);
+
+  /// No description provided for @missionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s mission'**
+  String get missionTitle;
+
+  /// No description provided for @missionCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Review {count} cards'**
+  String missionCards(int count);
+
+  /// No description provided for @missionCardsProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} cards'**
+  String missionCardsProgress(int done, int total);
+
+  /// No description provided for @missionLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Read one lesson step'**
+  String get missionLesson;
+
+  /// No description provided for @missionQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer 3 quiz questions'**
+  String get missionQuiz;
+
+  /// No description provided for @missionNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Download your modules to get a mission.'**
+  String get missionNothing;
+
+  /// No description provided for @missionGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get missionGo;
+
+  /// No description provided for @missionDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mission done'**
+  String get missionDoneTitle;
+
+  /// No description provided for @missionDoneDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {count} this week. Small steps every day beat long nights.'**
+  String missionDoneDay(int count);
+
+  /// No description provided for @weekGoalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Week goal: {days} of {goal} days'**
+  String weekGoalLabel(int days, int goal);
+
+  /// No description provided for @weekReached.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days this week. You\'re becoming someone who studies every day.'**
+  String weekReached(int count);
+
+  /// No description provided for @weekFreshStart.
+  ///
+  /// In en, this message translates to:
+  /// **'New week, fresh start.'**
+  String get weekFreshStart;
+
+  /// No description provided for @weeksInRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'weeks in a row'**
+  String get weeksInRowLabel;
+
+  /// No description provided for @whyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What matters most to you?'**
+  String get whyTitle;
+
+  /// No description provided for @whyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick 1 or 2. This stays on your phone, nobody else sees it.'**
+  String get whyBody;
+
+  /// No description provided for @whyValueFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'My family'**
+  String get whyValueFamily;
+
+  /// No description provided for @whyValueFutureJob.
+  ///
+  /// In en, this message translates to:
+  /// **'My future job'**
+  String get whyValueFutureJob;
+
+  /// No description provided for @whyValueFaith.
+  ///
+  /// In en, this message translates to:
+  /// **'My faith'**
+  String get whyValueFaith;
+
+  /// No description provided for @whyValueProveMyself.
+  ///
+  /// In en, this message translates to:
+  /// **'Proving it to myself'**
+  String get whyValueProveMyself;
+
+  /// No description provided for @whyValueScholarship.
+  ///
+  /// In en, this message translates to:
+  /// **'A scholarship'**
+  String get whyValueScholarship;
+
+  /// No description provided for @whyValueOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get whyValueOther;
+
+  /// No description provided for @whyTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In your own words (optional)'**
+  String get whyTextHint;
+
+  /// No description provided for @whyShownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your why'**
+  String get whyShownTitle;
+
+  /// No description provided for @howTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How to study with KampusLink'**
+  String get howTitle;
+
+  /// No description provided for @how1.
+  ///
+  /// In en, this message translates to:
+  /// **'Short sessions every day beat long nights before the exam.'**
+  String get how1;
+
+  /// No description provided for @how2.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards come back right before you would forget them.'**
+  String get how2;
+
+  /// No description provided for @how3.
+  ///
+  /// In en, this message translates to:
+  /// **'Mistakes are how memory grows.'**
+  String get how3;
+
+  /// No description provided for @motNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get motNext;
+
+  /// No description provided for @motSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get motSkip;
+
+  /// No description provided for @motStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s go'**
+  String get motStart;
+
+  /// No description provided for @anchorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When will you study every day?'**
+  String get anchorTitle;
+
+  /// No description provided for @anchorAfterSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'After school'**
+  String get anchorAfterSchool;
+
+  /// No description provided for @anchorAfterMaghrib.
+  ///
+  /// In en, this message translates to:
+  /// **'After Maghrib'**
+  String get anchorAfterMaghrib;
+
+  /// No description provided for @anchorAfterIsha.
+  ///
+  /// In en, this message translates to:
+  /// **'After Isha'**
+  String get anchorAfterIsha;
+
+  /// No description provided for @anchorAfterDinner.
+  ///
+  /// In en, this message translates to:
+  /// **'After dinner'**
+  String get anchorAfterDinner;
+
+  /// No description provided for @anchorBeforeSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Before sleep'**
+  String get anchorBeforeSleep;
+
+  /// No description provided for @anchorCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time'**
+  String get anchorCustom;
+
+  /// No description provided for @weekTileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'days this week'**
+  String get weekTileLabel;
+
+  /// No description provided for @bacCountdownWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Bac in about {count} weeks'**
+  String bacCountdownWeeks(int count);
+
+  /// No description provided for @bacCountdownDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Bac in {count} days'**
+  String bacCountdownDays(int count);
+
+  /// No description provided for @bacReadinessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How ready you are'**
+  String get bacReadinessTitle;
+
+  /// No description provided for @bacReadinessHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards you know well and lessons done, chapter by chapter.'**
+  String get bacReadinessHint;
+
+  /// No description provided for @bacSubjectSvt.
+  ///
+  /// In en, this message translates to:
+  /// **'Natural sciences'**
+  String get bacSubjectSvt;
+
+  /// No description provided for @bacSubjectMath.
+  ///
+  /// In en, this message translates to:
+  /// **'Maths'**
+  String get bacSubjectMath;
+
+  /// No description provided for @bacSubjectPhys.
+  ///
+  /// In en, this message translates to:
+  /// **'Physics & chemistry'**
+  String get bacSubjectPhys;
+
+  /// No description provided for @bacCoef.
+  ///
+  /// In en, this message translates to:
+  /// **'coef. {count}'**
+  String bacCoef(int count);
+
+  /// No description provided for @weekFreezeUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'A week freeze kept your weeks in a row.'**
+  String get weekFreezeUsed;
 }
 
 class _AppLocalizationsDelegate

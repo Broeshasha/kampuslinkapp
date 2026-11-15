@@ -1273,4 +1273,164 @@ class AppLocalizationsEn extends AppLocalizations {
   String bacBadge(int year) {
     return 'Bac $year';
   }
+
+  @override
+  String get missionTitle => 'Today\'s mission';
+
+  @override
+  String missionCards(int count) {
+    return 'Review $count cards';
+  }
+
+  @override
+  String missionCardsProgress(int done, int total) {
+    return '$done of $total cards';
+  }
+
+  @override
+  String get missionLesson => 'Read one lesson step';
+
+  @override
+  String get missionQuiz => 'Answer 3 quiz questions';
+
+  @override
+  String get missionNothing => 'Download your modules to get a mission.';
+
+  @override
+  String get missionGo => 'Go';
+
+  @override
+  String get missionDoneTitle => 'Mission done';
+
+  @override
+  String missionDoneDay(int count) {
+    return 'Day $count this week. Small steps every day beat long nights.';
+  }
+
+  @override
+  String weekGoalLabel(int days, int goal) {
+    return 'Week goal: $days of $goal days';
+  }
+
+  @override
+  String weekReached(int count) {
+    return '$count days this week. You\'re becoming someone who studies every day.';
+  }
+
+  @override
+  String get weekFreshStart => 'New week, fresh start.';
+
+  @override
+  String get weeksInRowLabel => 'weeks in a row';
+
+  @override
+  String get whyTitle => 'What matters most to you?';
+
+  @override
+  String get whyBody =>
+      'Pick 1 or 2. This stays on your phone, nobody else sees it.';
+
+  @override
+  String get whyValueFamily => 'My family';
+
+  @override
+  String get whyValueFutureJob => 'My future job';
+
+  @override
+  String get whyValueFaith => 'My faith';
+
+  @override
+  String get whyValueProveMyself => 'Proving it to myself';
+
+  @override
+  String get whyValueScholarship => 'A scholarship';
+
+  @override
+  String get whyValueOther => 'Something else';
+
+  @override
+  String get whyTextHint => 'In your own words (optional)';
+
+  @override
+  String get whyShownTitle => 'Your why';
+
+  @override
+  String get howTitle => 'How to study with KampusLink';
+
+  @override
+  String get how1 =>
+      'Short sessions every day beat long nights before the exam.';
+
+  @override
+  String get how2 => 'Cards come back right before you would forget them.';
+
+  @override
+  String get how3 => 'Mistakes are how memory grows.';
+
+  @override
+  String get motNext => 'Next';
+
+  @override
+  String get motSkip => 'Skip';
+
+  @override
+  String get motStart => 'Let\'s go';
+
+  @override
+  String get anchorTitle => 'When will you study every day?';
+
+  @override
+  String get anchorAfterSchool => 'After school';
+
+  @override
+  String get anchorAfterMaghrib => 'After Maghrib';
+
+  @override
+  String get anchorAfterIsha => 'After Isha';
+
+  @override
+  String get anchorAfterDinner => 'After dinner';
+
+  @override
+  String get anchorBeforeSleep => 'Before sleep';
+
+  @override
+  String get anchorCustom => 'Pick a time';
+
+  @override
+  String get weekTileLabel => 'days this week';
+
+  @override
+  String bacCountdownWeeks(int count) {
+    return 'Bac in about $count weeks';
+  }
+
+  @override
+  String bacCountdownDays(int count) {
+    return 'Bac in $count days';
+  }
+
+  @override
+  String get bacReadinessTitle => 'How ready you are';
+
+  @override
+  String get bacReadinessHint =>
+      'Cards you know well and lessons done, chapter by chapter.';
+
+  @override
+  String get bacSubjectSvt => 'Natural sciences';
+
+  @override
+  String get bacSubjectMath => 'Maths';
+
+  @override
+  String get bacSubjectPhys => 'Physics & chemistry';
+
+  @override
+  String bacCoef(int count) {
+    return 'coef. $count';
+  }
+
+  @override
+  String get weekFreezeUsed => 'A week freeze kept your weeks in a row.';
 }

@@ -1262,4 +1262,162 @@ class AppLocalizationsAr extends AppLocalizations {
   String bacBadge(int year) {
     return 'بكالوريا $year';
   }
+
+  @override
+  String get missionTitle => 'مهمة اليوم';
+
+  @override
+  String missionCards(int count) {
+    return 'راجع $count بطاقات';
+  }
+
+  @override
+  String missionCardsProgress(int done, int total) {
+    return '$done من $total بطاقات';
+  }
+
+  @override
+  String get missionLesson => 'اقرأ جزءًا من درس';
+
+  @override
+  String get missionQuiz => 'أجب عن 3 أسئلة';
+
+  @override
+  String get missionNothing => 'حمّل موادك لتحصل على مهمة.';
+
+  @override
+  String get missionGo => 'ابدأ';
+
+  @override
+  String get missionDoneTitle => 'أنجزت المهمة';
+
+  @override
+  String missionDoneDay(int count) {
+    return 'اليوم $count هذا الأسبوع. خطوات صغيرة كل يوم أفضل من سهر طويل.';
+  }
+
+  @override
+  String weekGoalLabel(int days, int goal) {
+    return 'هدف الأسبوع: $days من $goal أيام';
+  }
+
+  @override
+  String weekReached(int count) {
+    return '$count أيام هذا الأسبوع. أنت تصبح شخصًا يدرس كل يوم.';
+  }
+
+  @override
+  String get weekFreshStart => 'أسبوع جديد، بداية جديدة.';
+
+  @override
+  String get weeksInRowLabel => 'أسابيع متتالية';
+
+  @override
+  String get whyTitle => 'ما الذي يهمك أكثر؟';
+
+  @override
+  String get whyBody => 'اختر 1 أو 2. يبقى هذا على هاتفك ولا يراه أحد غيرك.';
+
+  @override
+  String get whyValueFamily => 'عائلتي';
+
+  @override
+  String get whyValueFutureJob => 'مهنتي المستقبلية';
+
+  @override
+  String get whyValueFaith => 'إيماني';
+
+  @override
+  String get whyValueProveMyself => 'أن أثبت ذلك لنفسي';
+
+  @override
+  String get whyValueScholarship => 'منحة دراسية';
+
+  @override
+  String get whyValueOther => 'شيء آخر';
+
+  @override
+  String get whyTextHint => 'بكلماتك (اختياري)';
+
+  @override
+  String get whyShownTitle => 'سببك';
+
+  @override
+  String get howTitle => 'كيف تدرس مع KampusLink';
+
+  @override
+  String get how1 => 'جلسات قصيرة كل يوم أفضل من ليالٍ طويلة قبل الامتحان.';
+
+  @override
+  String get how2 => 'تعود البطاقات قبل أن تنساها مباشرة.';
+
+  @override
+  String get how3 => 'الأخطاء هي طريقة نمو الذاكرة.';
+
+  @override
+  String get motNext => 'التالي';
+
+  @override
+  String get motSkip => 'تخطّ';
+
+  @override
+  String get motStart => 'هيا بنا';
+
+  @override
+  String get anchorTitle => 'متى ستدرس كل يوم؟';
+
+  @override
+  String get anchorAfterSchool => 'بعد المدرسة';
+
+  @override
+  String get anchorAfterMaghrib => 'بعد المغرب';
+
+  @override
+  String get anchorAfterIsha => 'بعد العشاء (الصلاة)';
+
+  @override
+  String get anchorAfterDinner => 'بعد العشاء';
+
+  @override
+  String get anchorBeforeSleep => 'قبل النوم';
+
+  @override
+  String get anchorCustom => 'اختر وقتًا';
+
+  @override
+  String get weekTileLabel => 'أيام هذا الأسبوع';
+
+  @override
+  String bacCountdownWeeks(int count) {
+    return 'البكالوريا بعد حوالي $count أسبوعًا';
+  }
+
+  @override
+  String bacCountdownDays(int count) {
+    return 'البكالوريا بعد $count يومًا';
+  }
+
+  @override
+  String get bacReadinessTitle => 'مدى استعدادك';
+
+  @override
+  String get bacReadinessHint =>
+      'البطاقات التي تتقنها والدروس المنجزة، فصلًا بفصل.';
+
+  @override
+  String get bacSubjectSvt => 'علوم الطبيعة والحياة';
+
+  @override
+  String get bacSubjectMath => 'الرياضيات';
+
+  @override
+  String get bacSubjectPhys => 'العلوم الفيزيائية';
+
+  @override
+  String bacCoef(int count) {
+    return 'المعامل $count';
+  }
+
+  @override
+  String get weekFreezeUsed => 'حافظ تجميد الأسبوع على أسابيعك المتتالية.';
 }
