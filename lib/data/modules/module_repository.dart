@@ -20,7 +20,10 @@ class ModuleRepository {
 
   /// Saves get_my_modules() rows. Keeps what was downloaded (localVersion);
   /// removes modules that are no longer the student's (and their content).
+  /// B08: an EMPTY list never deletes anything (a server hiccup must not wipe
+  /// a semester of downloads).
   Future<void> saveServerList(List<Map<String, dynamic>> rows) async {
+    if (rows.isEmpty) return;
     final ids = <int>{};
     await _db.transaction(() async {
       for (final r in rows) {
@@ -75,7 +78,28 @@ class ModuleRepository {
     return langs.every(have.contains);
   }
 
+  /// B08 (B-01): the module's download marks go too, otherwise a module that
+  /// comes back (year changed and changed back) is "complete" with no lessons.
   Future<void> _deleteModule(int id) async {
+    final lessonIds = await (_db.selectOnly(_db.lessons)
+          ..addColumns([_db.lessons.id])
+          ..where(_db.lessons.moduleId.equals(id)))
+        .map((r) => r.read(_db.lessons.id)!)
+        .get();
+    await (_db.delete(_db.keyValues)..where(
+          (t) => t.name.isIn([
+            for (final l in lessonIds) ...[
+              'lesson_rev:$l',
+              'meta:$l',
+              'quiz:$l',
+            ],
+            'extras_rev:$id',
+            'sets:$id',
+            'practice_index:$id',
+            'exams:$id',
+          ]),
+        ))
+        .go();
     await (_db.delete(_db.cards)..where((t) => t.moduleId.equals(id))).go();
     await (_db.delete(_db.questions)..where((t) => t.moduleId.equals(id))).go();
     await (_db.delete(_db.lessons)..where((t) => t.moduleId.equals(id))).go();

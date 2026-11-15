@@ -137,15 +137,24 @@ class FeedRepository {
   }
 
   /// When the next card becomes due (null = nothing scheduled).
+  /// B08: only cards that are on the phone (a progress row of a removed
+  /// module never promises a review that cannot be shown).
   Future<DateTime?> nextDueAt() async {
     final now = _now();
+    final p = _db.cardProgress;
     final row =
-        await (_db.select(_db.cardProgress)
-              ..where((t) => t.dueAt.isBiggerThanValue(now))
-              ..orderBy([(t) => OrderingTerm.asc(t.dueAt)])
+        await (_db.select(p).join([
+                innerJoin(
+                  _db.cards,
+                  _db.cards.id.equalsExp(p.cardId),
+                  useColumns: false,
+                ),
+              ])
+              ..where(p.dueAt.isBiggerThanValue(now))
+              ..orderBy([OrderingTerm.asc(p.dueAt)])
               ..limit(1))
             .getSingleOrNull();
-    return row?.dueAt;
+    return row?.readTable(p).dueAt;
   }
 
   Future<void> setLiked(int cardId, {required bool on}) =>

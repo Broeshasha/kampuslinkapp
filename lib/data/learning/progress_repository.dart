@@ -49,13 +49,20 @@ class ProgressRepository {
 
   Future<void> completeLesson(int lessonId, {int? score}) =>
       _db.transaction(() async {
+        // B08: a second, weaker try never lowers the best score.
+        final old = (await (_db.select(
+          _db.lessonProgress,
+        )..where((t) => t.lessonId.equals(lessonId))).getSingleOrNull())?.score;
+        final best = old == null || (score != null && score > old)
+            ? score
+            : old;
         await _db
             .into(_db.lessonProgress)
             .insertOnConflictUpdate(
               LessonProgressCompanion(
                 lessonId: Value(lessonId),
                 completed: const Value(true),
-                score: Value(score),
+                score: Value(best),
                 completedAt: Value(_now()),
               ),
             );

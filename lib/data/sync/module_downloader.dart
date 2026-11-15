@@ -257,6 +257,7 @@ class ModuleDownloader {
       ..sort((a, b) => _int(a['position']).compareTo(_int(b['position'])));
     final total = lessons.length;
     final ids = {for (final l in lessons) _int(l['id'])};
+    var localIds = <int>{};
 
     try {
       await (_db.update(
@@ -270,6 +271,7 @@ class ModuleDownloader {
       final local = await (_db.select(
         _db.lessons,
       )..where((t) => t.moduleId.equals(moduleId))).get();
+      localIds = {for (final l in local) l.id};
       final gone = [
         for (final l in local)
           if (!ids.contains(l.id)) l.id,
@@ -296,7 +298,8 @@ class ModuleDownloader {
       final id = _int(l['id']);
       final rev = '${l['rev'] ?? ''}';
       final stored = _parse(await _get(_revKey(id)));
-      if (stored == null || stored.rev != rev) {
+      // B08 self-heal: a rev mark without the lesson row = download again.
+      if (stored == null || stored.rev != rev || !localIds.contains(id)) {
         tasks.add(_Task(id, rev, i + 1, langs, false, _int(l['kb'])));
       } else {
         final missing = [

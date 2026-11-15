@@ -226,3 +226,8 @@ NOT DONE (later): A-06 ValueNotifier for the current block + lazy list, A-07 mod
 [2026-11-15] LANE: A | AI/Person: founder + Claude | WP: B12 + B13 (part 2)
 DONE: A-06 reader: the block on screen lives in a ValueNotifier, only the "back to where you stopped" chip rebuilds on scroll; A-07 module page + Home continue card read a cached LessonHeadline (title, unit) per (lesson, stored text, language), the full lesson is not decoded again on every progress write; A-18 Home: mounted check after the review await; A-15 reminders: identical plan (times, language, second chance, studied today, 6-hour bucket) -> no cancel / re-schedule.
 LEFT for later: lazy lesson list, Home header decode once (A-14), timezone data size, Supabase init timeout (A-20), early errors to Crashlytics (A-23), lints.
+
+[2026-11-15] LANE: A | AI/Person: founder + Claude | WP: B08 downloads never lie
+DONE: removing a module also deletes its lesson_rev/meta/quiz/extras_rev/sets/practice_index/exams keys; the downloader re-downloads a lesson whose rev mark exists but whose row is missing (self-heal); an empty module list never deletes downloads; applyManifest returns complete and practice/exams are stamped only when every chapter + paper is on the phone; completeLesson keeps the best score; nextDueAt only counts cards on the phone.
+TESTED: test/data/b08_downloads_test.dart (5) on the founder PC.
+DECISIONS (founder 15 Nov, for MOT-2): bac 2027 = 2027-06-13 08:30 Africa/Algiers PROVISIONAL (bac_date_confirmed false -> "about N weeks"); SE coefficients SVT 6, Maths 5, Sciences physiques 5 (PHY + CHEM one bar, chapters equal), per stream in app_config; week freeze = shop item 200 XP, max 2, auto on a missed week, price in kl_shop_items.

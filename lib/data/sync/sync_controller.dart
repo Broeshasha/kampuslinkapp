@@ -668,7 +668,7 @@ class SyncController extends Notifier<SyncState> {
         final manifest =
             manifests[ModuleDownloader.manifestKey(m.id, langs)] ??
             await source.fetchManifest(m.id, langs);
-        await store.applyManifest(
+        final complete = await store.applyManifest(
           m.id,
           manifest,
           fetchPractice: (chapter) =>
@@ -676,10 +676,12 @@ class SyncController extends Notifier<SyncState> {
           fetchPaper: (id) => source.fetchPaper(id, langs),
         );
         await store.mergeServerAttempts(await api.getMyExamAttempts(m.id));
+        return complete;
       });
       switch (r) {
-        case Ok():
-          await prefs.setString(key, stamp);
+        // B08: a missing chapter / paper is retried at the next pass.
+        case Ok(:final value):
+          if (value) await prefs.setString(key, stamp);
         case Err(:final failure):
           appLog.info('practice/exams of module ${m.id}: $failure');
           // Server or network trouble: stop here, the next pass resumes.

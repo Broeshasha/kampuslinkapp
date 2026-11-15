@@ -74,7 +74,9 @@ class AssessStore {
 
   /// Applies one manifest: downloads what is new or changed (rev), deletes
   /// what disappeared. [fetchPractice] / [fetchPaper] are the server calls.
-  Future<void> applyManifest(
+  /// B08 (B-04): true only when EVERY chapter and paper is on the phone;
+  /// the caller marks the module done only then (retried next pass).
+  Future<bool> applyManifest(
     int moduleId,
     Map<String, dynamic> manifest, {
     required Future<List<Object?>> Function(String chapterRef) fetchPractice,
@@ -84,6 +86,7 @@ class AssessStore {
     final exams = _maps(manifest['exams']);
     final oldPractice = await practiceIndex(moduleId);
     final oldExams = await examIndex(moduleId);
+    var complete = true;
     for (final p in practice) {
       final ref = '${p['chapter_ref'] ?? ''}';
       if (ref.isEmpty) continue;
@@ -98,6 +101,7 @@ class AssessStore {
         await _put('practice:$moduleId:$ref', value);
         await _put(revKey, rev);
       } else if (r case Err(:final failure)) {
+        complete = false;
         appLog.warn('practice $moduleId/$ref not downloaded: $failure');
       }
     }
@@ -123,6 +127,7 @@ class AssessStore {
         await _put('exam:${id.toInt()}', value);
         await _put(revKey, rev);
       } else if (r case Err(:final failure)) {
+        complete = false;
         appLog.warn('exam $id not downloaded: $failure');
       }
     }
@@ -135,6 +140,7 @@ class AssessStore {
     }
     await _put('practice_index:$moduleId', practice);
     await _put('exams:$moduleId', exams);
+    return complete;
   }
 
   // ---- practice progress ----
