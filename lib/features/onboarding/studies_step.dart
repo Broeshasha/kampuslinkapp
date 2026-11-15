@@ -80,10 +80,10 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
       return;
     }
     _prefilled = true;
+    // Always ask "University or Bac?" (a university account can switch to
+    // bac); only a saved bac choice skips the question.
     if (me?['track'] == 'bac') {
       _track = 'bac';
-    } else if (me?['university_id'] != null) {
-      _track = 'univ';
     }
     final saved = me?['username']?.toString() ?? '';
     final email = ref.read(authControllerProvider).email ?? '';
