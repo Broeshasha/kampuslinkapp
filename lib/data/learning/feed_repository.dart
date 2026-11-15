@@ -78,21 +78,32 @@ class FeedRepository {
   final DateTime Function() _now;
 
   /// Every stored card with its module, lesson position and progress.
+  /// B12 (A-02): only the lesson POSITION is read, never the lesson text.
   Future<List<FeedCard>> allCards() async {
-    final rows = await _db.select(_db.cards).join([
-      innerJoin(_db.modules, _db.modules.id.equalsExp(_db.cards.moduleId)),
-      leftOuterJoin(_db.lessons, _db.lessons.id.equalsExp(_db.cards.lessonId)),
-      leftOuterJoin(
-        _db.cardProgress,
-        _db.cardProgress.cardId.equalsExp(_db.cards.id),
-      ),
-    ]).get();
+    final rows =
+        await (_db.select(_db.cards).join([
+                innerJoin(
+                  _db.modules,
+                  _db.modules.id.equalsExp(_db.cards.moduleId),
+                ),
+                leftOuterJoin(
+                  _db.lessons,
+                  _db.lessons.id.equalsExp(_db.cards.lessonId),
+                  useColumns: false,
+                ),
+                leftOuterJoin(
+                  _db.cardProgress,
+                  _db.cardProgress.cardId.equalsExp(_db.cards.id),
+                ),
+              ])
+              ..addColumns([_db.lessons.position]))
+            .get();
     return [
       for (final r in rows)
         FeedCard(
           card: r.readTable(_db.cards),
           module: r.readTable(_db.modules),
-          lessonPosition: r.readTableOrNull(_db.lessons)?.position ?? 0,
+          lessonPosition: r.read(_db.lessons.position) ?? 0,
           progress: r.readTableOrNull(_db.cardProgress),
         ),
     ];

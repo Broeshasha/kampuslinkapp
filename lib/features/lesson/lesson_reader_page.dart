@@ -54,6 +54,33 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
   bool _loading = true;
   LessonRow? _row;
   Map<String, dynamic>? _i18n;
+
+  // B13 (A-06): the lesson is decoded once per (row, text, language), not at
+  // every scroll stop.
+  LessonContent? _memo;
+  Object? _memoRow;
+  Object? _memoI18n;
+  String? _memoLang;
+
+  LessonContent _contentFor(
+    LessonRow row,
+    Map<String, dynamic>? i18n,
+    String lang,
+  ) {
+    final memo = _memo;
+    if (memo != null &&
+        identical(_memoRow, row) &&
+        identical(_memoI18n, i18n) &&
+        _memoLang == lang) {
+      return memo;
+    }
+    _memoRow = row;
+    _memoI18n = i18n;
+    _memoLang = lang;
+    return _memo = i18n == null
+        ? LessonContent.of(row, lang)
+        : LessonContent.fromI18n(row, i18n, lang);
+  }
   LessonRow? _next;
   String? _resumeId;
   String? _contentLang;
@@ -191,10 +218,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
       );
     }
     final uiLang = Localizations.localeOf(context).languageCode;
-    final i18n = _i18n;
-    final content = i18n == null
-        ? LessonContent.of(row, _contentLang ?? uiLang)
-        : LessonContent.fromI18n(row, i18n, _contentLang ?? uiLang);
+    final content = _contentFor(row, _i18n, _contentLang ?? uiLang);
     final blocks = content.blocks;
     final step = ref.watch(readerScaleStepProvider);
     final done = switch (ref.watch(lessonDoneProvider(row.id))) {

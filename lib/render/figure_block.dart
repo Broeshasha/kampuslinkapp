@@ -33,6 +33,21 @@ const maxSvgImagesChars = 600 * 1024 * 4 ~/ 3 + 4;
 /// <= 150 KB, all <= 600 KB; the markup checks never scan the photo bytes.
 bool isSafeSvg(String svg) {
   if (svg.isEmpty) return false;
+  // B13 (A-16): every rebuild used to re-scan the whole figure.
+  final key = (svg.length, svg.hashCode);
+  final hit = _safeCache.remove(key);
+  if (hit != null) return _safeCache[key] = hit;
+  final ok = _checkSvg(svg);
+  _safeCache[key] = ok;
+  if (_safeCache.length > _cacheSize) _safeCache.remove(_safeCache.keys.first);
+  return ok;
+}
+
+const _cacheSize = 96;
+final _safeCache = <(int, int), bool>{};
+final _themedCache = <(int, int, int, int), String>{};
+
+bool _checkSvg(String svg) {
   var images = 0;
   var imageChars = 0;
   var badImage = false;
@@ -89,6 +104,24 @@ final _loggedPlaceholders = <String>{};
 /// Replaces the theme placeholders so drawings follow light/dark. An
 /// unknown placeholder is drawn as {{fg}} and logged once.
 String themeSvg(String source, KampusColors kc) {
+  // B13 (A-16): one themed copy per (figure, theme), most recent kept.
+  final key = (
+    source.length,
+    source.hashCode,
+    kc.textPrimary.toARGB32(),
+    kc.surfaceRaised.toARGB32() ^ kc.accent.toARGB32(),
+  );
+  final hit = _themedCache.remove(key);
+  if (hit != null) return _themedCache[key] = hit;
+  final out = _themeSvg(source, kc);
+  _themedCache[key] = out;
+  if (_themedCache.length > _cacheSize) {
+    _themedCache.remove(_themedCache.keys.first);
+  }
+  return out;
+}
+
+String _themeSvg(String source, KampusColors kc) {
   final svg = svgMathToPlain(source);
   final palette = svgPalette(kc);
   final colours = <String, Color>{

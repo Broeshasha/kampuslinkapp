@@ -68,13 +68,23 @@ class _Stored {
 }
 
 class _Task {
-  const _Task(this.lessonId, this.rev, this.index, this.langs, this.merge);
+  const _Task(
+    this.lessonId,
+    this.rev,
+    this.index,
+    this.langs,
+    this.merge, [
+    this.kb = 0,
+  ]);
 
   final int lessonId;
   final String rev;
   final int index;
   final List<String> langs;
   final bool merge;
+
+  /// Size announced by the manifest (KB), for the progress label.
+  final int kb;
 }
 
 int _int(Object? v) => v is num ? v.toInt() : int.tryParse('$v') ?? 0;
@@ -132,6 +142,18 @@ class ModuleDownloader {
 
   static String manifestKey(int moduleId, List<String> langs) =>
       '$moduleId|${(langs.toSet().toList()..sort()).join(',')}';
+
+  /// B12 (A-13): the manifest already says how big a lesson is; encoding
+  /// the whole lesson again only to measure it is skipped when it does.
+  void _countKb(int kb, Object? json) {
+    final f = onBytes;
+    if (f == null) return;
+    if (kb > 0) {
+      f(kb * 1024);
+    } else {
+      _count(json);
+    }
+  }
 
   void _count(Object? json) {
     final f = onBytes;
@@ -275,7 +297,7 @@ class ModuleDownloader {
       final rev = '${l['rev'] ?? ''}';
       final stored = _parse(await _get(_revKey(id)));
       if (stored == null || stored.rev != rev) {
-        tasks.add(_Task(id, rev, i + 1, langs, false));
+        tasks.add(_Task(id, rev, i + 1, langs, false, _int(l['kb'])));
       } else {
         final missing = [
           for (final lang in langs)
@@ -284,7 +306,7 @@ class ModuleDownloader {
         if (missing.isEmpty) {
           done++;
         } else {
-          tasks.add(_Task(id, rev, i + 1, missing, true));
+          tasks.add(_Task(id, rev, i + 1, missing, true, _int(l['kb'])));
         }
       }
     }
@@ -300,7 +322,7 @@ class ModuleDownloader {
           final lesson = await _retry(
             () => fetchLesson(task.lessonId, task.langs),
           );
-          _count(lesson);
+          _countKb(task.kb, lesson);
           await _importer.importLesson(moduleId, lesson, merge: task.merge);
           final before = _parse(await _get(_revKey(task.lessonId)));
           await _set(

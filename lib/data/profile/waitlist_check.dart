@@ -152,13 +152,21 @@ Future<void> cancelWaitlistCheck() async {
 
 /// Start of the app: the job runs only while there is a waitlist entry
 /// not yet notified.
+/// B12 (A-24): WorkManager is started only when a job exists or existed:
+/// most students never join a waitlist and pay nothing at start.
+const waitlistJobKey = 'waitlist_job_scheduled';
+
 Future<void> syncWaitlistCheck(SharedPreferences prefs) async {
   final waiting =
       readWaitlist(prefs) != null &&
       !(prefs.getBool(waitlistNotifiedKey) ?? false);
   if (waiting) {
     await scheduleWaitlistCheck();
-  } else {
+    await prefs.setBool(waitlistJobKey, true);
+  } else if ((prefs.getBool(waitlistJobKey) ?? false) ||
+      readWaitlist(prefs) != null) {
+    // (an entry already notified may still have a job from an older build)
     await cancelWaitlistCheck();
+    await prefs.remove(waitlistJobKey);
   }
 }

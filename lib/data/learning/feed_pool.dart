@@ -108,6 +108,26 @@ class FeedPoolLoader {
   /// Same decoding as the Home cards (off the UI thread when big).
   Future<Map<String, Map<String, dynamic>>> _meta() => loadContentMeta(_db);
 
+  /// B12 (A-02): the chapter index needs id, module, position and unit only;
+  /// the lesson text (i18n json, often 100+ KB each) is never loaded here.
+  Future<List<LessonRow>> _lessonIndex() async {
+    final l = _db.lessons;
+    final rows = await (_db.selectOnly(
+      l,
+    )..addColumns([l.id, l.moduleId, l.position, l.unitJson])).get();
+    return [
+      for (final r in rows)
+        LessonRow(
+          id: r.read(l.id)!,
+          moduleId: r.read(l.moduleId)!,
+          position: r.read(l.position)!,
+          unitJson: r.read(l.unitJson),
+          i18nJson: '{}',
+          resourceLinksJson: '[]',
+        ),
+    ];
+  }
+
   /// Frontier chapter per module, kept in Drift (key_values) and
   /// recomputed from the card progress at every load, so a reinstall +
   /// server restore finds it again. It never goes back.
@@ -158,8 +178,7 @@ class FeedPoolLoader {
       for (final c in await _feed.allCards())
         if (inSemester(modules[c.module.id] ?? c.module, semester)) c,
     ];
-    final lessons = await _db.select(_db.lessons).get();
-    final chapterOf = chapterIndexOf(lessons);
+    final chapterOf = chapterIndexOf(await _lessonIndex());
     final done = {
       for (final p in await _db.select(_db.lessonProgress).get())
         if (p.completed) p.lessonId,

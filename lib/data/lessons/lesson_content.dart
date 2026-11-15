@@ -101,7 +101,10 @@ class LessonContent {
   String get title => '${_data['title'] ?? ''}';
   String get summary => '${_data['summary'] ?? ''}';
 
-  List<Map<String, dynamic>> get blocks {
+  /// Built once per content object (B13: same list at every rebuild).
+  late final List<Map<String, dynamic>> blocks = _blocks();
+
+  List<Map<String, dynamic>> _blocks() {
     final raw = _data['blocks'];
     if (raw is! List) return const <Map<String, dynamic>>[];
     return [
