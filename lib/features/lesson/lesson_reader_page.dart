@@ -85,6 +85,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
   LessonRow? _next;
   String? _resumeId;
   String? _contentLang;
+
   /// B13 (A-06): the block on screen changes at every scroll stop; only the
   /// "back to where you stopped" chip listens to it (no full rebuild).
   final _current = ValueNotifier<String?>(null);
@@ -327,20 +328,20 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
                 return const SizedBox.shrink();
               }
               return PositionedDirectional(
-              start: 0,
-              end: 0,
-              bottom: KSpace.xl,
-              child: Center(
-                child: ActionChip(
-                  avatar: Icon(Icons.bookmark_rounded, color: accent),
-                  label: Text(l10n.backToWhereYouStopped),
-                  onPressed: () {
-                    final id = _resumeId;
-                    if (id != null) _view.currentState?.jumpToBlock(id);
-                  },
+                start: 0,
+                end: 0,
+                bottom: KSpace.xl,
+                child: Center(
+                  child: ActionChip(
+                    avatar: Icon(Icons.bookmark_rounded, color: accent),
+                    label: Text(l10n.backToWhereYouStopped),
+                    onPressed: () {
+                      final id = _resumeId;
+                      if (id != null) _view.currentState?.jumpToBlock(id);
+                    },
+                  ),
                 ),
-              ),
-            );
+              );
             },
           ),
         ],
