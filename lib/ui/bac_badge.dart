@@ -17,10 +17,7 @@ class BacBadge extends StatelessWidget {
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: KSpace.sm,
-          vertical: 2,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: KSpace.sm, vertical: 2),
         decoration: BoxDecoration(
           color: kc.xp.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(KRadius.chip),

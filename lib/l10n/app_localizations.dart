@@ -2301,6 +2301,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start'**
   String get bacStart;
+
+  /// Badge on a question taken from a real bac exam
+  ///
+  /// In en, this message translates to:
+  /// **'Bac {year}'**
+  String bacBadge(int year);
 }
 
 class _AppLocalizationsDelegate

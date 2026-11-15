@@ -19,7 +19,9 @@ final _mathRun = RegExp('$_tok(?:\\s*$_op+\\s*$_tok)*(?:\\s*[⊥⇒⇔→])?');
 final _vector = RegExp('[\u20D0-\u20FF]');
 final _logic = RegExp('[⊥⇒⇔]');
 final _arrow = RegExp('[←→]');
-final _interval = RegExp(r'^[\[\]]\s*[-−+]?[0-9A-Za-z.,∞]+\s*;\s*[-−+]?[0-9A-Za-z.,∞]+\s*[\[\]]$');
+final _interval = RegExp(
+  r'^[\[\]]\s*[-−+]?[0-9A-Za-z.,∞]+\s*;\s*[-−+]?[0-9A-Za-z.,∞]+\s*[\[\]]$',
+);
 
 /// Only these plain runs are isolated (see the rule above).
 bool _isolate(String run) =>

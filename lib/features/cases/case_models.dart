@@ -99,6 +99,7 @@ class CaseSlide {
   final String prompt;
   final List<String> options;
   final int? correctIndex;
+
   /// B17: real bac question on this slide (📜 badge), else null.
   final int? bacYear;
   final String explanation;

@@ -68,18 +68,29 @@ void main() {
     expect(isSafeSvg(_svg(_img('png', 1000))), isTrue);
     expect(isSafeSvg(_svg(_img('webp', 1000) + _img('jpeg', 1000))), isTrue);
     // 300 KB of photo is fine even though the whole string is > 200 KB.
-    expect(isSafeSvg(_svg(_img('png', 150 * 1024) + _img('png', 150 * 1024))), isTrue);
+    expect(
+      isSafeSvg(_svg(_img('png', 150 * 1024) + _img('png', 150 * 1024))),
+      isTrue,
+    );
     expect(isSafeSvg(_svg(_img('svg+xml', 100))), isFalse);
     expect(isSafeSvg(_svg(_img('gif', 100))), isFalse);
-    expect(isSafeSvg(_svg(_img('png', 210 * 1024))), isFalse, reason: 'one too big');
+    expect(
+      isSafeSvg(_svg(_img('png', 210 * 1024))),
+      isFalse,
+      reason: 'one too big',
+    );
     expect(
       isSafeSvg(_svg([for (var i = 0; i < 4; i++) _img('png', 100)].join())),
       isFalse,
       reason: 'more than 3',
     );
     expect(
-      isSafeSvg(_svg([for (var i = 0; i < 3; i++) _img('png', 200 * 1024)].join() +
-          _img('png', 0))),
+      isSafeSvg(
+        _svg(
+          [for (var i = 0; i < 3; i++) _img('png', 200 * 1024)].join() +
+              _img('png', 0),
+        ),
+      ),
       isFalse,
     );
     expect(isSafeSvg(_svg('<image href="https://x.example/a.png"/>')), isFalse);

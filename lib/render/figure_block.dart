@@ -46,9 +46,7 @@ bool isSafeSvg(String svg) {
     }
     return 'data:image/x;base64,';
   });
-  if (badImage ||
-      images > maxSvgImages ||
-      imageChars > maxSvgImagesChars) {
+  if (badImage || images > maxSvgImages || imageChars > maxSvgImagesChars) {
     return false;
   }
   final lower = markup.toLowerCase();

@@ -1257,4 +1257,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bacStart => 'ابدأ';
+
+  @override
+  String bacBadge(int year) {
+    return 'بكالوريا $year';
+  }
 }

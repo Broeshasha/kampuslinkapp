@@ -1276,4 +1276,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get bacStart => 'Commencer';
+
+  @override
+  String bacBadge(int year) {
+    return 'Bac $year';
+  }
 }
