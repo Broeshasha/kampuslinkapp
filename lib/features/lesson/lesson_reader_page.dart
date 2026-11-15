@@ -81,6 +81,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
         ? LessonContent.of(row, lang)
         : LessonContent.fromI18n(row, i18n, lang);
   }
+
   LessonRow? _next;
   String? _resumeId;
   String? _contentLang;
