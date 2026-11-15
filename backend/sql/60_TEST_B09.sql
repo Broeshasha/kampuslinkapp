@@ -1,7 +1,7 @@
 -- 60_TEST_B09.sql - run AFTER 59. Changes nothing (ends with an error on purpose).
 -- Expected last line: "B09 TEST: ALL 6 PASSED (rolled back on purpose)".
 do $t$
-declare v_uid uuid; v_card bigint; v_card2 bigint; v_q bigint; v_lesson bigint; v_ok int := 0; r jsonb;
+declare v_uid uuid; v_old bigint; v_card bigint; v_card2 bigint; v_q bigint; v_lesson bigint; v_ok int := 0; r jsonb;
         today date := public.algiers_today(); st public.study_stats;
         sat timestamptz; sun timestamptz;
 begin
@@ -59,7 +59,9 @@ begin
     raise exception 'B09 TEST T4 FAILED: streak changed'; end if;
   v_ok := v_ok + 1;
 
-  -- T5: future, 30-days-old and garbage dates are clamped (no rejection)
+  -- T5: future, 30-days-old and garbage dates are clamped (no rejection). Only rows THIS test touches are
+  -- compared (the student may have real study days older than 14 days).
+  select coalesce(sum(active_seconds), 0) into v_old from public.study_daily where user_id = v_uid and day < today - 14;
   set local role authenticated;
   r := public.sync_progress(jsonb_build_array(
     jsonb_build_object('op_id', gen_random_uuid(), 'kind', 'study_time', 'payload', jsonb_build_object('seconds', 10, 'at', now() + interval '3 days')),
@@ -67,7 +69,8 @@ begin
     jsonb_build_object('op_id', gen_random_uuid(), 'kind', 'study_time', 'payload', jsonb_build_object('seconds', 10, 'at', 'yesterday!'))));
   reset role;
   if exists (select 1 from jsonb_array_elements(r) e where e ->> 'status' <> 'applied')
-     or exists (select 1 from public.study_daily where user_id = v_uid and (day > today or day < today - 14)) then
+     or exists (select 1 from public.study_daily where user_id = v_uid and day > today)
+     or (select coalesce(sum(active_seconds), 0) from public.study_daily where user_id = v_uid and day < today - 14) <> v_old then
     raise exception 'B09 TEST T5 FAILED: %', r; end if;
   v_ok := v_ok + 1;
 
