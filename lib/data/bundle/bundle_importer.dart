@@ -353,14 +353,17 @@ class BundleImporter {
   });
 
   /// get_module_extras: glossary and resources replaced, sets kept for the feed.
+  /// CDN-2: extras without a "resources" key leave the library untouched.
   Future<void> importExtras(int moduleId, Map<String, dynamic> extras) =>
       _db.transaction(() async {
         await (_db.delete(
           _db.glossaryEntries,
         )..where((t) => t.moduleId.equals(moduleId))).go();
-        await (_db.delete(
-          _db.resources,
-        )..where((t) => t.moduleId.equals(moduleId))).go();
+        if (extras.containsKey('resources')) {
+          await (_db.delete(
+            _db.resources,
+          )..where((t) => t.moduleId.equals(moduleId))).go();
+        }
         for (final g in _list(extras['glossary']).map(_map)) {
           await _db
               .into(_db.glossaryEntries)

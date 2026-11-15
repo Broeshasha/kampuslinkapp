@@ -14,6 +14,7 @@ import '../../core/l10n/locale_controller.dart';
 import '../../core/logging/logger.dart';
 import '../assess/assess_providers.dart';
 import '../catalog/catalog.dart';
+import '../content/content_providers.dart';
 import '../chat/chat_providers.dart';
 import '../shop/shop_providers.dart';
 import '../profile/study_level.dart';
@@ -226,13 +227,15 @@ class SyncController extends Notifier<SyncState> {
 
   ModuleDownloader? _downloader() {
     final api = ref.read(kampusApiProvider);
-    if (api == null) return null;
+    final source = ref.read(contentSourceProvider);
+    if (api == null || source == null) return null;
+    // CDN-2: Cloudflare first, Supabase second (same answers either way).
     return ModuleDownloader(
       ref.read(appDatabaseProvider),
       ref.read(bundleImporterProvider),
-      fetchManifest: api.getModuleManifest,
-      fetchLesson: api.getLessonBundle,
-      fetchExtras: api.getModuleExtras,
+      fetchManifest: source.fetchManifest,
+      fetchLesson: source.fetchLesson,
+      fetchExtras: source.fetchExtras,
       fetchBundle: api.getModuleBundle,
       shouldStop: () => _stop,
       onBytes: (n) =>
@@ -388,6 +391,12 @@ class SyncController extends Notifier<SyncState> {
     if (r case Ok(:final value)) {
       final w = value['wallet'];
       if (w is Map) await wallet.apply(w.cast<String, dynamic>());
+      // CDN-2: which modules this student reads from Cloudflare (file 55;
+      // nothing from an older server = Supabase for everything).
+      final cdn = value['cdn'];
+      await ref
+          .read(sharedPrefsProvider)
+          .setString(cdnPathsKey, jsonEncode(cdn is Map ? cdn : const {}));
       final c = value['catalog'];
       final hash = value['catalog_hash'];
       if (c is Map) {
@@ -630,6 +639,8 @@ class SyncController extends Notifier<SyncState> {
     bool force = false,
     Map<String, Map<String, dynamic>> manifests = const {},
   }) async {
+    final source = ref.read(contentSourceProvider);
+    if (source == null) return;
     final store = ref.read(assessStoreProvider);
     final db = ref.read(appDatabaseProvider);
     final prefs = ref.read(sharedPrefsProvider);
@@ -647,12 +658,13 @@ class SyncController extends Notifier<SyncState> {
       final r = await guard(() async {
         final manifest =
             manifests[ModuleDownloader.manifestKey(m.id, langs)] ??
-            await api.getModuleManifest(m.id, langs);
+            await source.fetchManifest(m.id, langs);
         await store.applyManifest(
           m.id,
           manifest,
-          fetchPractice: (chapter) => api.getPractice(m.id, chapter, langs),
-          fetchPaper: (id) => api.getExamPaper(id, langs),
+          fetchPractice: (chapter) =>
+              source.fetchPractice(m.id, chapter, langs),
+          fetchPaper: (id) => source.fetchPaper(id, langs),
         );
         await store.mergeServerAttempts(await api.getMyExamAttempts(m.id));
       });

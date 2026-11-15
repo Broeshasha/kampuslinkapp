@@ -142,4 +142,25 @@ void main() {
       expect((await module842()).localVersion, 1);
     },
   );
+
+  test('extras without "resources" keep the library (CDN-2)', () async {
+    final importer = BundleImporter(db);
+    await importer.importBundle(bundle());
+    await importer.importExtras(842, {
+      'glossary': const [],
+      'sets': const [],
+      'resources': [
+        {'id': 1, 'type': 'cours', 'title': 'Cours 1'},
+      ],
+    });
+    expect(await db.select(db.resources).get(), hasLength(1));
+    await importer.importExtras(842, {'glossary': const [], 'sets': const []});
+    expect(await db.select(db.resources).get(), hasLength(1));
+    await importer.importExtras(842, {
+      'glossary': const [],
+      'sets': const [],
+      'resources': const [],
+    });
+    expect(await db.select(db.resources).get(), isEmpty);
+  });
 }

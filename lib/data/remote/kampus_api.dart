@@ -266,6 +266,15 @@ class KampusApi {
         .timeout(const Duration(seconds: 45)),
   );
 
+  /// File 55 (CDN-2): the library list of a module alone (same rows as
+  /// "resources" in get_module_extras).
+  Future<List<Object?>> getModuleResources(int moduleId) async {
+    final rows = await _client
+        .rpc('get_module_resources', params: {'p_module': moduleId})
+        .timeout(_timeout);
+    return rows is List ? rows : const <Object?>[];
+  }
+
   /// Contract file 15: the practice items of one chapter (all languages
   /// asked); an ARRAY.
   Future<List<Object?>> getPractice(

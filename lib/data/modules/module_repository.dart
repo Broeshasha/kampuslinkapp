@@ -65,6 +65,11 @@ class ModuleRepository {
     ];
   }
 
+  /// The content version the server announced for [id] (null = unknown).
+  Future<int?> serverVersionOf(int id) async => (await (_db.select(
+    _db.modules,
+  )..where((t) => t.id.equals(id))).getSingleOrNull())?.serverVersion;
+
   bool _covers(String stored, List<String> langs) {
     final have = stored.split(',').where((s) => s.isNotEmpty).toSet();
     return langs.every(have.contains);
