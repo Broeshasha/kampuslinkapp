@@ -90,6 +90,16 @@ class MissionStatus {
   /// Weeks in a row (before this one) with the goal reached.
   final int weeksInRow;
 
+  /// Mission days in the week before this one.
+  int get lastWeekDays {
+    final last = weekStart.subtract(const Duration(days: 7));
+    var n = 0;
+    for (var i = 0; i < 7; i++) {
+      if (missionDays.contains(dayKey(last.add(Duration(days: i))))) n++;
+    }
+    return n;
+  }
+
   bool get cardsOk => cardsDone >= cardsTarget;
   bool get lessonOk => lessonDone || lesson == null;
   bool get quizOk => answers >= quizTarget || quizLesson == null;
@@ -104,10 +114,20 @@ DateTime weekStartOf(DateTime d) {
 }
 
 /// Weeks in a row (ending the week before [now]) with >= [goal] days.
-int weeksInRow(Set<String> days, DateTime now, int goal) {
+int weeksInRow(
+  Set<String> days,
+  DateTime now,
+  int goal, {
+  Set<String> frozen = const {},
+}) {
   var week = weekStartOf(now).subtract(const Duration(days: 7));
   var n = 0;
   while (n < 520) {
+    if (frozen.contains(dayKey(week))) {
+      n++;
+      week = week.subtract(const Duration(days: 7));
+      continue;
+    }
     var count = 0;
     for (var i = 0; i < 7; i++) {
       if (days.contains(dayKey(week.add(Duration(days: i))))) count++;
@@ -192,7 +212,11 @@ class MotivationStore {
       (await missionDays()).contains(dayKey(day));
 
   /// Today's mission for the visible modules [moduleIds] (catalog order).
-  Future<MissionStatus> today(List<int> moduleIds, {int weekGoal = 5}) async {
+  Future<MissionStatus> today(
+    List<int> moduleIds, {
+    int weekGoal = 5,
+    Set<String> frozenWeeks = const {},
+  }) async {
     final now = _now();
     final day = dayKey(now);
     final start = DateTime(now.year, now.month, now.day);
@@ -297,7 +321,7 @@ class MotivationStore {
       weekGoal: weekGoal,
       weekStart: week,
       missionDays: days,
-      weeksInRow: weeksInRow(days, now, weekGoal),
+      weeksInRow: weeksInRow(days, now, weekGoal, frozen: frozenWeeks),
     );
     // A finished mission marks the day (kept for a year).
     if (status.done && !days.contains(day) && moduleIds.isNotEmpty) {

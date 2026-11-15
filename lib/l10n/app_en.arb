@@ -848,5 +848,35 @@
   "anchorAfterDinner": "After dinner",
   "anchorBeforeSleep": "Before sleep",
   "anchorCustom": "Pick a time",
-  "weekTileLabel": "days this week"
+  "weekTileLabel": "days this week",
+  "bacCountdownWeeks": "Bac in about {count} weeks",
+  "@bacCountdownWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bacCountdownDays": "Bac in {count} days",
+  "@bacCountdownDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bacReadinessTitle": "How ready you are",
+  "bacReadinessHint": "Cards you know well and lessons done, chapter by chapter.",
+  "bacSubjectSvt": "Natural sciences",
+  "bacSubjectMath": "Maths",
+  "bacSubjectPhys": "Physics & chemistry",
+  "bacCoef": "coef. {count}",
+  "@bacCoef": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekFreezeUsed": "A week freeze kept your weeks in a row."
 }

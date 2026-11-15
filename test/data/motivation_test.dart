@@ -5,6 +5,7 @@ import 'package:kampuslink/data/bundle/bundle_importer.dart';
 import 'package:kampuslink/data/db/app_database.dart';
 import 'package:kampuslink/data/learning/feed_repository.dart' show dayKey;
 import 'package:kampuslink/data/modules/module_repository.dart';
+import 'package:kampuslink/data/motivation/bac_readiness.dart';
 import 'package:kampuslink/data/motivation/motivation_store.dart';
 import 'package:kampuslink/data/motivation/prayer_times.dart';
 import 'package:kampuslink/data/sync/module_downloader.dart';
@@ -45,6 +46,36 @@ void main() {
     expect(weeksInRow(days, now, 5), 2);
     expect(weeksInRow(days, now, 6), 0);
     expect(weeksInRow({}, now, 5), 0);
+    // a frozen missed week keeps the run going
+    final withHole = {...week(DateTime(2026, 11, 2), 5), ...week(DateTime(2026, 10, 26), 5)};
+    expect(weeksInRow(withHole, now, 5), 0);
+    expect(weeksInRow(withHole, now, 5, frozen: {'2026-11-09'}), 3);
+  });
+
+  test('bac countdown: weeks until the date is confirmed', () {
+    final now = DateTime.utc(2026, 11, 15, 12);
+    const date = '2027-06-13T08:30:00+01:00';
+    final weeks = bacCountdown(date, false, now)!;
+    expect(weeks.days, isFalse);
+    expect(weeks.value, inInclusiveRange(29, 31));
+    final days = bacCountdown(date, true, now)!;
+    expect(days.days, isTrue);
+    expect(days.value, inInclusiveRange(209, 211));
+    expect(bacCountdown(date, true, DateTime.utc(2027, 7)), isNull);
+    expect(bacCountdown(null, true, now), isNull);
+  });
+
+  test('bac subjects: only the ones the student sees', () {
+    final config = {
+      'se': [
+        {'key': 'svt', 'modules': [3001], 'coef': 6},
+        {'key': 'phys', 'modules': [3002, 3003], 'coef': 5},
+      ],
+    };
+    final s = BacSubject.listFrom(config, {3002});
+    expect(s.map((e) => e.key), ['phys']);
+    expect(s.single.coef, 5);
+    expect(BacSubject.listFrom('bad', {3001}), isEmpty);
   });
 
   group('store', () {
@@ -112,6 +143,21 @@ void main() {
       final b = await store().today([1]);
       expect(a.cardsTarget, b.cardsTarget);
       expect(a.cardsTarget, lessThanOrEqualTo(15));
+    });
+
+    test('readiness grows with finished lessons', () async {
+      const sub = BacSubject(key: 'x', modules: [1], coef: 1);
+      final before = (await bacReadiness(db, [sub])).single.value;
+      await db.into(db.lessonProgress).insertOnConflictUpdate(
+        LessonProgressCompanion(
+          lessonId: const Value(101),
+          completed: const Value(true),
+          completedAt: Value(now),
+        ),
+      );
+      final after = (await bacReadiness(db, [sub])).single.value;
+      expect(after, greaterThan(before));
+      expect(after, lessThanOrEqualTo(1));
     });
 
     test('my why stays capped and clean', () async {

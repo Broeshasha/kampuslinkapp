@@ -42,6 +42,9 @@ class Wallet {
     this.studiedToday = false,
     this.freezeUsedToday = false,
     this.inventory = const <InventoryItem>[],
+    this.weekFreezes = 0,
+    this.maxWeekFreezes = 0,
+    this.frozenWeeks = const <String>{},
   });
 
   factory Wallet.fromMap(Map<String, dynamic> m) {
@@ -55,6 +58,9 @@ class Wallet {
       streakProtected: s['protected'] == true,
       studiedToday: s['studied_today'] == true,
       freezeUsedToday: s['freeze_used_today'] == true,
+      weekFreezes: asInt(m['week_freezes']),
+      maxWeekFreezes: asInt(m['max_week_freezes']),
+      frozenWeeks: {for (final w in asList(m['frozen_weeks'])) '$w'},
       inventory: [
         for (final e in asList(m['inventory']))
           if (e is Map)
@@ -73,6 +79,10 @@ class Wallet {
   final int streak, bestStreak, freezes;
   final bool streakProtected, studiedToday, freezeUsedToday;
   final List<InventoryItem> inventory;
+
+  /// MOT-2 week freezes (held / max) and the Mondays already frozen.
+  final int weekFreezes, maxWeekFreezes;
+  final Set<String> frozenWeeks;
 
   bool owns(String itemId) => inventory.any((i) => i.itemId == itemId);
   bool isEquipped(String itemId) =>
@@ -124,5 +134,6 @@ class ShopItem {
   final Map<String, dynamic> payload;
   final int sort;
 
-  bool get isFreeze => kind == 'streak_freeze';
+  bool get isFreeze => kind == 'streak_freeze' || kind == 'week_freeze';
+  bool get isWeekFreeze => kind == 'week_freeze';
 }

@@ -415,5 +415,14 @@
   "anchorAfterDinner": "Après le dîner",
   "anchorBeforeSleep": "Avant de dormir",
   "anchorCustom": "Choisir une heure",
-  "weekTileLabel": "jours cette semaine"
+  "weekTileLabel": "jours cette semaine",
+  "bacCountdownWeeks": "Bac dans environ {count} semaines",
+  "bacCountdownDays": "Bac dans {count} jours",
+  "bacReadinessTitle": "Où tu en es",
+  "bacReadinessHint": "Cartes bien sues et leçons faites, chapitre par chapitre.",
+  "bacSubjectSvt": "SVT",
+  "bacSubjectMath": "Maths",
+  "bacSubjectPhys": "Physique-chimie",
+  "bacCoef": "coef. {count}",
+  "weekFreezeUsed": "Un gel de semaine a gardé tes semaines d'affilée."
 }

@@ -415,5 +415,14 @@
   "anchorAfterDinner": "بعد العشاء",
   "anchorBeforeSleep": "قبل النوم",
   "anchorCustom": "اختر وقتًا",
-  "weekTileLabel": "أيام هذا الأسبوع"
+  "weekTileLabel": "أيام هذا الأسبوع",
+  "bacCountdownWeeks": "البكالوريا بعد حوالي {count} أسبوعًا",
+  "bacCountdownDays": "البكالوريا بعد {count} يومًا",
+  "bacReadinessTitle": "مدى استعدادك",
+  "bacReadinessHint": "البطاقات التي تتقنها والدروس المنجزة، فصلًا بفصل.",
+  "bacSubjectSvt": "علوم الطبيعة والحياة",
+  "bacSubjectMath": "الرياضيات",
+  "bacSubjectPhys": "العلوم الفيزيائية",
+  "bacCoef": "المعامل {count}",
+  "weekFreezeUsed": "حافظ تجميد الأسبوع على أسابيعك المتتالية."
 }

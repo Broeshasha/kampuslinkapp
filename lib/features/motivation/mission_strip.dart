@@ -6,7 +6,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/db/app_database.dart';
 import '../../data/lessons/lesson_content.dart';
+import '../../data/motivation/bac_readiness.dart';
 import '../../data/motivation/motivation_providers.dart';
+import '../../data/shop/shop_providers.dart';
+import '../../data/learning/feed_repository.dart' show dayKey;
 import '../../data/motivation/motivation_store.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -88,6 +91,12 @@ class _MissionSheet extends ConsumerWidget {
     final lang = Localizations.localeOf(context).languageCode;
     final m = ref.watch(missionProvider).value;
     final why = ref.watch(myWhyProvider).value ?? const MyWhy();
+    final countdown = ref.watch(bacCountdownProvider);
+    final readiness = ref.watch(bacReadinessProvider).value ?? const <SubjectReadiness>[];
+    final frozen = ref.watch(walletControllerProvider)?.frozenWeeks ?? const <String>{};
+    final lastWeekFrozen = frozen.contains(
+      dayKey(m?.weekStart.subtract(const Duration(days: 7)) ?? DateTime(2000)),
+    );
     if (m == null) return const SizedBox(height: 120);
     final nothing = m.cardsTarget == 0 && m.lesson == null && m.quizLesson == null;
 
@@ -116,11 +125,14 @@ class _MissionSheet extends ConsumerWidget {
         ? l10n.weekReached(m.weekDays)
         : m.done
         ? l10n.missionDoneDay(m.weekDays)
+        : m.weekDays == 0 && lastWeekFrozen
+        ? l10n.weekFreezeUsed
         : m.weekDays == 0
         ? l10n.weekFreshStart
         : null;
 
-    return Padding(
+    return SingleChildScrollView(
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(KSpace.lg, KSpace.md, KSpace.lg, KSpace.xl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -130,6 +142,15 @@ class _MissionSheet extends ConsumerWidget {
             l10n.missionTitle,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
+          if (countdown != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              countdown.days
+                  ? l10n.bacCountdownDays(countdown.value)
+                  : l10n.bacCountdownWeeks(countdown.value),
+              style: TextStyle(color: kc.accentText, fontWeight: FontWeight.w700),
+            ),
+          ],
           const SizedBox(height: KSpace.xs),
           _WeekDots(mission: m),
           const SizedBox(height: KSpace.xs),
@@ -174,8 +195,67 @@ class _MissionSheet extends ConsumerWidget {
                 onGo: () => onQuiz(m.quizLesson!),
               ),
           ],
+          if (readiness.isNotEmpty) ...[
+            const SizedBox(height: KSpace.md),
+            _Readiness(items: readiness),
+          ],
         ],
       ),
+      ),
+    );
+  }
+}
+
+class _Readiness extends StatelessWidget {
+  const _Readiness({required this.items});
+
+  final List<SubjectReadiness> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final kc = context.kc;
+    String name(String key) => switch (key) {
+      'svt' => l10n.bacSubjectSvt,
+      'math' => l10n.bacSubjectMath,
+      'phys' => l10n.bacSubjectPhys,
+      _ => key,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.bacReadinessTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+        Text(l10n.bacReadinessHint, style: TextStyle(color: kc.textSecondary, fontSize: 12)),
+        const SizedBox(height: KSpace.xs),
+        for (final r in items)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Text(name(r.subject.key))),
+                    Text(
+                      '${(r.value * 100).round()}% · ${l10n.bacCoef(r.subject.coef)}',
+                      style: TextStyle(color: kc.textSecondary, fontSize: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: r.value,
+                    minHeight: 6,
+                    color: kc.accent,
+                    backgroundColor: kc.border,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

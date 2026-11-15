@@ -337,6 +337,14 @@ class KampusApi {
 
   /// Errors: item_not_found, item_inactive, not_for_sale, insufficient_xp,
   /// already_owned, freeze_limit.
+  /// MOT-2: last week missed the goal -> spend a week freeze (idempotent).
+  /// Error: bad_week. Answer: {used, week_freezes}.
+  Future<Map<String, dynamic>> useWeekFreeze(String monday) async => _map(
+    await _client
+        .rpc('use_week_freeze', params: {'p_week': monday})
+        .timeout(_timeout),
+  );
+
   Future<Map<String, dynamic>> buyItem(String itemId) async => _map(
     await _client.rpc('buy_item', params: {'p_item': itemId}).timeout(_timeout),
   );

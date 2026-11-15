@@ -155,8 +155,12 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
     Widget? action;
     String? note;
     if (item.isFreeze) {
-      final have = wallet?.freezes ?? 0;
-      final max = wallet?.maxFreezes ?? 0;
+      final have = item.isWeekFreeze
+          ? wallet?.weekFreezes ?? 0
+          : wallet?.freezes ?? 0;
+      final max = item.isWeekFreeze
+          ? wallet?.maxWeekFreezes ?? 0
+          : wallet?.maxFreezes ?? 0;
       note = l10n.shopHave(have, max);
       final full = max > 0 && have >= max;
       action = FilledButton(
@@ -185,7 +189,9 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
     final notEnough =
         !owned &&
         !(item.isFreeze &&
-            (wallet?.freezes ?? 0) >= (wallet?.maxFreezes ?? 1 << 20)) &&
+            (item.isWeekFreeze
+                    ? (wallet?.weekFreezes ?? 0) >= (wallet?.maxWeekFreezes ?? 1 << 20)
+                    : (wallet?.freezes ?? 0) >= (wallet?.maxFreezes ?? 1 << 20))) &&
         balance < item.price;
 
     return Padding(
