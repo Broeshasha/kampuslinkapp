@@ -7,6 +7,7 @@ import '../lessons/figures.dart';
 import '../lessons/lesson_content.dart';
 import '../sync/outbox_repository.dart';
 import 'bac_source.dart';
+import 'feed_repository.dart' show dayKey;
 import 'progress_repository.dart';
 
 /// One question in one language.
@@ -171,6 +172,19 @@ class QuizRepository {
           'choice': choice,
           'at': _now().toUtc().toIso8601String(),
         });
+        // MOT-1: answers today for Today's Mission (phone only).
+        final missionKey = 'mot_answers:${dayKey(_now())}';
+        final soFar = await (_db.select(
+          _db.keyValues,
+        )..where((t) => t.name.equals(missionKey))).getSingleOrNull();
+        await _db
+            .into(_db.keyValues)
+            .insertOnConflictUpdate(
+              KeyValuesCompanion(
+                name: Value(missionKey),
+                value: Value('${(int.tryParse(soFar?.value ?? '') ?? 0) + 1}'),
+              ),
+            );
         final correct = choice == question.correctIndex;
         if (!correct) {
           final now = _now();

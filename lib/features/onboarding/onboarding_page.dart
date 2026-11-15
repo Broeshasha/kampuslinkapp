@@ -12,6 +12,7 @@ import '../../ui/legal_links.dart';
 import '../auth/google_sign_in_button.dart';
 import '../profile/language_picker.dart';
 import '../reminders/reminder_step.dart';
+import '../motivation/motivation_step.dart';
 import 'download_step.dart';
 import 'onboarding_status.dart';
 import 'step_layout.dart';
@@ -61,9 +62,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       1 => const _SignInStep(),
       2 => StudiesStep(onDone: () => _go(3)),
       3 => ReminderStep(onDone: () => _go(4)),
+      4 => MotivationStep(onDone: () => _go(5)),
       _ => DownloadStep(onFinish: _finish),
     };
-    final canGoBack = _step >= 1 && _step <= 3;
+    final canGoBack = _step >= 1 && _step <= 4;
     return PopScope(
       canPop: _step == 0,
       onPopInvokedWithResult: (didPop, result) {
@@ -126,7 +128,7 @@ class _StepDots extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 6; i++)
           AnimatedContainer(
             duration: KMotion.normal,
             curve: KMotion.curve,

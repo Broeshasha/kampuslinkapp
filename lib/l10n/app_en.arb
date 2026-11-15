@@ -4,12 +4,30 @@
   "practiceTitle": "Practice",
   "examsTitle": "Mock exams",
   "practiceCount": "{count} exercises",
-  "@practiceCount": {"placeholders": {"count": {"type": "int"}}},
+  "@practiceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "examCount": "{count} papers",
-  "@examCount": {"placeholders": {"count": {"type": "int"}}},
+  "@examCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "assessNotDownloaded": "Not downloaded yet. Connect to the internet and pull down to refresh.",
   "exerciseNumber": "Exercise {n}",
-  "@exerciseNumber": {"placeholders": {"n": {"type": "int"}}},
+  "@exerciseNumber": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "practiceNextPart": "Next question",
   "practiceRate": "How did it go?",
   "rateGotIt": "Got it",
@@ -17,16 +35,40 @@
   "rateMissed": "Missed",
   "practiceHint": "Hint",
   "practiceHintCount": "Hint {n}/{total}",
-  "@practiceHintCount": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@practiceHintCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "practiceShowSolution": "Show solution",
   "practiceSolution": "Solution",
   "practiceAnswer": "Answer",
-  "examMeta": "{minutes} min \u00b7 {points} pts",
-  "@examMeta": {"placeholders": {"minutes": {"type": "int"}, "points": {"type": "String"}}},
+  "examMeta": "{minutes} min · {points} pts",
+  "@examMeta": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
   "examOnPaper": "Write your answers on paper. The app shows only the statements; the correction opens when you finish.",
   "examStart": "Start",
   "examBest": "Best {score}/20",
-  "@examBest": {"placeholders": {"score": {"type": "String"}}},
+  "@examBest": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
   "examResume": "Resume",
   "examCorrection": "Correction",
   "examTenMinutes": "10 minutes left",
@@ -38,19 +80,49 @@
   "examQuitBody": "If you leave now, this attempt is marked as abandoned.",
   "examQuit": "Leave",
   "examTotal": "Total: {total} / {max}",
-  "@examTotal": {"placeholders": {"total": {"type": "String"}, "max": {"type": "String"}}},
+  "@examTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
   "examOn20": "{score} / 20",
-  "@examOn20": {"placeholders": {"score": {"type": "String"}}},
+  "@examOn20": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
   "examPoints": "{points} pts",
-  "@examPoints": {"placeholders": {"points": {"type": "String"}}},
+  "@examPoints": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
   "examMarking": "Marking scheme",
   "examYourPoints": "Your points",
   "contentNotSupported": "This part needs a newer version of the app.",
   "updateAvailable": "A new version of KampusLink is available.",
   "webStorageWarning": "Downloads may be lost when you close the browser. Use the phone app.",
   "studyLevelTitle": "My year & semester",
-  "studyLevelValue": "{year} \u00b7 Semester {number}",
-  "@studyLevelValue": {"placeholders": {"year": {"type": "String"}, "number": {"type": "int"}}},
+  "studyLevelValue": "{year} · Semester {number}",
+  "@studyLevelValue": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      },
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "studyLevelChange": "Change",
   "studyLevelYear": "Year",
   "studyLevelSemester": "Semester",
@@ -71,18 +143,48 @@
   "semesterPinnedHelp": "Semesters you still follow (debts, retakes):",
   "semesterNone": "Choose your current semester",
   "semesterCurrent": "Current semester: S{number}",
-  "@semesterCurrent": {"placeholders": {"number": {"type": "int"}}},
+  "@semesterCurrent": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "semesterPinned": "Also following: {list}",
-  "@semesterPinned": {"placeholders": {"list": {"type": "String"}}},
+  "@semesterPinned": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
   "semesterNewHint": "New semester? Check that yours is right.",
   "semesterUpdate": "Update",
-  "semesterThis": "This semester \u00b7 S{number}",
-  "@semesterThis": {"placeholders": {"number": {"type": "int"}}},
-  "semesterStillFollowing": "S{number} \u00b7 still following",
-  "@semesterStillFollowing": {"placeholders": {"number": {"type": "int"}}},
+  "semesterThis": "This semester · S{number}",
+  "@semesterThis": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "semesterStillFollowing": "S{number} · still following",
+  "@semesterStillFollowing": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "semesterPrevious": "Previous semesters",
   "yearQuestionTitle": "Did you pass your year ({year})?",
-  "@yearQuestionTitle": {"placeholders": {"year": {"type": "String"}}},
+  "@yearQuestionTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
   "yearPassed": "I passed",
   "yearPassedDebts": "Passed with debts",
   "yearRepeat": "I repeat the year",
@@ -95,9 +197,27 @@
   "kindExplainer": "Explainer",
   "kindQuizChain": "Quiz chain",
   "clueCount": "Clue {n}/{total}",
-  "@clueCount": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@clueCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "stepCount": "Step {n}/{total}",
-  "@stepCount": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@stepCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "whyExam": "Why it matters for the exam",
   "nextCase": "Next",
   "reportMistake": "Report a mistake",
@@ -107,9 +227,21 @@
   "learnThis": "Learn this",
   "downloadsTitle": "Downloads",
   "downloadsOnPhone": "On this phone: {size}",
-  "@downloadsOnPhone": {"placeholders": {"size": {"type": "String"}}},
+  "@downloadsOnPhone": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "downloadsLastUpdate": "Last update: {date}",
-  "@downloadsLastUpdate": {"placeholders": {"date": {"type": "String"}}},
+  "@downloadsLastUpdate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "downloadsNever": "Not updated yet",
   "downloadNow": "Download now",
   "downloadPause": "Pause",
@@ -117,7 +249,13 @@
   "downloadsMobileData": "Works on mobile data. Updates are checked once a day.",
   "downloadFirstTitle": "Download your courses",
   "downloadFirstBody": "About {size} for all your modules, once. Then everything works without internet.",
-  "@downloadFirstBody": {"placeholders": {"size": {"type": "String"}}},
+  "@downloadFirstBody": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "downloadContinue": "Continue",
   "downloadLater": "Later",
   "swipeForMore": "Swipe to see more",
@@ -134,31 +272,64 @@
   "dlCopy": "Copy",
   "dlCopied": "Copied",
   "dlDownloadingLessons": "Downloading {done} / {total} lessons",
-  "@dlDownloadingLessons": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
-  "langDownloading": "Downloading this language for the lesson\u2026",
-  "@appTitle": { "description": "App name, never translated" },
+  "@dlDownloadingLessons": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "langDownloading": "Downloading this language for the lesson…",
+  "@appTitle": {
+    "description": "App name, never translated"
+  },
   "splashTagline": "Study smarter. Even offline.",
-  "@splashTagline": { "description": "One-line promise under the logo" },
+  "@splashTagline": {
+    "description": "One-line promise under the logo"
+  },
   "languageLabel": "Language",
-  "@languageLabel": { "description": "Title above the language picker" },
-  "languageNameAr": "\u0627\u0644\u0639\u0631\u0628\u064a\u0629",
-  "@languageNameAr": { "description": "Always written in Arabic" },
-  "languageNameFr": "Fran\u00e7ais",
-  "@languageNameFr": { "description": "Always written in French" },
+  "@languageLabel": {
+    "description": "Title above the language picker"
+  },
+  "languageNameAr": "العربية",
+  "@languageNameAr": {
+    "description": "Always written in Arabic"
+  },
+  "languageNameFr": "Français",
+  "@languageNameFr": {
+    "description": "Always written in French"
+  },
   "languageNameEn": "English",
-  "@languageNameEn": { "description": "Always written in English" },
+  "@languageNameEn": {
+    "description": "Always written in English"
+  },
   "tabHome": "Home",
-  "@tabHome": { "description": "Bottom tab: flashcard feed" },
+  "@tabHome": {
+    "description": "Bottom tab: flashcard feed"
+  },
   "tabModules": "Modules",
-  "@tabModules": { "description": "Bottom tab: the student's modules (Arabic: maqayis)" },
+  "@tabModules": {
+    "description": "Bottom tab: the student's modules (Arabic: maqayis)"
+  },
   "tabProfile": "Profile",
-  "@tabProfile": { "description": "Bottom tab: account and settings" },
+  "@tabProfile": {
+    "description": "Bottom tab: account and settings"
+  },
   "comingSoon": "Coming soon",
-  "@comingSoon": { "description": "Placeholder under a screen that is not built yet" },
+  "@comingSoon": {
+    "description": "Placeholder under a screen that is not built yet"
+  },
   "modulesPlaceholder": "Your modules, lessons, library and chat",
-  "@modulesPlaceholder": { "description": "Placeholder title on the Modules tab" },
+  "@modulesPlaceholder": {
+    "description": "Placeholder title on the Modules tab"
+  },
   "profilePlaceholder": "Your account, language and reminders",
-  "@profilePlaceholder": { "description": "Placeholder title on the Profile tab" },
+  "@profilePlaceholder": {
+    "description": "Placeholder title on the Profile tab"
+  },
   "errorTitle": "Something went wrong",
   "errorOffline": "You're offline. Connect to the internet and try again.",
   "errorSession": "Your session ended. Please sign in again.",
@@ -170,43 +341,82 @@
   "errorServerBusyBody": "Nothing is wrong with your phone. We keep trying and continue by ourselves.",
   "errorUnknown": "Something unexpected happened. Try again.",
   "retry": "Try again",
-  "loading": "Loading\u2026",
-  "offlineBanner": "You're offline \u00b7 showing what's saved on your phone",
+  "loading": "Loading…",
+  "offlineBanner": "You're offline · showing what's saved on your phone",
   "semesterLabel": "Semester {number}",
-  "@semesterLabel": { "placeholders": { "number": { "type": "int" } } },
+  "@semesterLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "lessonsCount": "{count, plural, =0{No lessons yet} =1{1 lesson} other{{count} lessons}}",
-  "@lessonsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@lessonsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "signInToSeeModules": "Sign in to download your modules",
   "continueWithGoogle": "Continue with Google",
   "noModulesTitle": "No modules yet",
   "noModulesOffline": "Connect to the internet once to download your modules.",
   "noModulesOnline": "We couldn't find modules for your year yet.",
-  "syncing": "Syncing\u2026",
+  "syncing": "Syncing…",
   "synced": "Synced",
   "signOut": "Sign out",
   "signedInAs": "Signed in as {email}",
-  "@signedInAs": { "placeholders": { "email": { "type": "String" } } },
+  "@signedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "onboardingNext": "Next",
   "onboardingSignInTitle": "Save your progress",
   "onboardingSignInBody": "Sign in with Google to keep your streak, cards and notes on every phone.",
   "onboardingStudiesTitle": "Your studies",
-  "studiesPilot": "Mining Engineering \u00b7 L2",
+  "studiesPilot": "Mining Engineering · L2",
   "studiesComingSoon": "More specialities coming soon",
   "studiesNotifyMe": "Notify me",
   "universityLabel": "University",
   "chooseUniversity": "Choose your university",
   "usernameLabel": "Username",
-  "usernameHelp": "3\u201320 characters: a\u2013z, 0\u20139, _ or .",
+  "usernameHelp": "3–20 characters: a–z, 0–9, _ or .",
   "usernameTaken": "This username is taken",
   "studyGoalLabel": "Daily study goal: {minutes} min",
-  "@studyGoalLabel": { "placeholders": { "minutes": { "type": "int" } } },
+  "@studyGoalLabel": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "remindersLabel": "Remind me to study",
   "reminderTime": "At {time}",
-  "@reminderTime": { "placeholders": { "time": { "type": "String" } } },
+  "@reminderTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "onboardingFinishStudies": "Download my modules",
   "downloadTitle": "Downloading your modules",
   "downloadProgress": "{done} of {total} ready",
-  "@downloadProgress": { "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } } },
+  "@downloadProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "downloadNoContent": "Lessons coming soon",
   "downloadReady": "Ready",
   "downloadSkip": "Continue in the background",
@@ -218,14 +428,32 @@
   "blockDiagram": "Diagram",
   "blockDescription": "Description",
   "figureLabel": "Figure {number}",
-  "@figureLabel": { "placeholders": { "number": { "type": "int" } } },
+  "@figureLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "readerTextSize": "Text size",
   "moduleLessons": "Lessons",
   "moduleLibrary": "Library",
   "chapterLabel": "Chapter {number}",
-  "@chapterLabel": { "placeholders": { "number": { "type": "int" } } },
+  "@chapterLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "minutesShort": "{minutes} min",
-  "@minutesShort": { "placeholders": { "minutes": { "type": "int" } } },
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "moduleNotDownloaded": "This module is not downloaded yet",
   "downloadModule": "Download",
   "moduleNoLessons": "No lessons yet for this module. They are coming soon.",
@@ -234,9 +462,21 @@
   "needInternetToDownload": "Connect to the internet to download it.",
   "libraryEmpty": "No files yet",
   "resourceType": "{type, select, cours{Course} td{Tutorials} tp{Labs} textbook{Textbook} exercices_corriges{Solved exercises} exam{Exams} notes{Notes} memoire{Thesis} other{Other files}}",
-  "@resourceType": { "placeholders": { "type": { "type": "String" } } },
+  "@resourceType": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "trustLabel": "{label, select, official{Official} verified{Verified} other{Student}}",
-  "@trustLabel": { "placeholders": { "label": { "type": "String" } } },
+  "@trustLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
   "backToWhereYouStopped": "Back to where you stopped",
   "markAsDone": "Mark as done",
   "lessonDone": "Done",
@@ -251,7 +491,13 @@
   "openModules": "Open my modules",
   "feedDoneTitle": "All done for now",
   "feedDoneNext": "Next cards at {time}",
-  "@feedDoneNext": { "placeholders": { "time": { "type": "String" } } },
+  "@feedDoneNext": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "feedDoneNoMore": "Read a lesson to unlock new cards.",
   "practiseAhead": "Practise ahead",
   "tapToFlip": "Tap to see the answer",
@@ -261,19 +507,46 @@
   "streakLabel": "Day streak",
   "xpLabel": "XP",
   "todayMinutes": "{done} / {goal} min today",
-  "@todayMinutes": { "placeholders": { "done": { "type": "int" }, "goal": { "type": "int" } } },
+  "@todayMinutes": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
   "likeLabel": "Like",
   "saveLabel": "Save",
   "quizTitle": "Quiz",
   "takeQuiz": "Take the quiz",
   "questionOf": "Question {n} of {total}",
-  "@questionOf": { "placeholders": { "n": { "type": "int" }, "total": { "type": "int" } } },
+  "@questionOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "quizCorrect": "Correct!",
   "quizWrong": "Not quite",
   "quizNext": "Next",
   "quizSeeResults": "See results",
   "quizScore": "{correct} / {total} correct",
-  "@quizScore": { "placeholders": { "correct": { "type": "int" }, "total": { "type": "int" } } },
+  "@quizScore": {
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "quizCardsBack": "The cards of this lesson are back in your feed.",
   "quizFinish": "Finish",
   "quizNoQuestions": "No questions for this lesson yet.",
@@ -294,11 +567,23 @@
   "savedCardsEmpty": "Tap the bookmark on a flashcard to keep it here.",
   "allSynced": "Everything is synced",
   "pendingSync": "{count} changes waiting to sync",
-  "@pendingSync": { "placeholders": { "count": { "type": "int" } } },
+  "@pendingSync": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "aboutTitle": "About",
   "sendFeedback": "Send feedback",
   "appVersion": "Version {version}",
-  "@appVersion": { "placeholders": { "version": { "type": "String" } } },
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAccount": "Delete my account",
   "deleteAccountTitle": "Delete your account?",
   "deleteAccountBody": "Your profile, progress, streak, XP and messages are deleted from our servers, and this phone is cleared. This cannot be undone.",
@@ -317,7 +602,13 @@
   "chatTranslating": "translating...",
   "chatReport": "Report",
   "chatBlock": "Block @{name}",
-  "@chatBlock": { "placeholders": { "name": { "type": "String" } } },
+  "@chatBlock": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "chatDelete": "Delete",
   "reportTitle": "Report this message",
   "reportSpam": "Spam",
@@ -328,10 +619,22 @@
   "reportSend": "Send report",
   "reportThanks": "Thanks. We will look at it.",
   "blockConfirmTitle": "Block @{name}?",
-  "@blockConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@blockConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "blockConfirmBody": "You will no longer see each other's messages.",
   "blockDone": "@{name} is blocked.",
-  "@blockDone": { "placeholders": { "name": { "type": "String" } } },
+  "@blockDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "updateTitle": "A new version is needed",
   "updateBody": "This version of KampusLink is too old to keep your progress safe. Please update to continue.",
   "caseLabel": "Case",
@@ -350,7 +653,7 @@
   "guessWrong": "Not this time. Here is why:",
   "swipeHint": "Swipe to see the answer",
   "caseDone": "Case solved",
-"reminderStepTitle": "When do you want to study?",
+  "reminderStepTitle": "When do you want to study?",
   "reminderStepBody": "Pick a time and your days. We send one short reminder then: 10 minutes is enough. Tap Not now when you are busy; if you skip a few, we pause by ourselves.",
   "reminderTimeLabel": "Study time",
   "reminderDaysLabel": "Days",
@@ -363,13 +666,25 @@
   "remindersDeniedHint": "Notifications are blocked for KampusLink. To get reminders, open your phone Settings > Apps > KampusLink > Notifications and turn them on.",
   "reviewTitle": "10-minute review",
   "reviewTimeLeft": "{minutes} min",
-  "@reviewTimeLeft": {"placeholders": {"minutes": {"type": "int"}}},
+  "@reviewTimeLeft": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "reviewDoneTitle": "Session done!",
   "reviewDoneBody": "{count} cards reviewed. See you next time.",
-  "@reviewDoneBody": {"placeholders": {"count": {"type": "int"}}},
+  "@reviewDoneBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "reviewEmpty": "Nothing to review right now.",
   "reviewBackHome": "Back to Home",
-"studiesSpecialityLabel": "Speciality",
+  "studiesSpecialityLabel": "Speciality",
   "studiesChooseSpeciality": "Choose your speciality and year",
   "studiesNotListed": "My speciality isn't listed",
   "studiesNotOffered": "This speciality or year isn't open yet. Choose another one.",
@@ -380,20 +695,32 @@
   "waitlistJoin": "Tell me when it's ready",
   "comingSoonTitle": "Coming soon",
   "comingSoonBody": "We'll tell you as soon as {name} is on KampusLink.",
-  "@comingSoonBody": {"placeholders": {"name": {"type": "String"}}},
+  "@comingSoonBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "comingSoonBodyGeneric": "We'll tell you as soon as your speciality is on KampusLink.",
   "comingSoonChange": "Choose another speciality",
   "myStudiesTitle": "My studies",
   "myStudiesSaved": "Saved. Your new modules are downloading.",
   "myStudiesOffline": "Connect to the internet to change your studies.",
-"remindersNext": "Next reminder: {when}",
-  "@remindersNext": {"placeholders": {"when": {"type": "String"}}},
+  "remindersNext": "Next reminder: {when}",
+  "@remindersNext": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "remindersNextNone": "No reminder planned right now (none on a day you already studied).",
   "remindersBatteryTip": "Reminder late or missing? Set KampusLink to Unrestricted: Settings > Apps > KampusLink > Battery.",
-"shareApp": "Share KampusLink",
+  "shareApp": "Share KampusLink",
   "shareAppHint": "Invite your classmates",
   "shareMessage": "I revise my modules with KampusLink: 10 minutes a day, even offline. Join me!",
-"shareCopy": "Copy the link",
+  "shareCopy": "Copy the link",
   "shareCopied": "Link copied",
   "shopTitle": "Shop",
   "shopHint": "Earn XP by studying and spend it here. Nothing here can be bought with money.",
@@ -401,7 +728,16 @@
   "shopUse": "Use",
   "shopInUse": "In use",
   "shopHave": "You have {count} of {max}",
-  "@shopHave": {"placeholders": {"count": {"type": "int"}, "max": {"type": "int"}}},
+  "@shopHave": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "shopMax": "Maximum reached",
   "shopNotEnough": "Not enough XP yet",
   "shopEmpty": "The shop is empty for now.",
@@ -426,5 +762,91 @@
   "bacConsent": "If you are under 18, a parent or guardian agrees to your use of KampusLink.",
   "bacStart": "Start",
   "bacBadge": "Bac {year}",
-  "@bacBadge": {"description": "Badge on a question taken from a real bac exam", "placeholders": {"year": {"type": "int"}}}
+  "@bacBadge": {
+    "description": "Badge on a question taken from a real bac exam",
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "missionTitle": "Today's mission",
+  "missionCards": "Review {count} cards",
+  "@missionCards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "missionCardsProgress": "{done} of {total} cards",
+  "@missionCardsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "missionLesson": "Read one lesson step",
+  "missionQuiz": "Answer 3 quiz questions",
+  "missionNothing": "Download your modules to get a mission.",
+  "missionGo": "Go",
+  "missionDoneTitle": "Mission done",
+  "missionDoneDay": "Day {count} this week. Small steps every day beat long nights.",
+  "@missionDoneDay": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekGoalLabel": "Week goal: {days} of {goal} days",
+  "@weekGoalLabel": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "weekReached": "{count} days this week. You're becoming someone who studies every day.",
+  "@weekReached": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weekFreshStart": "New week, fresh start.",
+  "weeksInRowLabel": "weeks in a row",
+  "whyTitle": "What matters most to you?",
+  "whyBody": "Pick 1 or 2. This stays on your phone, nobody else sees it.",
+  "whyValueFamily": "My family",
+  "whyValueFutureJob": "My future job",
+  "whyValueFaith": "My faith",
+  "whyValueProveMyself": "Proving it to myself",
+  "whyValueScholarship": "A scholarship",
+  "whyValueOther": "Something else",
+  "whyTextHint": "In your own words (optional)",
+  "whyShownTitle": "Your why",
+  "howTitle": "How to study with KampusLink",
+  "how1": "Short sessions every day beat long nights before the exam.",
+  "how2": "Cards come back right before you would forget them.",
+  "how3": "Mistakes are how memory grows.",
+  "motNext": "Next",
+  "motSkip": "Skip",
+  "motStart": "Let's go",
+  "anchorTitle": "When will you study every day?",
+  "anchorAfterSchool": "After school",
+  "anchorAfterMaghrib": "After Maghrib",
+  "anchorAfterIsha": "After Isha",
+  "anchorAfterDinner": "After dinner",
+  "anchorBeforeSleep": "Before sleep",
+  "anchorCustom": "Pick a time",
+  "weekTileLabel": "days this week"
 }

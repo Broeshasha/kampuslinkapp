@@ -14,6 +14,7 @@ import '../../data/learning/feed_repository.dart';
 import '../../data/learning/learning_providers.dart';
 import '../../data/providers.dart';
 import '../../data/shop/shop_providers.dart';
+import '../../data/motivation/motivation_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/reader_settings.dart';
 import '../../ui/legal_links.dart';
@@ -280,18 +281,28 @@ class _StatsGrid extends ConsumerWidget {
       AsyncData(:final value) => value,
       _ => 0,
     };
+    final mission = ref.watch(missionProvider).value;
     final serverStreak = stats?['current_streak'];
     final streak = serverStreak == null
         ? localStreak(days, DateTime.now())
         : _int(serverStreak);
     final minutes = days.values.fold<int>(0, (a, b) => a + b) ~/ 60;
     final tiles = [
-      _StatTile(
-        icon: Icons.local_fire_department_rounded,
-        color: kc.streak,
-        value: '$streak',
-        label: l10n.streakLabel,
-      ),
+      // MOT-1: the weekly goal replaces the daily streak (no guilt).
+      if (mission != null)
+        _StatTile(
+          icon: Icons.flag_rounded,
+          color: kc.streak,
+          value: '${mission.weekDays}/${mission.weekGoal}',
+          label: l10n.weekTileLabel,
+        )
+      else
+        _StatTile(
+          icon: Icons.local_fire_department_rounded,
+          color: kc.streak,
+          value: '$streak',
+          label: l10n.streakLabel,
+        ),
       _StatTile(
         icon: Icons.bolt_rounded,
         color: kc.xp,

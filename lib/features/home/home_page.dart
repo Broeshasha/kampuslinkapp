@@ -29,6 +29,7 @@ import '../../data/lessons/lesson_repository.dart';
 import '../../data/profile/study_level.dart';
 import '../../data/providers.dart';
 import '../../l10n/app_localizations.dart';
+import '../motivation/mission_strip.dart';
 import '../../ui/coming_soon.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
@@ -113,6 +114,7 @@ class _HomeTop extends ConsumerWidget {
               child: Row(
                 children: [
                   const Expanded(child: _FeedChips()),
+                  const MissionButton(),
                   const _ResumeButton(),
                   IconButton(
                     tooltip: l10n.shuffleFeed,

@@ -14,6 +14,7 @@ import '../catalog/catalog.dart';
 import '../profile/waitlist_check.dart' show waitlistPayload;
 import '../db/app_database.dart';
 import '../learning/feed_repository.dart';
+import '../motivation/motivation_providers.dart';
 import '../profile/study_level.dart';
 import '../providers.dart';
 import 'notification_templates.dart';
@@ -430,14 +431,26 @@ class ReminderController extends Notifier<ReminderState?> {
       }
       final now = _now();
       // One reminder a day at most (2 allowed for bac); bac: quiet 22-07.
-      final plan = planReminders(
-        current,
-        now,
-        max: reminderMaxSlots,
-        quietHours: ref.read(isBacProvider),
-      );
-      final studied = await _studiedToday();
       final today = algiersWall(now);
+      // MOT-1: today's mission done -> no more reminders today.
+      final missionDone = await ref
+          .read(motivationStoreProvider)
+          .missionDoneOn(now)
+          .catchError((Object _) => false);
+      final plan = [
+        for (final at in planReminders(
+          current,
+          now,
+          max: reminderMaxSlots,
+          quietHours: ref.read(isBacProvider),
+        ))
+          if (!missionDone ||
+              !(algiersWall(at).year == today.year &&
+                  algiersWall(at).month == today.month &&
+                  algiersWall(at).day == today.day))
+            at,
+      ];
+      final studied = await _studiedToday();
       // B12 (A-15): same times, language and situation as the plan already
       // on the phone -> nothing to cancel or schedule (refreshed at least
       // every 6 hours so the counts in the texts stay fresh).
@@ -446,6 +459,7 @@ class ReminderController extends Notifier<ReminderState?> {
         _language(),
         '${current.inSecondChance}',
         '$studied',
+        '$missionDone',
         '${today.year}-${today.month}-${today.day}/${today.hour ~/ 6}',
       ].join('|');
       if (_prefs.getString(reminderPlanSigKey) == signature) return;
