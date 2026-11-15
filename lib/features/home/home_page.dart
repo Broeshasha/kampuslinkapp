@@ -254,7 +254,7 @@ class _ContinueLessonTile extends StatelessWidget {
     final kc = context.kc;
     final accent = moduleAccent(item.module.id);
     final lang = Localizations.localeOf(context).languageCode;
-    final title = LessonContent.of(item.lesson, lang).title;
+    final title = lessonHeadline(item.lesson, lang).title;
     return Material(
       color: kc.surface,
       shape: RoundedRectangleBorder(
@@ -560,6 +560,8 @@ class _FeedState extends ConsumerState<_Feed> {
           .read(progressRepositoryProvider)
           .reviewCard(card.card.id, correct: knewIt),
     );
+    // B13 (A-18): the page may be gone after the await (tab change).
+    if (!mounted) return;
     ref
         .read(feedQueueProvider.notifier)
         .outcome(item.key, knewIt ? 'right' : 'wrong');

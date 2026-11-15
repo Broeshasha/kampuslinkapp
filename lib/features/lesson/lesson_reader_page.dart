@@ -85,7 +85,9 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
   LessonRow? _next;
   String? _resumeId;
   String? _contentLang;
-  String? _currentId;
+  /// B13 (A-06): the block on screen changes at every scroll stop; only the
+  /// "back to where you stopped" chip listens to it (no full rebuild).
+  final _current = ValueNotifier<String?>(null);
   String? _pendingId;
   double _pendingProgress = 0;
   int _questions = 0;
@@ -123,7 +125,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
     _pendingProgress = progress;
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 1500), _flush);
-    if (blockId != _currentId) setState(() => _currentId = blockId);
+    _current.value = blockId;
   }
 
   /// Saves the position now (debounce end, leaving, app in background).
@@ -197,6 +199,7 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
   void dispose() {
     _flush();
     _life.dispose();
+    _current.dispose();
     super.dispose();
   }
 
@@ -230,10 +233,6 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
     final resumeIndex = _resumeId == null
         ? -1
         : blocks.indexWhere((b) => '${b['id']}' == _resumeId);
-    final currentIndex = _currentId == null
-        ? resumeIndex
-        : blocks.indexWhere((b) => '${b['id']}' == _currentId);
-    final showResume = resumeIndex > 1 && currentIndex < resumeIndex - 1;
 
     return Scaffold(
       appBar: AppBar(
@@ -318,8 +317,16 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
             Positioned.fill(
               child: ConfettiBurst(key: ValueKey<int>(_celebrations)),
             ),
-          if (showResume)
-            PositionedDirectional(
+          ValueListenableBuilder<String?>(
+            valueListenable: _current,
+            builder: (context, shown, _) {
+              final currentIndex = shown == null
+                  ? resumeIndex
+                  : blocks.indexWhere((b) => '${b['id']}' == shown);
+              if (resumeIndex <= 1 || currentIndex >= resumeIndex - 1) {
+                return const SizedBox.shrink();
+              }
+              return PositionedDirectional(
               start: 0,
               end: 0,
               bottom: KSpace.xl,
@@ -333,7 +340,9 @@ class _LessonReaderPageState extends ConsumerState<LessonReaderPage> {
                   },
                 ),
               ),
-            ),
+            );
+            },
+          ),
         ],
       ),
     );

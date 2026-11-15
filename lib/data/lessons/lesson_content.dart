@@ -130,3 +130,46 @@ class LessonContent {
     return t == null ? '' : '$t';
   }
 }
+
+/// B13 (A-07): what the module page needs from a lesson. Kept per (lesson,
+/// stored text, language) so a progress write does not decode every lesson
+/// of the module again; the full text is not kept in memory.
+class LessonHeadline {
+  const LessonHeadline({
+    required this.title,
+    required this.unitKey,
+    required this.unitTitle,
+    this.unitNumber,
+  });
+
+  final String title;
+  final String unitKey;
+  final String unitTitle;
+  final int? unitNumber;
+}
+
+const _headlineCacheSize = 600;
+final _headlines = <(int, int, int, String), LessonHeadline>{};
+
+LessonHeadline lessonHeadline(LessonRow row, String lang) {
+  final key = (
+    row.id,
+    row.i18nJson.length,
+    row.i18nJson.hashCode ^ (row.unitJson?.hashCode ?? 0),
+    lang,
+  );
+  final hit = _headlines.remove(key);
+  if (hit != null) return _headlines[key] = hit;
+  final c = LessonContent.of(row, lang);
+  final h = LessonHeadline(
+    title: c.title,
+    unitKey: c.unitKey,
+    unitTitle: c.unitTitle,
+    unitNumber: c.unitNumber,
+  );
+  _headlines[key] = h;
+  if (_headlines.length > _headlineCacheSize) {
+    _headlines.remove(_headlines.keys.first);
+  }
+  return h;
+}

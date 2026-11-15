@@ -245,7 +245,7 @@ class _LessonList extends StatelessWidget {
     String? currentUnit;
     var number = 0;
     for (final item in items) {
-      final content = LessonContent.of(item.lesson, lang);
+      final content = lessonHeadline(item.lesson, lang);
       if (content.unitKey != currentUnit) {
         currentUnit = content.unitKey;
         final n = content.unitNumber;

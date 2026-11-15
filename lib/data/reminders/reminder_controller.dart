@@ -34,6 +34,9 @@ const reminderAppOpenKey = 'reminder_app_open_day_v1';
 const reminderTemplatesKey = 'notif_templates_v1';
 const reminderPlanBodiesKey = 'reminder_plan_bodies_v1';
 
+/// B12: signature of the plan on the phone (skip identical re-plans).
+const reminderPlanSigKey = 'reminder_plan_sig_v1';
+
 /// Minutes promised in the reminder ({minutes}).
 const reminderSessionMinutes = 10;
 
@@ -419,9 +422,10 @@ class ReminderController extends Notifier<ReminderState?> {
       await _drainInbox();
       await _processFired();
       final current = state;
-      await _notifier.cancelAll();
       if (current == null || !current.active || !await _notifier.enabled()) {
+        await _notifier.cancelAll();
         await _prefs.setStringList(reminderPlanKey, const []);
+        await _prefs.remove(reminderPlanSigKey);
         return;
       }
       final now = _now();
@@ -434,6 +438,18 @@ class ReminderController extends Notifier<ReminderState?> {
       );
       final studied = await _studiedToday();
       final today = algiersWall(now);
+      // B12 (A-15): same times, language and situation as the plan already
+      // on the phone -> nothing to cancel or schedule (refreshed at least
+      // every 6 hours so the counts in the texts stay fresh).
+      final signature = [
+        for (final at in plan) at.toIso8601String(),
+        _language(),
+        '${current.inSecondChance}',
+        '$studied',
+        '${today.year}-${today.month}-${today.day}/${today.hour ~/ 6}',
+      ].join('|');
+      if (_prefs.getString(reminderPlanSigKey) == signature) return;
+      await _notifier.cancelAll();
       bool keepGoing(int i) {
         final d = algiersWall(plan[i]);
         return studied &&
@@ -503,6 +519,7 @@ class ReminderController extends Notifier<ReminderState?> {
       await _prefs.setStringList(reminderPlanBodiesKey, [
         for (final s in slots) '${s.at.toIso8601String()}|${s.body}',
       ]);
+      await _prefs.setString(reminderPlanSigKey, signature);
     });
   }
 
