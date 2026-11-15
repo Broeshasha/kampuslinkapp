@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/auth_repository.dart';
 import '../../core/errors/result.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/cases/case_repository.dart';
@@ -51,6 +52,7 @@ class CasePage extends ConsumerWidget {
         child: MaxWidth(
           child: CaseSetView(
             set: set,
+            seed: ref.read(authControllerProvider).userId ?? '',
             demo: found.moduleId == null,
             accent: found.moduleId == null
                 ? null

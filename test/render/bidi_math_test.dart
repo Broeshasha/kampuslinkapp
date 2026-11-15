@@ -10,12 +10,13 @@ import 'package:kampuslink/render/rich_block_text.dart';
 const _l = '\u2066';
 const _p = '\u2069';
 
-/// The 4 examples from the bac maths content review.
+/// Golden lines: the founder's 15 Nov RTL rule (SVT arrows untouched, MATH
+/// interval + vectors isolated, CHEM LaTeX ion inside Arabic).
 const examples = [
-  'العدد -5 سالب.',
-  'المجال [0;3] مغلق',
-  'لدينا i^4 = 1 دائما',
+  'pH 8.5 ← 5 يرتفع',
+  'على المجال [0;3] الدالة مستمرة',
   'AB⃗ ⊥ CD⃗ ⇒ الشعاعان متعامدان',
+  r'الشاردة \(\mathrm{H_3O^+}\) تعطي الوسط الصفة الحمضية',
 ];
 
 Future<void> _loadFont(String family, List<String> assets) async {
@@ -27,15 +28,22 @@ Future<void> _loadFont(String family, List<String> assets) async {
 }
 
 void main() {
-  test('maths runs inside Arabic stay left-to-right', () {
-    expect(isolateMathRuns(examples[0]), 'العدد $_l-5$_p سالب.');
-    expect(isolateMathRuns(examples[1]), 'المجال $_l[0;3]$_p مغلق');
-    expect(isolateMathRuns(examples[2]), 'لدينا ${_l}i^4 = 1$_p دائما');
+  test('only vectors, ⊥ ⇒ ⇔ and intervals are isolated in Arabic', () {
+    expect(isolateMathRuns('المجال [0;3] مغلق'), 'المجال $_l[0;3]$_p مغلق');
+    expect(isolateMathRuns(']0;3[ مفتوح'), '$_l]0;3[$_p مفتوح');
     expect(
-      isolateMathRuns(examples[3]),
+      isolateMathRuns('AB⃗ ⊥ CD⃗ ⇒ الشعاعان متعامدان'),
       '${_l}AB⃗ ⊥ CD⃗ ⇒$_p الشعاعان متعامدان',
     );
-    expect(isolateMathRuns(']0;3[ مفتوح'), '$_l]0;3[$_p مفتوح');
+    // SVT arrows and equations stay in normal RTL display.
+    expect(isolateMathRuns('pH 8.5 ← 5 يرتفع'), 'pH 8.5 ← 5 يرتفع');
+    expect(
+      isolateMathRuns('6CO2 + 12H2O → C6H12O6 + 6O2'),
+      '6CO2 + 12H2O → C6H12O6 + 6O2',
+    );
+    // Plain numbers / Latin are not touched (content uses LaTeX for those).
+    expect(isolateMathRuns('العدد -5 سالب.'), 'العدد -5 سالب.');
+    expect(isolateMathRuns('لدينا i^4 = 1 دائما'), 'لدينا i^4 = 1 دائما');
     expect(isolateMathRuns('نص عربي فقط'), 'نص عربي فقط');
   });
 

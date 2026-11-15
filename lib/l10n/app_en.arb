@@ -424,5 +424,7 @@
   "wilayaWhy": "For wilaya competitions. Never shown to other students.",
   "wilayaRequired": "Choose your wilaya",
   "bacConsent": "If you are under 18, a parent or guardian agrees to your use of KampusLink.",
-  "bacStart": "Start"
+  "bacStart": "Start",
+  "bacBadge": "Bac {year}",
+  "@bacBadge": {"description": "Badge on a question taken from a real bac exam", "placeholders": {"year": {"type": "int"}}}
 }

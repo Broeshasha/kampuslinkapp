@@ -104,6 +104,12 @@ const allContentLanguages = ['ar', 'fr', 'en'];
 // TODO(lead): drop when the server falls back to the source language.
 const contentLanguage = 'fr';
 
+/// B14: which content languages to download. University modules: the UI
+/// language + French (their source). Bac modules exist in Arabic (source)
+/// + English only: Arabic always, English too when the UI is English.
+List<String> contentLanguagesFor({required String ui, required bool bac}) =>
+    bac ? [if (ui == 'en') 'en', 'ar'] : {ui, contentLanguage}.toList();
+
 /// Feed brief C: at most one content update check a day (plus "Download
 /// now" / pull-to-refresh / sign-in / semester or language change).
 const contentCheckEvery = Duration(hours: 24);
@@ -222,7 +228,10 @@ class SyncController extends Notifier<SyncState> {
           WidgetsBinding.instance.platformDispatcher.locales,
           const <Locale>[],
         ).languageCode;
-    return {ui, contentLanguage}.toList();
+    return contentLanguagesFor(
+      ui: ui,
+      bac: ref.read(catalogValueProvider)?.me['track'] == 'bac',
+    );
   }
 
   ModuleDownloader? _downloader() {

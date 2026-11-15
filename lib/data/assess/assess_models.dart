@@ -12,14 +12,15 @@ String _s(Object? v) => v == null ? '' : '$v';
 int _int(Object? v) => v is num ? v.toInt() : int.tryParse(_s(v)) ?? 0;
 double _num(Object? v) => v is num ? v.toDouble() : double.tryParse(_s(v)) ?? 0;
 
-/// T: {en, fr, ar} (or a plain string) in [lang], then French, then any.
+/// T: {en, fr, ar} (or a plain string) in [lang], then French, Arabic,
+/// English, any.
 String pickText(Object? v, String lang) {
   if (v == null) return '';
   if (v is String) return v;
   if (v is num) return '$v';
   if (v is Map) {
     if (v.isEmpty) return '';
-    final t = v[lang] ?? v['fr'] ?? v.values.first;
+    final t = v[lang] ?? v['fr'] ?? v['ar'] ?? v['en'] ?? v.values.first;
     return t is String ? t : (t == null ? '' : '$t');
   }
   return '';
@@ -36,7 +37,12 @@ List<String> pickTextList(Object? v, String lang) {
     ];
   }
   if (v is Map && v.values.any((x) => x is List)) {
-    final picked = v[lang] ?? v['fr'] ?? v.values.firstWhere((x) => x is List);
+    final picked =
+        v[lang] ??
+        v['fr'] ??
+        v['ar'] ??
+        v['en'] ??
+        v.values.firstWhere((x) => x is List);
     return pickTextList(picked, lang);
   }
   final one = pickText(v, lang);

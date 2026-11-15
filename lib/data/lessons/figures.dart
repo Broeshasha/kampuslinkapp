@@ -19,11 +19,11 @@ Map<String, dynamic>? figureMap(Object? v) {
 }
 
 /// The text of [v] in [lang] (String, or a map by language: wanted, then
-/// French, then English, then any).
+/// French, then Arabic, then English, then any).
 String figureText(Object? v, String lang) {
   if (v is String) return v;
   if (v is! Map || v.isEmpty) return '';
-  final t = v[lang] ?? v['fr'] ?? v['en'] ?? v.values.first;
+  final t = v[lang] ?? v['fr'] ?? v['ar'] ?? v['en'] ?? v.values.first;
   return t == null ? '' : '$t';
 }
 

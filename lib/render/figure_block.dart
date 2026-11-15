@@ -5,6 +5,7 @@ import '../core/logging/logger.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import 'block_style.dart';
+import 'compact_figure.dart' show DiagramUnavailable;
 import 'latex_plain.dart';
 import 'math_text.dart';
 
@@ -15,12 +16,44 @@ String _text(Object? v) => v == null ? '' : '$v';
 String _hex(Color c) =>
     '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
 
+/// B17: embedded photos, only `data:image/png|jpeg|webp;base64,...`.
+final _dataImage = RegExp(
+  r'data:image/([a-zA-Z0-9.+-]+);base64,[A-Za-z0-9+/=\s]*',
+);
+const _okImageTypes = {'png', 'jpeg', 'jpg', 'webp'};
+
+/// Caps of FIX_PLAN 2.3 (in base64 characters: 4 per 3 bytes).
+const maxSvgImages = 3;
+const maxSvgImageChars = 150 * 1024 * 4 ~/ 3 + 4;
+const maxSvgImagesChars = 600 * 1024 * 4 ~/ 3 + 4;
+
 /// CONTENT_FORMAT 5.5 author rules: viewBox, no scripts, no foreignObject,
-/// no event handlers, no external links, under 200 KB.
+/// no event handlers, no external links, markup under 200 KB. Embedded
+/// photos (B17) are checked apart: png/jpeg/webp only, at most 3, each
+/// <= 150 KB, all <= 600 KB; the markup checks never scan the photo bytes.
 bool isSafeSvg(String svg) {
-  final lower = svg.toLowerCase();
-  return svg.isNotEmpty &&
-      svg.length <= 200 * 1024 &&
+  if (svg.isEmpty) return false;
+  var images = 0;
+  var imageChars = 0;
+  var badImage = false;
+  final markup = svg.replaceAllMapped(_dataImage, (m) {
+    images++;
+    final len = m[0]!.length;
+    imageChars += len;
+    if (!_okImageTypes.contains(m[1]!.toLowerCase()) ||
+        len > maxSvgImageChars) {
+      badImage = true;
+    }
+    return 'data:image/x;base64,';
+  });
+  if (badImage ||
+      images > maxSvgImages ||
+      imageChars > maxSvgImagesChars) {
+    return false;
+  }
+  final lower = markup.toLowerCase();
+  return markup.length <= 200 * 1024 &&
+      !lower.contains('data:image/svg') &&
       lower.contains('viewbox') &&
       !lower.contains('<script') &&
       !lower.contains('foreignobject') &&
@@ -163,7 +196,8 @@ class FigureBlock extends StatelessWidget {
       final raw = _text(asset['svg']);
       if (!isSafeSvg(raw)) {
         appLog.warn('figure ${block['id']}: unsafe or empty svg skipped');
-        return null;
+        // B17: never drop content silently.
+        return raw.isEmpty ? null : const DiagramUnavailable();
       }
       final svg = themeSvg(raw, kc);
       final alt = latexToPlain(

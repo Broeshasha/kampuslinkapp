@@ -20,7 +20,11 @@ String tableText(Object? v, String lang) {
       return tableText(v['value'] ?? v['latex'], lang);
     }
     final t =
-        v[lang] ?? v['fr'] ?? v['en'] ?? (v.isEmpty ? null : v.values.first);
+        v[lang] ??
+        v['fr'] ??
+        v['ar'] ??
+        v['en'] ??
+        (v.isEmpty ? null : v.values.first);
     return tableText(t, lang);
   }
   return '$v';

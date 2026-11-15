@@ -16,6 +16,7 @@ import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/rich_block_text.dart';
+import '../../ui/bac_badge.dart';
 import '../../ui/confetti.dart';
 import '../../ui/max_width.dart';
 import '../../ui/states.dart';
@@ -233,6 +234,10 @@ class _QuestionView extends StatelessWidget {
                 style: TextStyle(color: kc.textSecondary),
               ),
               const SizedBox(height: KSpace.lg),
+              if (question.bacYear case final year?) ...[
+                BacBadge(year: year),
+                const SizedBox(height: KSpace.sm),
+              ],
               Directionality(
                 textDirection: style.direction,
                 child: RichBlockText(

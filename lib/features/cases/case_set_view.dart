@@ -8,12 +8,14 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import '../../core/l10n/locale_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../data/learning/option_order.dart';
 import '../home/post_backdrop.dart';
 import '../../l10n/app_localizations.dart';
 import '../../render/block_style.dart';
 import '../../render/compact_figure.dart';
 import '../../render/figure_block.dart';
 import '../../render/rich_block_text.dart';
+import '../../ui/bac_badge.dart';
 import '../../ui/confetti.dart';
 import '../../render/math_text.dart';
 import 'case_models.dart';
@@ -41,9 +43,13 @@ class CaseSetView extends StatefulWidget {
     this.fullBleed = false,
     this.topInset = 0,
     this.bottomInset = 0,
+    this.seed = '',
   });
 
   final CaseSet set;
+
+  /// Shuffles the options stably per student (usually the user id).
+  final String seed;
   final CaseProgress progress;
   final ValueChanged<CaseProgress> onProgress;
   final bool demo;
@@ -344,6 +350,7 @@ class _CaseSetViewState extends State<CaseSetView>
                               choice: _choice,
                               progress: _p,
                               commitSlide: _set.commitSlide,
+                              seed: '${widget.seed}|${_set.id}',
                               onChoose: (c) => setState(() => _choice = c),
                               onLock: _lock,
                               onAnswer: (c) => _answer(slide, c),
@@ -544,6 +551,7 @@ class _SlideBody extends StatelessWidget {
     required this.progress,
     required this.commitSlide,
     required this.onChoose,
+    this.seed = '',
     required this.onLock,
     required this.onAnswer,
     required this.onSave,
@@ -553,6 +561,7 @@ class _SlideBody extends StatelessWidget {
     this.bare = false,
   });
 
+  final String seed;
   final CaseSlide slide;
   final int roleIndex;
   final int roleTotal;
@@ -727,9 +736,11 @@ class _SlideBody extends StatelessWidget {
     switch (slide.role) {
       case SlideRole.commit:
         final locked = progress.guess != null;
+        final order = optionOrder(0, '$seed:${slide.id}', slide.options.length);
         children.addAll([
+          if (slide.bacYear case final year?) BacBadge(year: year),
           _Prompt(text: slide.prompt, style: style),
-          for (var i = 0; i < slide.options.length; i++)
+          for (final i in order)
             _Option(
               text: slide.options[i],
               style: style,
@@ -818,8 +829,15 @@ class _SlideBody extends StatelessWidget {
         }
       case SlideRole.quiz:
         final answered = progress.answers[slide.id];
+        if (slide.bacYear case final year?) {
+          children.add(BacBadge(year: year));
+        }
         children.add(_Prompt(text: slide.prompt, style: style));
-        for (var i = 0; i < slide.options.length; i++) {
+        for (final i in optionOrder(
+          0,
+          '$seed:${slide.id}',
+          slide.options.length,
+        )) {
           children.add(
             _Option(
               text: slide.options[i],

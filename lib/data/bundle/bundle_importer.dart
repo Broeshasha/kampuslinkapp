@@ -208,6 +208,8 @@ class BundleImporter {
           'difficulty',
           'card_kind',
           'figure',
+          'source',
+          'based_on',
         ]),
     }..removeWhere((_, v) => (v as Map).isEmpty);
     final questions = <String, dynamic>{
@@ -217,6 +219,8 @@ class BundleImporter {
           'difficulty',
           'figure',
           'option_figures',
+          'source',
+          'based_on',
         ]),
     }..removeWhere((_, v) => (v as Map).isEmpty);
     if (merge) {

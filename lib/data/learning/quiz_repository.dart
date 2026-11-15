@@ -6,6 +6,7 @@ import '../db/app_database.dart';
 import '../lessons/figures.dart';
 import '../lessons/lesson_content.dart';
 import '../sync/outbox_repository.dart';
+import 'bac_source.dart';
 import 'progress_repository.dart';
 
 /// One question in one language.
@@ -20,6 +21,7 @@ class QuizQuestion {
     required this.language,
     this.figure,
     this.optionFigures = const [],
+    this.bacYear,
   });
 
   final int id;
@@ -33,6 +35,9 @@ class QuizQuestion {
   /// WP16 B: optional diagram, and one per option (null = none).
   final Map<String, dynamic>? figure;
   final List<Map<String, dynamic>?> optionFigures;
+
+  /// B17: year of the real bac this question comes from (📜 badge), or null.
+  final int? bacYear;
 }
 
 String _quizKey(int lessonId) => 'quiz:$lessonId';
@@ -118,6 +123,7 @@ class QuizRepository {
             shared: sharedMap['option_figures'],
             count: optionCount,
           ),
+          bacYear: bacYearOf(sharedMap['source']),
         ),
       );
     }

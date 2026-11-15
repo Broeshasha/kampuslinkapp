@@ -1,8 +1,13 @@
 import 'package:flutter/painting.dart';
 
-/// Content review (bac, Arabic): inside right-to-left text, plain maths like
-/// "-5", "[0;3]", "i^4 = 1" or "AB⃗ ⊥ CD⃗ ⇒" must stay left-to-right. Each
-/// maths run is wrapped in a Unicode isolate (LRI U+2066 ... PDI U+2069).
+/// Content review (bac, Arabic), founder rule of 15 Nov 2026:
+/// - LaTeX \( ... \) is drawn as a formula widget: always left-to-right.
+/// - Plain text is NOT isolated by default (SVT writes "8.5 ← 5" and
+///   equations with → that are right only in normal RTL display).
+/// - Exceptions, isolated left-to-right with LRI U+2066 ... PDI U+2069:
+///   a run with a vector mark (U+20D0-U+20FF, e.g. "AB⃗"), with ⊥ ⇒ ⇔, or an
+///   interval like "[0;3]" / "]0;3[". Never a run that contains ← or →.
+/// Plain "-5" or "i^4 = 1" stay as typed: content writes them as LaTeX.
 const _lri = '\u2066';
 const _pdi = '\u2069';
 
@@ -11,6 +16,15 @@ const _tok =
 const _op = r'[=+\-−×÷<>≤≥≠±*/⊥⇒⇔→←∈∉⊂⊃∩∪≈∥]';
 
 final _mathRun = RegExp('$_tok(?:\\s*$_op+\\s*$_tok)*(?:\\s*[⊥⇒⇔→])?');
+final _vector = RegExp('[\u20D0-\u20FF]');
+final _logic = RegExp('[⊥⇒⇔]');
+final _arrow = RegExp('[←→]');
+final _interval = RegExp(r'^[\[\]]\s*[-−+]?[0-9A-Za-z.,∞]+\s*;\s*[-−+]?[0-9A-Za-z.,∞]+\s*[\[\]]$');
+
+/// Only these plain runs are isolated (see the rule above).
+bool _isolate(String run) =>
+    !_arrow.hasMatch(run) &&
+    (_vector.hasMatch(run) || _logic.hasMatch(run) || _interval.hasMatch(run));
 final _trailing = RegExp(r'[.,;:]+$');
 
 /// [text] with every maths run isolated left-to-right. Sentence punctuation
@@ -23,7 +37,7 @@ String isolateMathRuns(String text) => text.replaceAllMapped(_mathRun, (m) {
     tail = run.substring(t.start);
     run = run.substring(0, t.start);
   }
-  if (run.isEmpty) return m[0]!;
+  if (run.isEmpty || !_isolate(run)) return m[0]!;
   return '$_lri$run$_pdi$tail';
 });
 

@@ -367,5 +367,6 @@
   "wilayaWhy": "Pour les compétitions entre wilayas. Jamais montrée aux autres élèves.",
   "wilayaRequired": "Choisis ta wilaya",
   "bacConsent": "Si tu as moins de 18 ans, un parent ou tuteur accepte que tu utilises KampusLink.",
-  "bacStart": "Commencer"
+  "bacStart": "Commencer",
+  "bacBadge": "Bac {year}"
 }

@@ -35,7 +35,8 @@ Future<Map<String, dynamic>> decodeLessonI18n(String? json) async {
   }
 }
 
-/// Best available language: wanted -> French -> source language -> any.
+/// Best available language: wanted -> French -> source language -> Arabic
+/// -> English -> any (B14: bac content has no French; Arabic is its source).
 String pickLanguage(
   Iterable<String> available,
   String wanted, {
@@ -43,7 +44,7 @@ String pickLanguage(
 }) {
   final list = available.toList();
   if (list.isEmpty) return wanted;
-  for (final code in [wanted, 'fr', ?source]) {
+  for (final code in [wanted, 'fr', ?source, 'ar', 'en']) {
     if (list.contains(code)) return code;
   }
   return list.first;

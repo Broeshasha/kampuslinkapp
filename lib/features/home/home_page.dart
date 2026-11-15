@@ -589,6 +589,7 @@ class _FeedState extends ConsumerState<_Feed> {
           topInset: topInset,
           bottomInset: bottomInset,
           set: set,
+          seed: ref.read(authControllerProvider).userId ?? '',
           demo: payload.moduleId == null,
           accent: payload.moduleId == null
               ? null

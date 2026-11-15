@@ -1,3 +1,4 @@
+import '../../data/learning/bac_source.dart';
 import '../../render/source_adapter.dart';
 
 enum SlideRole { hook, clue, step, commit, reveal, quiz, takeaway, unknown }
@@ -51,6 +52,7 @@ class CaseSlide {
     this.explanation = '',
     this.examNote = '',
     this.figure,
+    this.bacYear,
   });
 
   factory CaseSlide.fromMap(Map<String, dynamic> raw) {
@@ -85,6 +87,7 @@ class CaseSlide {
       explanation: _s(m['explanation']),
       examNote: _s(m['exam_note'] ?? m['why_exam'] ?? m['exam']),
       figure: figure,
+      bacYear: bacYearOf(m['source']),
     );
   }
 
@@ -96,6 +99,8 @@ class CaseSlide {
   final String prompt;
   final List<String> options;
   final int? correctIndex;
+  /// B17: real bac question on this slide (📜 badge), else null.
+  final int? bacYear;
   final String explanation;
 
   /// "Why this matters for the exam" (reveal), optional.
