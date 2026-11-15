@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../data/push/push_registration.dart';
 import '../errors/app_failure.dart';
 import '../logging/logger.dart';
 import '../supabase/supabase_bootstrap.dart';
@@ -69,6 +70,17 @@ class AuthRepository {
     }
     final auth = _client?.auth;
     if (auth == null) return;
+    // MOT-3: this phone stops getting pushes for the account that leaves.
+    if (auth.currentSession != null) {
+      await dropPushToken(
+        (token) async {
+          await _client!.rpc(
+            'unregister_push_token',
+            params: {'p_token': token},
+          );
+        },
+      );
+    }
     try {
       await auth.signOut();
     } catch (error) {

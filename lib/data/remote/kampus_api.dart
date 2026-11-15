@@ -134,6 +134,12 @@ class KampusApi {
     await _client.rpc('delete_my_account').timeout(_timeout);
   }
 
+  Future<void> registerPushToken(String token) async {
+    await _client
+        .rpc('register_push_token', params: {'p_token': token, 'p_platform': 'android'})
+        .timeout(_timeout);
+  }
+
   Future<void> unregisterPushToken(String token) async {
     await _client
         .rpc('unregister_push_token', params: {'p_token': token})

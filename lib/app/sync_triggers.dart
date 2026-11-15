@@ -10,6 +10,7 @@ import '../core/supabase/supabase_bootstrap.dart';
 import '../data/learning/feed_queue_provider.dart';
 import '../core/l10n/locale_controller.dart';
 import '../data/profile/waitlist_check.dart';
+import '../data/push/push_registration.dart';
 import '../data/reminders/reminder_controller.dart';
 import '../data/sync/sync_controller.dart';
 import 'router.dart';
@@ -61,6 +62,7 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
       return;
     }
     unawaited(ref.read(reminderControllerProvider.notifier).start());
+    unawaited(ref.read(pushTokenSyncProvider)());
     unawaited(syncWaitlistCheck(ref.read(sharedPrefsProvider)));
   }
 
@@ -102,6 +104,7 @@ class _SyncTriggersState extends ConsumerState<SyncTriggers>
     unawaited(ref.read(feedQueueProvider.notifier).saveSnapshot());
     // Studied today -> no reminder today; new due-card count in the text.
     unawaited(ref.read(reminderControllerProvider.notifier).refreshPlan());
+    unawaited(ref.read(pushTokenSyncProvider)());
   }
 
   @override
