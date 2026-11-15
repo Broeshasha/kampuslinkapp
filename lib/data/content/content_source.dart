@@ -176,7 +176,8 @@ class ContentSource {
   }
 
   Future<Object?> _get(String path, {String? sha}) async {
-    final bytes = await cdnGet(Uri.parse('$cdnBaseUrl$path')).timeout(cdnTimeout);
+    final bytes = await cdnGet(Uri.parse('$cdnBaseUrl$path'))
+        .timeout(cdnTimeout);
     if (sha != null && sha256.convert(bytes).toString() != sha) {
       throw CdnError('hash mismatch $path');
     }

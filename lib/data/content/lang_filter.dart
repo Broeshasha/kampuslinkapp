@@ -53,7 +53,8 @@ Map<String, dynamic> filterLesson(
       },
     'i18n': filterLangs(_map(lesson['i18n']), langs),
     'cards': <Object?>[
-      for (final c in lesson['cards'] is List ? lesson['cards'] as List : const [])
+      for (final c
+          in lesson['cards'] is List ? lesson['cards'] as List : const [])
         if (c is Map)
           <String, dynamic>{
             ..._map(c),
@@ -63,7 +64,9 @@ Map<String, dynamic> filterLesson(
     ],
     'questions': <Object?>[
       for (final q
-          in lesson['questions'] is List ? lesson['questions'] as List : const [])
+          in lesson['questions'] is List
+              ? lesson['questions'] as List
+              : const [])
         if (q is Map)
           <String, dynamic>{
             ..._map(q),
@@ -82,7 +85,8 @@ Map<String, dynamic> filterExtras(
   List<String> langs,
 ) => <String, dynamic>{
   'glossary': <Object?>[
-    for (final g in extras['glossary'] is List ? extras['glossary'] as List : const [])
+    for (final g
+        in extras['glossary'] is List ? extras['glossary'] as List : const [])
       if (g is Map)
         <String, dynamic>{
           ..._map(g),

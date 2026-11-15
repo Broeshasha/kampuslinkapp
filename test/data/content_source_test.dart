@@ -224,10 +224,14 @@ void main() {
 
   test('no path, web, or content newer than the publish = Supabase', () async {
     path = null;
-    expect((await source().fetchManifest(3001, const ['fr']))['source'], isNull);
+    expect(
+      (await source().fetchManifest(3001, const ['fr']))['source'],
+      isNull,
+    );
     path = _manifest;
     expect(
-      (await source(enabled: false).fetchManifest(3001, const ['fr']))['source'],
+      (await source(enabled: false)
+          .fetchManifest(3001, const ['fr']))['source'],
       isNull,
     );
     serverVersion = 8;
