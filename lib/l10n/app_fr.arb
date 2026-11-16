@@ -424,5 +424,7 @@
   "bacSubjectMath": "Maths",
   "bacSubjectPhys": "Physique-chimie",
   "bacCoef": "coef. {count}",
-  "weekFreezeUsed": "Un gel de semaine a gardé tes semaines d'affilée."
+  "weekFreezeUsed": "Un gel de semaine a gardé tes semaines d'affilée.",
+  "blockAnswer": "Réponse",
+  "showAnswer": "Voir la réponse"
 }

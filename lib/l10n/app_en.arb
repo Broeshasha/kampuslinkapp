@@ -878,5 +878,7 @@
       }
     }
   },
-  "weekFreezeUsed": "A week freeze kept your weeks in a row."
+  "weekFreezeUsed": "A week freeze kept your weeks in a row.",
+  "blockAnswer": "Answer",
+  "showAnswer": "Show the answer"
 }

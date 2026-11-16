@@ -424,5 +424,7 @@
   "bacSubjectMath": "الرياضيات",
   "bacSubjectPhys": "العلوم الفيزيائية",
   "bacCoef": "المعامل {count}",
-  "weekFreezeUsed": "حافظ تجميد الأسبوع على أسابيعك المتتالية."
+  "weekFreezeUsed": "حافظ تجميد الأسبوع على أسابيعك المتتالية.",
+  "blockAnswer": "الإجابة",
+  "showAnswer": "أظهر الإجابة"
 }

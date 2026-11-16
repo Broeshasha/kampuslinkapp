@@ -35,6 +35,14 @@ class BlockView extends StatelessWidget {
     Widget rich() =>
         RichBlockText(text: content, highlights: highlights, style: style);
     final formula = _map(block['formula']);
+    // Bac content: a box can carry its own title (exam source, "Answer"),
+    // its own label ("Official definition") and a figure (exam document).
+    final title = _str(block['title']);
+    final ownLabel = _str(block['label']);
+    final figure = _map(block['figure']);
+    Widget? extra() => figure.isEmpty
+        ? null
+        : FigureBlock(block: Map<String, dynamic>.from(figure), style: style);
     final level = block['level'];
     final number = block['number'];
     return switch (type) {
@@ -45,21 +53,37 @@ class BlockView extends StatelessWidget {
       ),
       'paragraph' => rich(),
       'definition' => _Callout(
-        label: style.labels.blockDefinition,
+        label: ownLabel.isNotEmpty ? ownLabel : style.labels.blockDefinition,
+        title: title,
         icon: Icons.menu_book_outlined,
         color: kc.accentText,
         style: style,
         child: rich(),
       ),
       'example' => _Callout(
-        label: style.labels.blockExample,
+        label: ownLabel.isNotEmpty ? ownLabel : style.labels.blockExample,
+        title: title,
         icon: Icons.lightbulb_outline,
         color: kc.success,
         style: style,
+        extra: extra(),
         child: rich(),
       ),
       'note' => switch (_str(block['note_kind'])) {
+        // Bac: the official answer stays hidden until the student asks.
+        'bac_answer' => _Callout(
+          label: style.labels.blockAnswer,
+          title: title,
+          icon: Icons.check_circle_outline,
+          color: kc.success,
+          style: style,
+          hiddenUntilTap: style.labels.showAnswer,
+          extra: extra(),
+          child: rich(),
+        ),
         'intuition' => _Callout(
+          title: title,
+          extra: extra(),
           label: style.labels.noteIntuition,
           icon: Icons.emoji_objects_outlined,
           color: kc.accentAlt,
@@ -67,6 +91,8 @@ class BlockView extends StatelessWidget {
           child: rich(),
         ),
         'mistake' => _Callout(
+          title: title,
+          extra: extra(),
           label: style.labels.noteMistake,
           icon: Icons.error_outline,
           color: kc.danger,
@@ -74,6 +100,8 @@ class BlockView extends StatelessWidget {
           child: rich(),
         ),
         'exam_tip' => _Callout(
+          title: title,
+          extra: extra(),
           label: style.labels.noteExamTip,
           icon: Icons.school_outlined,
           color: kc.xp,
@@ -81,6 +109,8 @@ class BlockView extends StatelessWidget {
           child: rich(),
         ),
         'remember' => _Callout(
+          title: title,
+          extra: extra(),
           label: style.labels.noteRemember,
           icon: Icons.push_pin_outlined,
           color: kc.accentText,
@@ -88,6 +118,8 @@ class BlockView extends StatelessWidget {
           child: rich(),
         ),
         _ => _Callout(
+          title: title,
+          extra: extra(),
           label: style.labels.blockNote,
           icon: Icons.info_outline,
           color: kc.warning,
@@ -104,7 +136,11 @@ class BlockView extends StatelessWidget {
             ? rich()
             : _BulletList(items: _list(block['items']), style: style),
       ),
-      'bullet_list' => _BulletList(items: _list(block['items']), style: style),
+      'bullet_list' => _BulletList(
+        title: title,
+        items: _list(block['items']),
+        style: style,
+      ),
       'chemical_reaction' => MathBlock(
         latex: _str(formula['latex']),
         plainText: _str(formula['plain_text']),
@@ -194,13 +230,16 @@ class _Heading extends StatelessWidget {
   }
 }
 
-class _Callout extends StatelessWidget {
+class _Callout extends StatefulWidget {
   const _Callout({
     required this.label,
     required this.icon,
     required this.color,
     required this.style,
     required this.child,
+    this.title = '',
+    this.extra,
+    this.hiddenUntilTap,
   });
 
   final String label;
@@ -209,8 +248,29 @@ class _Callout extends StatelessWidget {
   final BlockStyle style;
   final Widget child;
 
+  /// Own title of the box (bac source line, "Answer (official ...)").
+  final String title;
+
+  /// Shown under the text (an exam document figure).
+  final Widget? extra;
+
+  /// Button text: the body stays hidden until tapped (bac answers).
+  final String? hiddenUntilTap;
+
+  @override
+  State<_Callout> createState() => _CalloutState();
+}
+
+class _CalloutState extends State<_Callout> {
+  bool _open = false;
+
   @override
   Widget build(BuildContext context) {
+    final label = widget.label;
+    final icon = widget.icon;
+    final color = widget.color;
+    final style = widget.style;
+    final hidden = widget.hiddenUntilTap != null && !_open;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(KSpace.md),
@@ -236,8 +296,30 @@ class _Callout extends StatelessWidget {
               ),
             ],
           ),
+          if (widget.title.isNotEmpty) ...[
+            const SizedBox(height: KSpace.xs),
+            MathText(
+              widget.title,
+              style: style.body.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ],
           const SizedBox(height: KSpace.xs),
-          child,
+          if (hidden)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _open = true),
+                icon: const Icon(Icons.visibility_outlined, size: 18),
+                label: Text(widget.hiddenUntilTap!),
+              ),
+            )
+          else ...[
+            widget.child,
+            if (widget.extra != null) ...[
+              const SizedBox(height: KSpace.sm),
+              widget.extra!,
+            ],
+          ],
         ],
       ),
     );
@@ -245,15 +327,25 @@ class _Callout extends StatelessWidget {
 }
 
 class _BulletList extends StatelessWidget {
-  const _BulletList({required this.items, required this.style});
+  const _BulletList({required this.items, required this.style, this.title = ''});
 
   final List<Object?> items;
   final BlockStyle style;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (title.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: KSpace.xs),
+            child: MathText(
+              title,
+              style: style.body.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
         for (final item in items)
           Padding(
             padding: const EdgeInsets.only(bottom: KSpace.xs),
