@@ -426,5 +426,6 @@
   "bacCoef": "المعامل {count}",
   "weekFreezeUsed": "حافظ تجميد الأسبوع على أسابيعك المتتالية.",
   "blockAnswer": "الإجابة",
-  "showAnswer": "أظهر الإجابة"
+  "showAnswer": "أظهر الإجابة",
+  "bacOtherStreamsSoon": "الشعب الأخرى قريبًا."
 }

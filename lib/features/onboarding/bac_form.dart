@@ -81,6 +81,41 @@ class _BacFormState extends ConsumerState<BacForm> {
     }
   }
 
+  void _otherStreams(String lang) {
+    final l10n = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (sheet) => StatefulBuilder(
+        builder: (sheet, setSheet) => ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(KSpace.md),
+          children: [
+            Text(
+              l10n.bacOtherStreamsSoon,
+              style: Theme.of(sheet).textTheme.titleMedium,
+            ),
+            for (final s in widget.offers.bacStreams)
+              if (!s.active)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(s.label(lang)),
+                  trailing: _notified.contains(s.code)
+                      ? const Icon(Icons.check_rounded)
+                      : TextButton(
+                          onPressed: () async {
+                            await _notify(s);
+                            setSheet(() {});
+                          },
+                          child: Text(l10n.bacNotifyMe),
+                        ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _start() async {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -180,28 +215,32 @@ class _BacFormState extends ConsumerState<BacForm> {
           onChanged: (v) => setState(() => _stream = v),
           child: Column(
             children: [
+              // Only the streams that are open. The others: one quiet line.
               for (final s in widget.offers.bacStreams)
-                s.active
-                    ? RadioListTile<String>(
-                        value: s.code,
-                        title: Text(s.label(lang)),
-                        contentPadding: EdgeInsets.zero,
-                      )
-                    : ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        enabled: false,
-                        title: Text(s.label(lang)),
-                        subtitle: Text(l10n.bacComingSoon),
-                        trailing: TextButton(
-                          onPressed: _notified.contains(s.code)
-                              ? null
-                              : () => _notify(s),
-                          child: Text(l10n.bacNotifyMe),
-                        ),
-                      ),
+                if (s.active)
+                  RadioListTile<String>(
+                    value: s.code,
+                    title: Text(s.label(lang)),
+                    contentPadding: EdgeInsets.zero,
+                  ),
             ],
           ),
         ),
+        if (widget.offers.bacStreams.any((s) => !s.active))
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.bacOtherStreamsSoon,
+                  style: theme.bodySmall?.copyWith(color: kc.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () => _otherStreams(lang),
+                child: Text(l10n.bacNotifyMe),
+              ),
+            ],
+          ),
         const SizedBox(height: KSpace.md),
         if (widget.offers.bacYears.length > 1) ...[
           Align(

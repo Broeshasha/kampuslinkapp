@@ -880,5 +880,6 @@
   },
   "weekFreezeUsed": "A week freeze kept your weeks in a row.",
   "blockAnswer": "Answer",
-  "showAnswer": "Show the answer"
+  "showAnswer": "Show the answer",
+  "bacOtherStreamsSoon": "Other streams are coming soon."
 }

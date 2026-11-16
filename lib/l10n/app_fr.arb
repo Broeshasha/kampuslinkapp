@@ -426,5 +426,6 @@
   "bacCoef": "coef. {count}",
   "weekFreezeUsed": "Un gel de semaine a gardé tes semaines d'affilée.",
   "blockAnswer": "Réponse",
-  "showAnswer": "Voir la réponse"
+  "showAnswer": "Voir la réponse",
+  "bacOtherStreamsSoon": "Les autres filières arrivent bientôt."
 }

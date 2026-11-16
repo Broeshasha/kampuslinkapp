@@ -276,7 +276,9 @@ class _StudiesStepState extends ConsumerState<StudiesStep> {
     _prefill(o, me.hasValue ? me.requireValue : null);
     // BAC-2: bac is a separate branch, asked first (servers without file 50
     // send no bac streams -> straight to the university form).
-    if (o.bacStreams.isNotEmpty && _view != _View.comingSoon) {
+    // A university waitlist ("coming soon") never hides the bac choice.
+    if (o.bacStreams.isNotEmpty &&
+        (_view != _View.comingSoon || _track != 'univ')) {
       if (_track == null) {
         return TrackChoice(onChoose: (t) => setState(() => _track = t));
       }
