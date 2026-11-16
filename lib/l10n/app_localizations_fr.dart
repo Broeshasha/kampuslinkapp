@@ -1442,4 +1442,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get weekFreezeUsed =>
       'Un gel de semaine a gardé tes semaines d\'affilée.';
+
+  @override
+  String get blockAnswer => 'Réponse';
+
+  @override
+  String get showAnswer => 'Voir la réponse';
+
+  @override
+  String get bacOtherStreamsSoon => 'Les autres filières arrivent bientôt.';
 }

@@ -2589,6 +2589,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A week freeze kept your weeks in a row.'**
   String get weekFreezeUsed;
+
+  /// No description provided for @blockAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get blockAnswer;
+
+  /// No description provided for @showAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the answer'**
+  String get showAnswer;
+
+  /// No description provided for @bacOtherStreamsSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Other streams are coming soon.'**
+  String get bacOtherStreamsSoon;
 }
 
 class _AppLocalizationsDelegate

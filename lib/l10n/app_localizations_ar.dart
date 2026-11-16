@@ -1420,4 +1420,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get weekFreezeUsed => 'حافظ تجميد الأسبوع على أسابيعك المتتالية.';
+
+  @override
+  String get blockAnswer => 'الإجابة';
+
+  @override
+  String get showAnswer => 'أظهر الإجابة';
+
+  @override
+  String get bacOtherStreamsSoon => 'الشعب الأخرى قريبًا.';
 }

@@ -1433,4 +1433,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weekFreezeUsed => 'A week freeze kept your weeks in a row.';
+
+  @override
+  String get blockAnswer => 'Answer';
+
+  @override
+  String get showAnswer => 'Show the answer';
+
+  @override
+  String get bacOtherStreamsSoon => 'Other streams are coming soon.';
 }

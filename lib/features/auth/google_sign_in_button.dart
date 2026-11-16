@@ -26,8 +26,12 @@ class _GoogleSignInButtonState extends ConsumerState<GoogleSignInButton> {
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
     } on GoogleSignInException catch (error, stack) {
-      if (error.code != GoogleSignInExceptionCode.canceled) {
-        _fail(error, stack);
+      // TEMP diagnostic: show the real reason, also for "canceled".
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          duration: const Duration(seconds: 20),
+          content: Text("${error.code.name}: ${error.description}"),
+        ));
       }
     } catch (error, stack) {
       _fail(error, stack);
