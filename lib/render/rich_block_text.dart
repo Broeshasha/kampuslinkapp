@@ -7,6 +7,7 @@ import 'latex_plain.dart';
 import 'math_text.dart';
 import 'math_view.dart';
 import 'segments.dart';
+import 'bare_math.dart';
 
 /// A text with highlights (term, value, formula, warning), inline math,
 /// `inline code` chips and ```fenced``` code blocks (drawn as CodeBlock).
@@ -29,7 +30,7 @@ class RichBlockText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = normalizeLatexEscapes(text);
+    final t = wrapBareMath(normalizeLatexEscapes(text));
     final parts = splitFences(t);
     if (parts.length == 1 && !parts.first.code) return _textPart(t);
     return Column(

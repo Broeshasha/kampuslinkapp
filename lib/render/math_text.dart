@@ -8,6 +8,7 @@ import 'bidi_math.dart';
 import 'latex_plain.dart';
 import 'math_view.dart';
 import 'segments.dart';
+import 'bare_math.dart';
 
 /// Inline formulas longer than this (source chars) scroll sideways.
 const _longInline = 60;
@@ -188,7 +189,7 @@ class MathText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = normalizeLatexEscapes(text);
+    final t = wrapBareMath(normalizeLatexEscapes(text));
     if (!mayContainMath(t) && highlights.isEmpty) {
       return Text(
         t,
