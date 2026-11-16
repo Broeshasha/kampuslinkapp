@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import 'bare_math.dart';
 import 'block_style.dart';
 import 'code_block.dart';
 import 'code_tokens.dart';
@@ -8,7 +9,6 @@ import 'bidi_math.dart';
 import 'latex_plain.dart';
 import 'math_view.dart';
 import 'segments.dart';
-import 'bare_math.dart';
 
 /// Inline formulas longer than this (source chars) scroll sideways.
 const _longInline = 60;

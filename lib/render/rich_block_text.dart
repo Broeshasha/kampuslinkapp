@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'bare_math.dart';
 import 'block_style.dart';
 import 'code_block.dart';
 import 'code_tokens.dart';
@@ -7,7 +8,6 @@ import 'latex_plain.dart';
 import 'math_text.dart';
 import 'math_view.dart';
 import 'segments.dart';
-import 'bare_math.dart';
 
 /// A text with highlights (term, value, formula, warning), inline math,
 /// `inline code` chips and ```fenced``` code blocks (drawn as CodeBlock).
