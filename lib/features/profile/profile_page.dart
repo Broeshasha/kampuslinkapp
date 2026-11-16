@@ -15,6 +15,7 @@ import '../../data/learning/learning_providers.dart';
 import '../../data/providers.dart';
 import '../../data/shop/shop_providers.dart';
 import '../../data/motivation/motivation_providers.dart';
+import '../../data/catalog/catalog.dart' show isBacProvider;
 import '../../l10n/app_localizations.dart';
 import '../../render/reader_settings.dart';
 import '../../ui/legal_links.dart';
@@ -66,9 +67,12 @@ class ProfilePage extends ConsumerWidget {
       const SizedBox(height: KSpace.xl),
       _SectionTitle(l10n.settingsTitle),
       const _SettingsCard(),
-      if (signedIn) ...[
+      // Bac students have no semesters (3AS, one year).
+      if (signedIn && !ref.watch(isBacProvider)) ...[
         const SizedBox(height: KSpace.md),
         const SemesterCard(),
+      ],
+      if (signedIn) ...[
         const SizedBox(height: KSpace.md),
         const _SyncRow(),
         const PreviewDraftsTile(),
@@ -512,7 +516,10 @@ class _SettingsCard extends ConsumerWidget {
           Divider(height: 1, color: kc.border),
           const RemindersTile(),
           Divider(height: 1, color: kc.border),
-          const StudyProfileTile(),
+          if (ref.watch(isBacProvider))
+            const _BacStudiesTile()
+          else
+            const StudyProfileTile(),
         ],
         Divider(height: 1, color: kc.border),
         const ShareAppTile(),
@@ -710,6 +717,28 @@ class _DeleteDialogState extends State<_DeleteDialog> {
           child: Text(l10n.deleteAccountConfirm),
         ),
       ],
+    );
+  }
+}
+
+
+/// Bac: "My studies" = the stream, no universities or semesters.
+class _BacStudiesTile extends ConsumerWidget {
+  const _BacStudiesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final kc = context.kc;
+    final stats = ref.watch(serverStatsProvider).value;
+    final stream = '${stats?['speciality_name'] ?? ''}';
+    final year = '${stats?['academic_year'] ?? ''}';
+    return ListTile(
+      leading: Icon(Icons.school_outlined, color: kc.accentText),
+      title: Text(l10n.myStudiesTitle),
+      subtitle: Text(
+        [l10n.trackBac, stream, year].where((v) => v.isNotEmpty).join(' \u00b7 '),
+      ),
     );
   }
 }
